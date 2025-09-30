@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Qlasar MVP</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>⚡ Qlasar MVP</h1>
+    <div class="chatbox">
+        {% for item in chat_history %}
+            <div class="user"><b>You:</b> {{ item.user }}</div>
+            <div class="bot"><b>Qlasar:</b> {{ item.bot }}</div>
+        {% endfor %}
+    </div>
+
+    <form method="post" action="/chat">
+        <input type="text" name="user_message" placeholder="Type your message..." required>
+        <input type="hidden" name="history" value='{{ chat_history | tojson }}'>
+        <button type="submit">Send</button>
+    </form>
+</body>
+</html>
