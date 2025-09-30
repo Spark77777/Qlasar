@@ -1,89 +1,54 @@
 import os
-import gradio as gr
 import requests
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
-# Load OpenRouter key from environment
-OR_KEY = os.getenv("OPENROUTER_KEY")  
-
+# Load API key
+OR_KEY = os.getenv("OPENROUTER_KEY")
 MODEL_ID = "x-ai/grok-4-fast:free"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScEFE0javLf_TFrm_DhxwGT1Gz3o-gXKmeTbUMttGizQF_FvA/viewform?usp=sf_link"
 
+app = FastAPI()
 
-# ---------------- Qlasar Chatbot ----------------
-def qlasar_respond(user_message, history):
-    system_message = (
-        "You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, provide four sections:\n"
-        "1. Answer: main response\n"
-        "2. Counterarguments: possible opposing views\n"
-        "3. Blindspots: missing considerations or overlooked aspects\n"
-        "4. Conclusion: encourage the user to think critically and gain insight\n"
-        "Format the response clearly with headings and end with a reflective thought for the user."
-        "For simple questions or those questions which do not need detailed or in-depth answer, provide answers as a General AI would. Do not provide answer in four sections. Also do not provide reflective thought."
-    )
+# Mount static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
-    # Build conversation history in OpenRouter format
-    messages = [{"role": "system", "content": system_message}]
-    for u, b in history:
-        if u:
-            messages.append({"role": "user", "content": u})
-        if b:
-            messages.append({"role": "assistant", "content": b})
+# Home route
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "chat_history": []})
 
-    # Add the latest user input
+# Chat route
+@app.post("/chat", response_class=HTMLResponse)
+async def chat(request: Request, user_message: str = Form(...), history: str = Form("[]")):
+    import json
+
+    try:
+        history = json.loads(history)
+    except:
+        history = []
+
+    messages = [{"role": "system", "content": "You are Qlasar, an AI scout."}]
+    for h in history:
+        messages.append({"role": "user", "content": h["user"]})
+        messages.append({"role": "assistant", "content": h["bot"]})
     messages.append({"role": "user", "content": user_message})
 
     payload = {
         "model": MODEL_ID,
         "messages": messages,
         "temperature": 0.7,
-        "top_p": 0.95,
-        "max_tokens": 2048
+        "max_tokens": 512,
     }
 
     try:
         resp = requests.post(
             API_URL,
             json=payload,
-            headers={"Authorization": f"Bearer {OR_KEY}", "Content-Type": "application/json"}
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-        reply = data["choices"][0]["message"]["content"]
-    except Exception as e:
-        reply = f"❌ Error: {str(e)}"
-
-    # Append to history for Gradio’s chatbox
-    history.append((user_message, reply))
-    return history, history
-
-
-# ---------------- Proactive Scout ----------------
-def proactive_scout(topic):
-    system_message = (
-        "You are the Proactive Scout. Provide concise, frequent, and actionable "
-        "facts, alerts, and insights about the topic the user enters. "
-        "Keep it clear and informative."
-    )
-    messages = [
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": f"Provide facts, alerts, and insights about: {topic}"}
-    ]
-
-    payload = {
-        "model": MODEL_ID,
-        "messages": messages,
-        "temperature": 0.7,
-        "top_p": 0.95,
-        "max_tokens": 512
-    }
-
-    try:
-        resp = requests.post(
-            API_URL,
-            json=payload,
-            headers={"Authorization": f"Bearer {OR_KEY}", "Content-Type": "application/json"}
+            headers={"Authorization": f"Bearer {OR_KEY}", "Content-Type": "application/json"},
         )
         resp.raise_for_status()
         data = resp.json()
@@ -91,38 +56,6 @@ def proactive_scout(topic):
     except Exception as e:
         reply = f"❌ Error: {str(e)}"
 
-    return reply
+    history.append({"user": user_message, "bot": reply})
 
-
-# ---------------- Gradio Interface ----------------
-with gr.Blocks() as demo:
-    gr.Markdown("**Qlasar MVP**")
-
-    with gr.Row():
-        # Left: Chatbot
-        with gr.Column(scale=2):
-            gr.Markdown("### Chat with Qlasar")
-            state = gr.State([])
-            chatbox = gr.Chatbot()
-            with gr.Row():
-                txt = gr.Textbox(placeholder="Type your message...", show_label=False, lines=3)
-                send = gr.Button("➤")
-            clear = gr.Button("Clear")
-
-            txt.submit(qlasar_respond, inputs=[txt, state], outputs=[chatbox, state])
-            send.click(qlasar_respond, inputs=[txt, state], outputs=[chatbox, state])
-            clear.click(lambda: ([], []), outputs=[chatbox, state])
-
-        # Right: Proactive Scout
-        with gr.Column(scale=1):
-            gr.Markdown("### Proactive Scout")
-            topic_input = gr.Textbox(placeholder="Enter a topic...", show_label=True)
-            scout_output = gr.Markdown("Proactive insights will appear here.")
-            scout_button = gr.Button("Get Insights")
-            scout_button.click(proactive_scout, inputs=topic_input, outputs=scout_output)
-
-    # ---------------- Feedback Link ----------------
-    gr.Markdown(f"---\n[Give Feedback]({FEEDBACK_URL})")
-
-if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=int(os.getenv("PORT", 7860)))
+    return templates.TemplateResponse("index.html", {"request": request, "chat_history": history})
