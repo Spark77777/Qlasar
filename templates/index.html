@@ -1,55 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Qlasar MVP</title>
-  <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<title>Qlasar MVP</title>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <h2>Qlasar MVP</h2>
-
-  <!-- Chatbot -->
-  <div id="chatbox"></div>
-  <form id="chat-form">
-    <input type="text" id="user-message" placeholder="Type your message..." required>
-    <button type="submit">Send</button>
-  </form>
-
-  <!-- Proactive Scout -->
-  <h3>Proactive Scout</h3>
-  <form id="scout-form">
-    <input type="text" id="scout-topic" placeholder="Enter topic..." required>
-    <button type="submit">Get Insights</button>
-  </form>
-  <div id="scout-output"></div>
-
-  <script>
-    const chatForm = document.getElementById("chat-form");
-    const chatBox = document.getElementById("chatbox");
-    chatForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const msg = document.getElementById("user-message").value;
-      chatBox.innerHTML += `<p><b>You:</b> ${msg}</p>`;
-      const resp = await fetch("/chat", {
-        method: "POST",
-        body: new URLSearchParams({ user_message: msg })
-      });
-      const data = await resp.json();
-      chatBox.innerHTML += `<p><b>Qlasar:</b> ${data.reply}</p>`;
-      document.getElementById("user-message").value = "";
-    };
-
-    const scoutForm = document.getElementById("scout-form");
-    const scoutOutput = document.getElementById("scout-output");
-    scoutForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const topic = document.getElementById("scout-topic").value;
-      const resp = await fetch("/scout", {
-        method: "POST",
-        body: new URLSearchParams({ topic: topic })
-      });
-      const data = await resp.json();
-      scoutOutput.innerHTML = `<p>${data.reply}</p>`;
-    };
-  </script>
+<div class="container">
+    <h1>Qlasar</h1>
+    <div class="chat-container">
+        <div class="chat-panel">
+            <div id="chatbox" class="chatbox"></div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Type your message...">
+                <button onclick="sendMessage()">➤</button>
+            </div>
+        </div>
+        <div class="scout-panel">
+            <h3>Proactive Scout</h3>
+            <input type="text" id="topicInput" placeholder="Enter a topic...">
+            <button onclick="getInsights()">Get Insights</button>
+            <div id="scoutOutput">Proactive insights will appear here.</div>
+        </div>
+    </div>
+    <div class="feedback">
+        <a href="{{ feedback_url }}" target="_blank">Give Feedback</a>
+    </div>
+</div>
+<script src="/static/script.js"></script>
 </body>
 </html>
