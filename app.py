@@ -3,7 +3,7 @@ import gradio as gr
 import requests
 
 # Load OpenRouter key from environment
-OR_KEY = os.getenv("OPENROUTER_KEY")  # Make sure you set this in Render's environment variables
+OR_KEY = os.getenv("OPENROUTER_KEY")  
 
 MODEL_ID = "x-ai/grok-4-fast:free"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -13,22 +13,24 @@ FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScEFE0javLf_TFrm_DhxwGT
 # ---------------- Qlasar Chatbot ----------------
 def qlasar_respond(user_message, history):
     system_message = (
-        "You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, "
-        "provide four sections:\n"
+        "You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, provide four sections:\n"
         "1. Answer: main response\n"
         "2. Counterarguments: possible opposing views\n"
         "3. Blindspots: missing considerations or overlooked aspects\n"
         "4. Conclusion: encourage the user to think critically and gain insight\n"
-        "Format the response clearly with headings and end with a reflective thought for the user. "
-        "For simple questions or those questions which do not need detailed or in-depth answer, "
-        "provide answers as a General AI would. Do not provide answer in four sections. "
-        "Also do not provide reflective thought."
+        "Format the response clearly with headings and end with a reflective thought for the user."
+        "For simple questions or those questions which do not need detailed or in-depth answer, provide answers as a General AI would. Do not provide answer in four sections. Also do not provide reflective thought."
     )
 
+    # Build conversation history in OpenRouter format
     messages = [{"role": "system", "content": system_message}]
     for u, b in history:
-        messages.append({"role": "user", "content": u})
-        messages.append({"role": "assistant", "content": b})
+        if u:
+            messages.append({"role": "user", "content": u})
+        if b:
+            messages.append({"role": "assistant", "content": b})
+
+    # Add the latest user input
     messages.append({"role": "user", "content": user_message})
 
     payload = {
@@ -47,10 +49,12 @@ def qlasar_respond(user_message, history):
         )
         resp.raise_for_status()
         data = resp.json()
+
         reply = data["choices"][0]["message"]["content"]
     except Exception as e:
         reply = f"❌ Error: {str(e)}"
 
+    # Append to history for Gradio’s chatbox
     history.append((user_message, reply))
     return history, history
 
@@ -99,7 +103,7 @@ with gr.Blocks() as demo:
         with gr.Column(scale=2):
             gr.Markdown("### Chat with Qlasar")
             state = gr.State([])
-            chatbox = gr.Chatbot(type="messages")  # ✅ use messages format
+            chatbox = gr.Chatbot()
             with gr.Row():
                 txt = gr.Textbox(placeholder="Type your message...", show_label=False, lines=3)
                 send = gr.Button("➤")
@@ -117,10 +121,8 @@ with gr.Blocks() as demo:
             scout_button = gr.Button("Get Insights")
             scout_button.click(proactive_scout, inputs=topic_input, outputs=scout_output)
 
-    # ---------------- Feedback Link at Bottom ----------------
+    # ---------------- Feedback Link ----------------
     gr.Markdown(f"---\n[Give Feedback]({FEEDBACK_URL})")
 
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # ✅ Render requires binding to this port
-    demo.launch(server_name="0.0.0.0", server_port=port)
+    demo.launch(server_name="0.0.0.0", server_port=int(os.getenv("PORT", 7860)))
