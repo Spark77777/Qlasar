@@ -2,3 +2,8 @@ gradio
 requests
 supabase
 python-dotenv
+fastapi
+uvicorn
+jinja2
+requests
+python-multipart
