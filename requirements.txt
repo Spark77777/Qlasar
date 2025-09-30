@@ -1,8 +1,6 @@
-gradio
-supabase
-python-dotenv
 fastapi
 uvicorn
-jinja2
 requests
-python-multipart
+jinja2
+python-dotenv
+supabase
