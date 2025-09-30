@@ -1,5 +1,4 @@
 gradio
-requests
 supabase
 python-dotenv
 fastapi
