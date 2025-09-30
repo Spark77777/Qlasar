@@ -1,22 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Qlasar MVP</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <title>Qlasar MVP</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>⚡ Qlasar MVP</h1>
-    <div class="chatbox">
-        {% for item in chat_history %}
-            <div class="user"><b>You:</b> {{ item.user }}</div>
-            <div class="bot"><b>Qlasar:</b> {{ item.bot }}</div>
-        {% endfor %}
-    </div>
+  <h2>Qlasar MVP</h2>
 
-    <form method="post" action="/chat">
-        <input type="text" name="user_message" placeholder="Type your message..." required>
-        <input type="hidden" name="history" value='{{ chat_history | tojson }}'>
-        <button type="submit">Send</button>
-    </form>
+  <!-- Chatbot -->
+  <div id="chatbox"></div>
+  <form id="chat-form">
+    <input type="text" id="user-message" placeholder="Type your message..." required>
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Proactive Scout -->
+  <h3>Proactive Scout</h3>
+  <form id="scout-form">
+    <input type="text" id="scout-topic" placeholder="Enter topic..." required>
+    <button type="submit">Get Insights</button>
+  </form>
+  <div id="scout-output"></div>
+
+  <script>
+    const chatForm = document.getElementById("chat-form");
+    const chatBox = document.getElementById("chatbox");
+    chatForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("user-message").value;
+      chatBox.innerHTML += `<p><b>You:</b> ${msg}</p>`;
+      const resp = await fetch("/chat", {
+        method: "POST",
+        body: new URLSearchParams({ user_message: msg })
+      });
+      const data = await resp.json();
+      chatBox.innerHTML += `<p><b>Qlasar:</b> ${data.reply}</p>`;
+      document.getElementById("user-message").value = "";
+    };
+
+    const scoutForm = document.getElementById("scout-form");
+    const scoutOutput = document.getElementById("scout-output");
+    scoutForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const topic = document.getElementById("scout-topic").value;
+      const resp = await fetch("/scout", {
+        method: "POST",
+        body: new URLSearchParams({ topic: topic })
+      });
+      const data = await resp.json();
+      scoutOutput.innerHTML = `<p>${data.reply}</p>`;
+    };
+  </script>
 </body>
 </html>
