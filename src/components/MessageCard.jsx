@@ -1,13 +1,8 @@
-import React from "react";
-
-export default function MessageCard({ type, content }) {
+export default function MessageCard({ message, type }) {
+  const alignment = type === "user" ? "text-right" : "text-left";
   return (
-    <div
-      className={`my-2 p-3 rounded max-w-xl ${
-        type === "user" ? "bg-teal-100 text-right self-end" : "bg-gray-200 dark:bg-gray-700 text-left self-start"
-      }`}
-    >
-      {content}
+    <div className={`mb-2 p-2 rounded ${alignment} ${type === "user" ? "bg-teal-100" : "bg-gray-200"}`}>
+      {message}
     </div>
   );
 }
