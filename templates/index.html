@@ -1,32 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Qlasar MVP</title>
-<link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <title>Qlasar</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="container">
-    <h1>Qlasar</h1>
-    <div class="chat-container">
-        <div class="chat-panel">
-            <div id="chatbox" class="chatbox"></div>
-            <div class="input-area">
-                <input type="text" id="userInput" placeholder="Type your message...">
-                <button onclick="sendMessage()">➤</button>
-            </div>
-        </div>
-        <div class="scout-panel">
-            <h3>Proactive Scout</h3>
-            <input type="text" id="topicInput" placeholder="Enter a topic...">
-            <button onclick="getInsights()">Get Insights</button>
-            <div id="scoutOutput">Proactive insights will appear here.</div>
-        </div>
+    <h1>🚀 Qlasar MVP</h1>
+
+    <!-- Chatbox -->
+    <div id="chatbox" class="chatbox"></div>
+
+    <div class="input-area">
+        <input id="userInput" type="text" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
     </div>
-    <div class="feedback">
-        <a href="{{ feedback_url }}" target="_blank">Give Feedback</a>
+
+    <!-- Proactive Scout -->
+    <h2>🔎 Proactive Insights</h2>
+    <div class="input-area">
+        <input id="topicInput" type="text" placeholder="Enter a topic...">
+        <button onclick="getInsights()">Scout</button>
     </div>
-</div>
-<script src="/static/script.js"></script>
+    <div id="scoutOutput" class="scout-output"></div>
+
+    <script src="/static/script.js"></script>
 </body>
 </html>
