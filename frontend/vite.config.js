@@ -1,14 +1,18 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    host: true, // Listen on 0.0.0.0
-    port: process.env.PORT || 5173
-  },
   build: {
-    outDir: '../backend/static', // Build files go to backend/static for Python to serve
-    emptyOutDir: true
-  }
+    outDir: resolve(__dirname, "../backend/static"),
+    emptyOutDir: true,
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      "/chat": "http://localhost:8000",
+      "/proactive": "http://localhost:8000",
+    },
+  },
 });
