@@ -4,17 +4,14 @@ import SessionSidebar from "./components/SessionSidebar";
 import ProactiveAlerts from "./components/ProactiveAlerts";
 
 export default function App() {
-  const [messages, setMessages] = useState([]);
+  const [activeSession, setActiveSession] = useState("General");
+  const [alertsTopic, setAlertsTopic] = useState("");
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <SessionSidebar />
-      <div className="flex flex-col flex-1">
-        <div className="flex flex-1">
-          <ChatWindow messages={messages} setMessages={setMessages} />
-          <ProactiveAlerts />
-        </div>
-      </div>
+    <div className="flex h-screen">
+      <SessionSidebar activeSession={activeSession} setActiveSession={setActiveSession} />
+      <ChatWindow activeSession={activeSession} />
+      <ProactiveAlerts topic={alertsTopic} setTopic={setAlertsTopic} />
     </div>
   );
 }
