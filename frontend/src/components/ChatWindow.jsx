@@ -1,45 +1,42 @@
-import React, { useState } from "react";
-
-const ChatWindow = () => {
-  const [messages, setMessages] = useState([]);
-
-  const handleSend = (e) => {
-    e.preventDefault();
-    const input = e.target.elements.message;
-    if (!input.value.trim()) return;
-    setMessages([...messages, { type: "user", text: input.value }]);
-    input.value = "";
-  };
-
+export default function ChatWindow({ onToggleAlerts, alertsVisible }) {
   return (
-    <div className="flex-1 flex flex-col p-4 bg-gray-100">
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`p-2 rounded max-w-xs ${
-              msg.type === "user" ? "bg-teal-200 self-end" : "bg-white self-start"
-            }`}
-          >
-            {msg.text}
-          </div>
-        ))}
-      </div>
-      <form onSubmit={handleSend} className="flex">
-        <input
-          name="message"
-          placeholder="Type a message..."
-          className="flex-1 px-4 py-2 rounded-l border border-gray-300"
-        />
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+        <h1 className="text-xl font-semibold">Qlasar Chat</h1>
         <button
-          type="submit"
-          className="bg-teal-500 text-white px-4 py-2 rounded-r"
+          onClick={onToggleAlerts}
+          className="px-3 py-1 text-sm font-medium text-white bg-teal-500 rounded hover:bg-teal-600"
         >
-          Send
+          {alertsVisible ? "Hide Alerts" : "Show Alerts"}
         </button>
-      </form>
+      </div>
+
+      {/* Conversation Area */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {/* Placeholder chat messages */}
+        <div className="space-y-2">
+          <div className="text-right">
+            <span className="inline-block px-3 py-1 bg-teal-100 text-teal-800 rounded-lg">
+              Hi Qlasar!
+            </span>
+          </div>
+          <div className="text-left">
+            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-lg">
+              Hello! How can I assist you today?
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Input */}
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <input
+          type="text"
+          placeholder="Type a message..."
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+        />
+      </div>
     </div>
   );
-};
-
-export default ChatWindow;
+}
