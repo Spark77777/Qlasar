@@ -1,39 +1,45 @@
 import React, { useState } from "react";
 
-export default function ChatWindow() {
+const ChatWindow = () => {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
 
-  const sendMessage = () => {
-    if (!input) return;
-    setMessages([...messages, { type: "user", text: input }]);
-    setInput("");
-    setMessages((prev) => [...prev, { type: "bot", text: "Qlasar says: (placeholder reply)" }]);
+  const handleSend = (e) => {
+    e.preventDefault();
+    const input = e.target.elements.message;
+    if (!input.value.trim()) return;
+    setMessages([...messages, { type: "user", text: input.value }]);
+    input.value = "";
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4">
-      <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+    <div className="flex-1 flex flex-col p-4 bg-gray-100">
+      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`p-2 rounded ${msg.type === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"}`}
+            className={`p-2 rounded max-w-xs ${
+              msg.type === "user" ? "bg-teal-200 self-end" : "bg-white self-start"
+            }`}
           >
             {msg.text}
           </div>
         ))}
       </div>
-      <div className="flex">
+      <form onSubmit={handleSend} className="flex">
         <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border rounded p-2 mr-2"
+          name="message"
           placeholder="Type a message..."
+          className="flex-1 px-4 py-2 rounded-l border border-gray-300"
         />
-        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">
+        <button
+          type="submit"
+          className="bg-teal-500 text-white px-4 py-2 rounded-r"
+        >
           Send
         </button>
-      </div>
+      </form>
     </div>
   );
-}
+};
+
+export default ChatWindow;
