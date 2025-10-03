@@ -1,50 +1,34 @@
 import os
-import httpx
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-
-OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
-if not OPENROUTER_KEY:
-    raise RuntimeError("Please set OPENROUTER_KEY environment variable.")
 
 app = FastAPI()
 
-# Serve frontend build
-app.mount("/static", StaticFiles(directory="backend/static"), name="static")
-templates = Jinja2Templates(directory="backend/templates")
+# Allow CORS (frontend-backend communication)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # you can restrict this later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_frontend(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+# ✅ Fix: absolute path for static folder
+static_dir = os.path.join(os.path.dirname(__file__), "static")
 
-# Chat request schema
-class ChatRequest(BaseModel):
-    message: str
+# Debug (will show up in Render logs)
+print(f"Static directory resolved to: {static_dir}")
 
-@app.post("/api/chat")
-async def chat_endpoint(req: ChatRequest):
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": "x.ai/grok-beta",   # ⚡ free Grok Fast model
-                    "messages": [{"role": "user", "content": req.message}],
-                },
-                timeout=60.0,
-            )
-        data = resp.json()
-        if "choices" in data:
-            reply = data["choices"][0]["message"]["content"]
-            return JSONResponse({"reply": reply})
-        else:
-            return JSONResponse({"error": data}, status_code=500)
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=500)
+# Mount static files
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Qlasar backend is running 🚀"}
+
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok", "message": "pong"}
