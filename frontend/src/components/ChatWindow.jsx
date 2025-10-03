@@ -1,46 +1,36 @@
 import React, { useState } from "react";
 
 export default function ChatWindow() {
-  const [messages, setMessages] = useState([
-    { role: "Qlasar", text: "Hello! I'm Qlasar. How can I help you today?" },
-    { role: "You", text: "Show me how the UI looks!" },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
   const sendMessage = () => {
-    if (!input.trim()) return;
-    setMessages([...messages, { role: "You", text: input }]);
+    if (!input) return;
+    setMessages([...messages, { type: "user", text: input }]);
     setInput("");
+    setMessages((prev) => [...prev, { type: "bot", text: "Qlasar says: (placeholder reply)" }]);
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto space-y-2">
-        {messages.map((msg, i) => (
+    <div className="flex-1 flex flex-col p-4">
+      <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+        {messages.map((msg, idx) => (
           <div
-            key={i}
-            className={`p-2 rounded max-w-xs ${
-              msg.role === "You"
-                ? "ml-auto bg-blue-500 text-white"
-                : "mr-auto bg-gray-200"
-            }`}
+            key={idx}
+            className={`p-2 rounded ${msg.type === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"}`}
           >
-            <strong>{msg.role}:</strong> {msg.text}
+            {msg.text}
           </div>
         ))}
       </div>
-
-      <div className="mt-4 flex">
+      <div className="flex">
         <input
-          className="flex-1 border border-gray-300 rounded-l p-2"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
+          className="flex-1 border rounded p-2 mr-2"
+          placeholder="Type a message..."
         />
-        <button
-          onClick={sendMessage}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded-r"
-        >
+        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">
           Send
         </button>
       </div>
