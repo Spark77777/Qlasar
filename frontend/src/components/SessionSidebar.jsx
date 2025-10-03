@@ -1,22 +1,19 @@
-import React from "react";
+import React from 'react';
+import { motion } from 'framer-motion';
 
-export default function SessionSidebar() {
+export default function SessionSidebar({ toggle }) {
   return (
-    <div className="w-60 bg-gray-200 p-4 flex flex-col">
-      <h2 className="text-xl font-bold mb-4">Qlasar Sessions</h2>
-      <button className="bg-teal-500 text-white py-2 px-4 rounded mb-4">
-        + New Session
-      </button>
-      <div className="flex-1 overflow-y-auto">
-        <ul>
-          <li className="p-2 bg-white rounded mb-2 cursor-pointer">Research</li>
-          <li className="p-2 bg-white rounded mb-2 cursor-pointer">Learning</li>
-          <li className="p-2 bg-white rounded mb-2 cursor-pointer">Weekend</li>
-        </ul>
+    <motion.div
+      initial={{ x: "-100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "-100%" }}
+      className="fixed top-14 left-0 bottom-0 w-3/4 md:w-1/3 bg-white shadow-lg z-40 p-4 overflow-y-auto"
+    >
+      <div className="flex justify-between mb-4">
+        <h2 className="font-bold text-lg">Sessions</h2>
+        <button onClick={toggle}>Close</button>
       </div>
-      <button className="mt-auto bg-gray-400 py-2 px-4 rounded">
-        Account
-      </button>
-    </div>
+      {/* Add session list here */}
+    </motion.div>
   );
 }
