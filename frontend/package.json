@@ -1,6 +1,7 @@
 {
   "name": "qlasar-frontend",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,10 +13,10 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.0",
-    "autoprefixer": "^10.4.15",
-    "postcss": "^8.4.28",
-    "tailwindcss": "^3.3.3",
+    "@vitejs/plugin-react": "^4.0.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.3.2",
     "vite": "^4.5.0"
   }
 }
