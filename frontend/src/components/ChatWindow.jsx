@@ -1,41 +1,62 @@
-export default function ChatWindow({ onToggleAlerts, alertsVisible }) {
+import React, { useState } from "react";
+
+export default function ChatWindow({ toggleAlerts }) {
+  const [messages, setMessages] = useState([]);
+
+  const [input, setInput] = useState("");
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    setMessages([...messages, { type: "user", text: input }]);
+    setInput("");
+    // Placeholder for backend API call
+    setTimeout(() => {
+      setMessages((prev) => [
+        ...prev,
+        { type: "bot", text: "Qlasar response will appear here." },
+      ]);
+    }, 500);
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
-        <h1 className="text-xl font-semibold">Qlasar Chat</h1>
+    <div className="flex-1 flex flex-col bg-gray-50 p-4">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-lg font-bold">Current Session</h2>
         <button
-          onClick={onToggleAlerts}
-          className="px-3 py-1 text-sm font-medium text-white bg-teal-500 rounded hover:bg-teal-600"
+          onClick={toggleAlerts}
+          className="bg-orange-500 text-white px-3 py-1 rounded"
         >
-          {alertsVisible ? "Hide Alerts" : "Show Alerts"}
+          Proactive Alerts
         </button>
       </div>
 
-      {/* Conversation Area */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        {/* Placeholder chat messages */}
-        <div className="space-y-2">
-          <div className="text-right">
-            <span className="inline-block px-3 py-1 bg-teal-100 text-teal-800 rounded-lg">
-              Hi Qlasar!
-            </span>
+      <div className="flex-1 overflow-y-auto mb-2">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`p-2 my-1 rounded max-w-xs ${
+              msg.type === "user" ? "bg-teal-200 self-end" : "bg-white self-start"
+            }`}
+          >
+            {msg.text}
           </div>
-          <div className="text-left">
-            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-lg">
-              Hello! How can I assist you today?
-            </span>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="flex">
         <input
           type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="flex-1 p-2 border rounded mr-2"
           placeholder="Type a message..."
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
         />
+        <button
+          onClick={sendMessage}
+          className="bg-teal-500 text-white px-4 rounded"
+        >
+          Send
+        </button>
       </div>
     </div>
   );
