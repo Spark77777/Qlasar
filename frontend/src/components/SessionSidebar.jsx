@@ -1,24 +1,20 @@
 import React from "react";
 
 export default function SessionSidebar() {
-  const sessions = ["Session 1", "Session 2", "Session 3"];
-
   return (
-    <div>
-      <h2 className="text-lg font-semibold mb-4">Sessions</h2>
-      <ul className="space-y-2">
-        {sessions.map((s, i) => (
-          <li
-            key={i}
-            className="p-2 bg-gray-700 hover:bg-gray-600 rounded cursor-pointer"
-          >
-            {s}
-          </li>
-        ))}
-      </ul>
-      <button className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
+    <div className="w-64 bg-gray-100 p-4 flex flex-col">
+      <h1 className="text-xl font-bold mb-4">Qlasar</h1>
+      <button className="bg-blue-500 text-white py-2 px-4 rounded mb-4">
         + New Session
       </button>
+      <div className="flex-1 overflow-y-auto">
+        <ul>
+          <li className="p-2 bg-gray-200 mb-2 rounded">Research</li>
+          <li className="p-2 bg-gray-200 mb-2 rounded">Learning</li>
+          <li className="p-2 bg-gray-200 mb-2 rounded">Weekend</li>
+        </ul>
+      </div>
+      <button className="mt-auto bg-gray-300 py-2 px-4 rounded">Account</button>
     </div>
   );
 }
