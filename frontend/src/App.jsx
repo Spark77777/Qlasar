@@ -1,118 +1,71 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ChatWindow from "./components/ChatWindow";
+import SessionSidebar from "./components/SessionSidebar";
+import ProactiveAlerts from "./components/ProactiveAlerts";
 
 export default function App() {
-  const [activeSidebar, setActiveSidebar] = useState(null); 
-  // "sessions" | "alerts" | null
+  const [isSessionOpen, setSessionOpen] = useState(false);
+  const [isAlertsOpen, setAlertsOpen] = useState(false);
 
-  const toggleSidebar = (type) => {
-    setActiveSidebar((prev) => (prev === type ? null : type));
+  const openSession = () => {
+    setSessionOpen(true);
+    setAlertsOpen(false);
+  };
+
+  const openAlerts = () => {
+    setAlertsOpen(true);
+    setSessionOpen(false);
   };
 
   return (
-    <div className="flex flex-col h-screen relative">
-      {/* Top Navigation Bar */}
-      <div className="p-4 bg-gray-800 text-white flex justify-between items-center">
-        <button
-          onClick={() => toggleSidebar("sessions")}
-          className="font-bold text-lg"
-        >
+    <div className="relative h-screen w-screen bg-gray-100">
+      {/* Top Navigation */}
+      <div className="flex justify-between items-center p-4 bg-white shadow fixed w-full z-20">
+        <div className="font-bold text-xl cursor-pointer" onClick={openSession}>
           Qlasar
-        </button>
+        </div>
         <button
-          onClick={() => toggleSidebar("alerts")}
-          className="bg-blue-500 px-3 py-1 rounded-md text-sm"
+          className="px-3 py-1 bg-teal-500 text-white rounded"
+          onClick={openAlerts}
         >
           Proactive Alerts
         </button>
       </div>
 
-      {/* Chat Window (Base Layer) */}
-      <div
-        className={`flex-1 p-4 bg-gray-100 overflow-auto transition ${
-          activeSidebar ? "brightness-75" : ""
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3 bg-white rounded shadow mb-2">
-              Hello! This is your Qlasar chat window.
-            </div>
-            <div className="p-3 bg-gray-50 rounded shadow mb-2">
-              Responses will appear here.
-            </div>
-          </div>
+      {/* Chat Window */}
+      <ChatWindow
+        dimBackground={isSessionOpen || isAlertsOpen}
+      />
 
-          {/* Input Bar */}
-          <div className="mt-2 flex">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              className="flex-1 border p-2 rounded-l"
-            />
-            <button className="bg-blue-500 text-white px-4 rounded-r">
-              Send
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Session Sidebar (Left Overlay) */}
+      {/* Session Sidebar */}
       <AnimatePresence>
-        {activeSidebar === "sessions" && (
+        {isSessionOpen && (
           <motion.div
-            initial={{ x: "-100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "-100%", opacity: 0 }}
+            key="session"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed top-0 left-0 h-full w-3/12 md:w-3/12 sm:w-7/12 bg-white shadow-lg z-20"
+            className="fixed top-0 left-0 h-full w-3/5 md:w-1/3 bg-white shadow z-30"
           >
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="font-bold">Sessions</h2>
-              <button onClick={() => setActiveSidebar(null)}>✕</button>
-            </div>
-            <div className="p-4 overflow-y-auto">
-              <button className="mb-4 bg-blue-500 text-white px-3 py-1 rounded">
-                + New Session
-              </button>
-              <ul className="space-y-2">
-                <li className="p-2 border rounded">Session 1 - Today</li>
-                <li className="p-2 border rounded">Session 2 - Yesterday</li>
-                <li className="p-2 border rounded">Session 3 - Last week</li>
-              </ul>
-            </div>
+            <SessionSidebar close={() => setSessionOpen(false)} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Proactive Alerts Sidebar (Right Overlay) */}
+      {/* Proactive Alerts Sidebar */}
       <AnimatePresence>
-        {activeSidebar === "alerts" && (
+        {isAlertsOpen && (
           <motion.div
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
+            key="alerts"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed top-0 right-0 h-full w-3/12 md:w-3/12 sm:w-7/12 bg-yellow-50 shadow-lg z-20"
+            className="fixed top-0 right-0 h-full w-3/5 md:w-1/3 bg-white shadow z-30"
           >
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="font-bold">Proactive Alerts</h2>
-              <button onClick={() => setActiveSidebar(null)}>✕</button>
-            </div>
-            <div className="p-4 space-y-3 overflow-y-auto">
-              <div className="p-3 bg-white rounded shadow">
-                <p className="text-sm">⚡ New insight detected.</p>
-                <p className="text-xs text-gray-500">2 min ago</p>
-              </div>
-              <div className="p-3 bg-white rounded shadow">
-                <p className="text-sm">📊 Trend: Rising interest in Qlasar AI.</p>
-                <p className="text-xs text-gray-500">10 min ago</p>
-              </div>
-              <div className="p-3 bg-white rounded shadow">
-                <p className="text-sm">🔔 Signal from your last session.</p>
-                <p className="text-xs text-gray-500">30 min ago</p>
-              </div>
-            </div>
+            <ProactiveAlerts close={() => setAlertsOpen(false)} />
           </motion.div>
         )}
       </AnimatePresence>
