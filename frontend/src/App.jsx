@@ -1,14 +1,21 @@
 import React from "react";
-import ChatWindow from "./components/ChatWindow";
-import SessionSidebar from "./components/SessionSidebar";
-import ProactiveAlerts from "./components/ProactiveAlerts";
+import ChatWindow from "./components/ChatWindow.jsx";
+import SessionSidebar from "./components/SessionSidebar.jsx";
+import ProactiveAlerts from "./components/ProactiveAlerts.jsx";
 
-export default function App() {
+const App = () => {
   return (
     <div className="flex h-screen">
+      {/* Left Sidebar */}
       <SessionSidebar />
+
+      {/* Center Chat Window */}
       <ChatWindow />
+
+      {/* Right Sidebar */}
       <ProactiveAlerts />
     </div>
   );
-}
+};
+
+export default App;
