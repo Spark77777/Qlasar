@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   root: ".",
   build: {
-    outDir: "../backend/static", // adjust if backend folder differs
+    outDir: "dist", // build stays inside frontend/dist
     emptyOutDir: true,
   },
 });
