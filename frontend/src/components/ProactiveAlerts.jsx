@@ -1,21 +1,20 @@
+import React from "react";
+
 export default function ProactiveAlerts() {
   const alerts = [
-    { title: "AI in Healthcare", desc: "AI use in healthcare is growing with new diagnostic tools." },
-    { title: "AI Trends", desc: "Generative AI is driving advancements in creativity." },
-    { title: "Quantum Computing", desc: "Research is accelerating with new breakthroughs." },
+    "AI in Healthcare → New research on diagnostics.",
+    "AI Trends → Generative AI advancing fast.",
+    "Quantum Computing → Breakthroughs in qubit coherence.",
   ];
 
   return (
-    <div className="p-4">
-      <h2 className="font-semibold text-lg mb-4">Proactive Alerts</h2>
-      <div className="space-y-3">
-        {alerts.map((alert, idx) => (
-          <div key={idx} className="p-3 border rounded shadow-sm hover:bg-gray-50 cursor-pointer">
-            <h3 className="font-medium">{alert.title}</h3>
-            <p className="text-sm text-gray-600">{alert.desc}</p>
-          </div>
-        ))}
-      </div>
+    <div className="w-80 bg-gray-100 p-4 overflow-y-auto">
+      <h2 className="text-lg font-bold mb-4">Proactive Alerts</h2>
+      {alerts.map((alert, idx) => (
+        <div key={idx} className="p-2 mb-2 bg-white rounded cursor-pointer">
+          {alert}
+        </div>
+      ))}
     </div>
   );
 }
