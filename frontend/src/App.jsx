@@ -1,43 +1,46 @@
-import React, { useState } from 'react';
-import ChatWindow from './components/ChatWindow';
-import SessionSidebar from './components/SessionSidebar';
-import ProactiveAlerts from './components/ProactiveAlerts';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useState } from "react";
+import ChatWindow from "./components/ChatWindow";
+import SessionSidebar from "./components/SessionSidebar";
+import ProactiveAlerts from "./components/ProactiveAlerts";
 
 export default function App() {
-  const [showSessions, setShowSessions] = useState(false);
-  const [showAlerts, setShowAlerts] = useState(false);
+  const [sessionOpen, setSessionOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
 
-  const toggleSessions = () => {
-    setShowSessions(!showSessions);
-    if (!showSessions) setShowAlerts(false);
+  const toggleSession = () => {
+    setSessionOpen(!sessionOpen);
+    if (alertsOpen) setAlertsOpen(false);
   };
 
   const toggleAlerts = () => {
-    setShowAlerts(!showAlerts);
-    if (!showAlerts) setShowSessions(false);
+    setAlertsOpen(!alertsOpen);
+    if (sessionOpen) setSessionOpen(false);
   };
 
   return (
-    <div className="h-screen w-screen relative bg-gray-100">
-      {/* Top Navbar */}
-      <div className="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 shadow-md z-30">
-        <button onClick={toggleSessions} className="font-bold text-lg">Qlasar</button>
-        <button onClick={toggleAlerts} className="font-medium">Proactive Alerts</button>
+    <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
+      {/* Top Navigation */}
+      <div className="fixed top-0 left-0 right-0 h-14 bg-white shadow flex justify-between items-center px-4 z-20">
+        <div
+          className="font-bold text-lg cursor-pointer"
+          onClick={toggleSession}
+        >
+          Qlasar
+        </div>
+        <button
+          className="bg-blue-500 text-white px-4 py-1 rounded"
+          onClick={toggleAlerts}
+        >
+          Proactive Alerts
+        </button>
       </div>
 
-      {/* Chat Window */}
-      <ChatWindow />
+      {/* Main Chat Window */}
+      <ChatWindow sessionOpen={sessionOpen} alertsOpen={alertsOpen} />
 
-      {/* Session Sidebar */}
-      <AnimatePresence>
-        {showSessions && <SessionSidebar toggle={toggleSessions} />}
-      </AnimatePresence>
-
-      {/* Proactive Alerts Sidebar */}
-      <AnimatePresence>
-        {showAlerts && <ProactiveAlerts toggle={toggleAlerts} />}
-      </AnimatePresence>
+      {/* Sidebars */}
+      {sessionOpen && <SessionSidebar close={toggleSession} />}
+      {alertsOpen && <ProactiveAlerts close={toggleAlerts} />}
     </div>
   );
 }
