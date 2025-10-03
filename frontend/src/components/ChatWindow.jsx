@@ -1,62 +1,41 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-export default function ChatWindow({ toggleAlerts }) {
+export default function ChatWindow() {
   const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
 
-  const [input, setInput] = useState("");
-
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim()) return;
-    setMessages([...messages, { type: "user", text: input }]);
-    setInput("");
-    // Placeholder for backend API call
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { type: "bot", text: "Qlasar response will appear here." },
-      ]);
-    }, 500);
+    const userMsg = { role: 'user', content: input };
+    setMessages([...messages, userMsg]);
+    setInput('');
+
+    // Call backend
+    try {
+      const res = await fetch("http://localhost:8000/ask", {  // change to your Render URL
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: input })
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'bot', content: data.answer }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'bot', content: "Error contacting backend" }]);
+    }
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-gray-50 p-4">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-bold">Current Session</h2>
-        <button
-          onClick={toggleAlerts}
-          className="bg-orange-500 text-white px-3 py-1 rounded"
-        >
-          Proactive Alerts
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto mb-2">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`p-2 my-1 rounded max-w-xs ${
-              msg.type === "user" ? "bg-teal-200 self-end" : "bg-white self-start"
-            }`}
-          >
-            {msg.text}
+    <div className="pt-16 px-4 pb-24 h-full overflow-y-auto">
+      <div className="flex flex-col gap-2">
+        {messages.map((m, i) => (
+          <div key={i} className={`p-2 rounded ${m.role==='user' ? 'bg-blue-200 self-end' : 'bg-gray-200 self-start'}`}>
+            {m.content}
           </div>
         ))}
       </div>
-
-      <div className="flex">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 p-2 border rounded mr-2"
-          placeholder="Type a message..."
-        />
-        <button
-          onClick={sendMessage}
-          className="bg-teal-500 text-white px-4 rounded"
-        >
-          Send
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 flex p-2 bg-white shadow-inner">
+        <input value={input} onChange={e => setInput(e.target.value)} className="flex-1 p-2 border rounded" placeholder="Type a message..." />
+        <button onClick={sendMessage} className="ml-2 p-2 bg-blue-500 text-white rounded">Send</button>
       </div>
     </div>
   );
