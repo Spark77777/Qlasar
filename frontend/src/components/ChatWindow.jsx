@@ -1,66 +1,58 @@
 import React, { useState } from "react";
 
-export default function ChatWindow({ isDimmed }) {
+const API_URL = "https://qlasar.onrender.com";
+
+export default function ChatWindow() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    const userMsg = input;
-    setMessages([...messages, { role: "user", content: userMsg }]);
+
+    const userMessage = { role: "user", content: input };
+    setMessages([...messages, userMessage]);
+    setLoading(true);
     setInput("");
-    setThinking(true);
 
     try {
-      const res = await fetch("https://qlasar.onrender.com/api/chat", {
+      const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: userMsg,
-          history: messages
-            .map((m) => [
-              m.role === "user" ? m.content : "",
-              m.role === "assistant" ? m.content : "",
-            ])
-            .filter(([u, b]) => u || b),
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: input }),
       });
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+
+      const data = await response.json();
+      setMessages((prev) => [...prev, { role: "qlasar", content: data.response }]);
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "❌ Error connecting to backend" },
-      ]);
+      console.error("Error:", err);
+      setMessages((prev) => [...prev, { role: "qlasar", content: "Qlasar couldn't generate a response." }]);
     } finally {
-      setThinking(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className={`transition-opacity duration-300 ${isDimmed ? "opacity-30" : "opacity-100"} pt-20 p-4`}>
-      <div className="flex flex-col gap-2 max-w-xl mx-auto">
-        {messages.map((m, idx) => (
-          <div key={idx} className={`p-2 rounded ${m.role === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"}`}>
-            {m.content}
+    <div className="chat-window">
+      <div className="messages">
+        {messages.map((msg, index) => (
+          <div key={index} className={`message ${msg.role}`}>
+            {msg.content}
           </div>
         ))}
-        {thinking && <div className="p-2 rounded bg-yellow-100 self-start italic">Qlasar is thinking...</div>}
+        {loading && <div className="message qlasar">Qlasar is thinking...</div>}
       </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 flex gap-2 shadow">
+      <div className="input-container">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border rounded p-2"
           placeholder="Type your message..."
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">
-          Send
-        </button>
+        <button onClick={sendMessage}>Send</button>
       </div>
     </div>
   );
