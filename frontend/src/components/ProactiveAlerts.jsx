@@ -3,53 +3,51 @@ import React, { useState } from "react";
 export default function ProactiveAlerts({ close }) {
   const [topic, setTopic] = useState("");
   const [alerts, setAlerts] = useState("");
-  const [isFetching, setIsFetching] = useState(false);
+  const [thinking, setThinking] = useState(false);
 
-  const fetchAlerts = async () => {
+  const getAlerts = async () => {
     if (!topic.trim()) return;
-    setAlerts("Fetching insights...");
-    setIsFetching(true);
-
+    setThinking(true);
     try {
-      const res = await fetch("https://qlasar.onrender.com/api/proactive", {
+      const res = await fetch("https://qlasar.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic })
+        body: JSON.stringify({
+          message: `Provide concise, frequent, actionable insights and alerts about: ${topic}`,
+          history: [],
+        }),
       });
       const data = await res.json();
-      setAlerts(data.reply || "❌ No insights generated");
+      setAlerts(data.reply);
     } catch (err) {
       setAlerts("❌ Error connecting to backend");
     } finally {
-      setIsFetching(false);
+      setThinking(false);
     }
   };
 
   return (
-    <div className="fixed top-0 right-0 w-80 h-full bg-white shadow-lg p-4 z-30 overflow-y-auto">
+    <div className="fixed top-0 right-0 bottom-0 w-80 bg-white shadow-lg z-30 p-4 overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="font-bold text-lg">Proactive Scout</h2>
-        <button onClick={close} className="text-red-500 font-bold">X</button>
+        <h2 className="font-bold text-lg">Proactive Alerts</h2>
+        <button onClick={close} className="text-gray-500 hover:text-gray-800">✕</button>
       </div>
 
       <input
         type="text"
         value={topic}
-        onChange={e => setTopic(e.target.value)}
-        placeholder="Enter a topic..."
+        onChange={(e) => setTopic(e.target.value)}
         className="w-full border rounded p-2 mb-2"
-        onKeyDown={e => e.key === "Enter" && fetchAlerts()}
-        disabled={isFetching}
+        placeholder="Enter a topic..."
+        onKeyDown={(e) => e.key === "Enter" && getAlerts()}
       />
-      <button
-        onClick={fetchAlerts}
-        className={`w-full mb-4 bg-blue-500 text-white p-2 rounded ${isFetching ? "opacity-50 cursor-not-allowed" : ""}`}
-        disabled={isFetching}
-      >
-        {isFetching ? "Fetching..." : "Get Insights"}
+      <button onClick={getAlerts} className="bg-blue-500 text-white px-4 py-1 rounded mb-2">
+        Get Insights
       </button>
 
-      <div className="whitespace-pre-line text-gray-700">{alerts}</div>
+      {thinking && <div className="italic text-yellow-600">Qlasar is thinking...</div>}
+
+      <div className="mt-2 whitespace-pre-wrap">{alerts}</div>
     </div>
   );
 }
