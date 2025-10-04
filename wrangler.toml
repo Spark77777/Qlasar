@@ -1,0 +1,7 @@
+name = "qlasar"
+compatibility_date = "2025-10-04"
+
+[build]
+command = "npm run build"
+cwd = "frontend"
+watch_dir = "frontend"
