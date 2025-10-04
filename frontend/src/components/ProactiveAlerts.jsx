@@ -7,7 +7,7 @@ export default function ProactiveAlerts({ close }) {
   const fetchInsights = async () => {
     if (!topic.trim()) return;
     try {
-      const res = await fetch("https://YOUR_RENDER_BACKEND_URL/api/proactive", {
+      const res = await fetch("https://qlasar.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),
