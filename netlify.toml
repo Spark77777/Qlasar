@@ -1,9 +1,4 @@
 [build]
-  base = "."                 # root of project
-  publish = "dist"           # Vite build output
-  command = "npm install && npm run build"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  base = ""
+  command = "npm install && npm run build --prefix frontend"
+  publish = "frontend/dist"
