@@ -1,4 +1,4 @@
 [build]
-  base = "frontend"                 # frontend folder
-  publish = "frontend/dist"         # must match Vite outDir
+  base = "frontend"            # Netlify cd's into frontend
+  publish = "dist"             # relative to frontend
   command = "npm install && npm run build"
