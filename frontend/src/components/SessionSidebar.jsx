@@ -1,25 +1,25 @@
 import React, { useState } from "react";
 
-export default function SessionSidebar({ sessions, onSelect }) {
-  const [selected, setSelected] = useState(null);
+export default function SessionSidebar() {
+  const [sessions, setSessions] = useState([]);
 
-  const handleSelect = (session) => {
-    setSelected(session);
-    onSelect(session);
+  const loadSessions = async () => {
+    try {
+      const res = await fetch("https://qlasar.onrender.com/sessions"); // optional endpoint
+      const data = await res.json();
+      setSessions(data.sessions || []);
+    } catch (err) {
+      console.error(err);
+      setSessions([{ id: 0, name: "Error loading sessions" }]);
+    }
   };
 
   return (
     <div className="session-sidebar">
-      <h2>Sessions</h2>
+      <button onClick={loadSessions}>Load Sessions</button>
       <ul>
-        {sessions.map((session, index) => (
-          <li
-            key={index}
-            className={selected === session ? "selected" : ""}
-            onClick={() => handleSelect(session)}
-          >
-            {session.name}
-          </li>
+        {sessions.map(session => (
+          <li key={session.id}>{session.name || "Unnamed Session"}</li>
         ))}
       </ul>
     </div>
