@@ -3,44 +3,30 @@ import ChatWindow from "./components/ChatWindow";
 import SessionSidebar from "./components/SessionSidebar";
 import ProactiveAlerts from "./components/ProactiveAlerts";
 
-export default function App() {
-  const [sessionOpen, setSessionOpen] = useState(false);
-  const [alertsOpen, setAlertsOpen] = useState(false);
-
-  const toggleSession = () => {
-    setSessionOpen(!sessionOpen);
-    if (alertsOpen) setAlertsOpen(false);
-  };
-
-  const toggleAlerts = () => {
-    setAlertsOpen(!alertsOpen);
-    if (sessionOpen) setSessionOpen(false);
-  };
+function App() {
+  const [isSessionOpen, setIsSessionOpen] = useState(false);
+  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-gray-50">
-      {/* Top Navigation */}
-      <div className="fixed top-0 left-0 right-0 h-14 bg-white shadow flex justify-between items-center px-4 z-20">
-        <div
-          className="font-bold text-lg cursor-pointer"
-          onClick={toggleSession}
-        >
-          Qlasar
-        </div>
-        <button
-          className="bg-blue-500 text-white px-4 py-1 rounded"
-          onClick={toggleAlerts}
-        >
-          Proactive Alerts
-        </button>
+    <div className="relative min-h-screen bg-gray-50">
+      {/* Top nav */}
+      <div className="fixed top-0 left-0 right-0 bg-white shadow p-4 flex justify-between z-20">
+        <div className="font-bold cursor-pointer" onClick={() => {
+          setIsSessionOpen(true); setIsAlertsOpen(false);
+        }}>Qlasar</div>
+        <button onClick={() => {
+          setIsAlertsOpen(true); setIsSessionOpen(false);
+        }} className="bg-blue-500 text-white px-3 py-1 rounded">Proactive Alerts</button>
       </div>
 
-      {/* Main Chat Window */}
-      <ChatWindow sessionOpen={sessionOpen} alertsOpen={alertsOpen} />
-
       {/* Sidebars */}
-      {sessionOpen && <SessionSidebar close={toggleSession} />}
-      {alertsOpen && <ProactiveAlerts close={toggleAlerts} />}
+      {isSessionOpen && <SessionSidebar close={() => setIsSessionOpen(false)} />}
+      {isAlertsOpen && <ProactiveAlerts close={() => setIsAlertsOpen(false)} />}
+
+      {/* Chat */}
+      <ChatWindow isDimmed={isSessionOpen || isAlertsOpen} />
     </div>
   );
 }
+
+export default App;
