@@ -3,23 +3,19 @@ import React, { useState } from "react";
 export default function ProactiveAlerts() {
   const [alerts, setAlerts] = useState([]);
 
-  const fetchAlerts = async () => {
-    try {
-      const res = await fetch("https://qlasar.onrender.com/alerts");
-      const data = await res.json();
-      setAlerts(data.alerts || []);
-    } catch (err) {
-      console.error(err);
-      setAlerts([{ id: 0, message: "Error fetching alerts." }]);
-    }
+  const addAlert = message => {
+    setAlerts(prev => [...prev, { message, timestamp: new Date() }]);
   };
 
   return (
     <div className="proactive-alerts">
-      <button onClick={fetchAlerts}>Load Alerts</button>
+      <h3>Proactive Alerts</h3>
+      <button onClick={() => addAlert("This is a proactive alert!")}>Add Alert</button>
       <ul>
-        {alerts.map(alert => (
-          <li key={alert.id}>{alert.message}</li>
+        {alerts.map((alert, index) => (
+          <li key={index}>
+            {alert.timestamp.toLocaleTimeString()}: {alert.message}
+          </li>
         ))}
       </ul>
     </div>
