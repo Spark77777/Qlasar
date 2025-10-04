@@ -1,32 +1,17 @@
 import React from "react";
 
-export default function SessionSidebar({ close, sessions = [] }) {
+export default function SessionSidebar({ close }) {
   return (
-    <div className="fixed top-14 left-0 bottom-0 w-3/4 md:w-1/3 bg-white shadow-lg z-30 overflow-y-auto transition-transform transform">
-      <div className="flex justify-between items-center p-4 border-b">
+    <div className="fixed top-0 left-0 bottom-0 w-80 bg-white shadow-lg z-30 p-4 overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="font-bold text-lg">Sessions</h2>
-        <button
-          onClick={close}
-          className="text-gray-500 hover:text-gray-800 font-bold"
-        >
-          ✕
-        </button>
+        <button onClick={close} className="text-gray-500 hover:text-gray-800">✕</button>
       </div>
-
-      <div className="p-4 flex flex-col gap-2">
-        {sessions.length === 0 ? (
-          <div className="text-gray-400">No sessions yet.</div>
-        ) : (
-          sessions.map((session, idx) => (
-            <div
-              key={idx}
-              className="p-2 bg-gray-100 rounded hover:bg-gray-200 cursor-pointer"
-            >
-              <div className="font-semibold">{session.name || `Session ${idx + 1}`}</div>
-              <div className="text-sm text-gray-600 truncate">{session.preview || "No preview available"}</div>
-            </div>
-          ))
-        )}
+      <div className="flex flex-col gap-2">
+        {/* Example session items */}
+        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 1</div>
+        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 2</div>
+        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 3</div>
       </div>
     </div>
   );
