@@ -1,4 +1,8 @@
 [build]
-  base = "frontend"            # Netlify cd's into frontend
-  publish = "dist"             # relative to frontend
+  base = "frontend"          # Netlify cd's into frontend
+  publish = "dist"           # relative to frontend
   command = "npm install && npm run build"
+
+[dev]
+  framework = "create-react-app"
+  port = 5173
