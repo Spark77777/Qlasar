@@ -1,34 +1,40 @@
-import express from 'express';
-import cors from 'cors';
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import OpenAI from "openai";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-// Test route
-app.get('/', (req, res) => {
-  res.send('Qlasar backend is live!');
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-// Chat route
-app.post('/chat', async (req, res) => {
+// Root route for chat
+app.post("/", async (req, res) => {
   try {
     const { message } = req.body;
-    if (!message) return res.status(400).json({ error: 'No message provided' });
+    if (!message) return res.status(400).json({ error: "Message is required" });
 
-    // Here you integrate your AI model logic
-    const responseText = `Qlasar received: ${message}`;
+    // Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: message }],
+      max_tokens: 2000
+    });
 
-    res.json({ response: responseText });
+    const answer = response.choices?.[0]?.message?.content || "Qlasar couldn't generate a response.";
+    res.json({ answer });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Qlasar couldn't generate a response." });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Qlasar backend running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Qlasar backend running at http://localhost:${port}`);
 });
