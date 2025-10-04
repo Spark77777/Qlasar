@@ -32,8 +32,18 @@ function App() {
       </div>
 
       {/* Sidebars */}
-      {isSessionOpen && <SessionSidebar close={() => setIsSessionOpen(false)} />}
-      {isAlertsOpen && <ProactiveAlerts close={() => setIsAlertsOpen(false)} />}
+      {isSessionOpen && (
+        <SessionSidebar
+          close={() => setIsSessionOpen(false)}
+          // You can pass extra props if needed
+        />
+      )}
+      {isAlertsOpen && (
+        <ProactiveAlerts
+          close={() => setIsAlertsOpen(false)}
+          // You can pass extra props if needed
+        />
+      )}
 
       {/* Chat */}
       <ChatWindow isDimmed={isSessionOpen || isAlertsOpen} />
