@@ -1,14 +1,14 @@
 {
   "name": "qlasar-backend",
   "version": "1.0.0",
-  "description": "Backend for Qlasar PV1",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "axios": "^1.7.0",
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "dotenv": "^16.3.1"
   }
 }
