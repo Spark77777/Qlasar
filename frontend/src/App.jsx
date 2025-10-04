@@ -1,45 +1,53 @@
 import React, { useState } from "react";
-import ChatWindow from "./components/ChatWindow";
-import SessionSidebar from "./components/SessionSidebar";
-import ProactiveAlerts from "./components/ProactiveAlerts";
+import ChatWindow from "./ChatWindow";
+import ProactiveAlerts from "./ProactiveAlerts";
+import SessionSidebar from "./SessionSidebar";
 
-function App() {
-  const [isSessionOpen, setIsSessionOpen] = useState(false);
-  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
+export default function App() {
+  const [sessions, setSessions] = useState([
+    { name: "Session 1" },
+    { name: "Session 2" },
+  ]);
+  const [activeSession, setActiveSession] = useState(sessions[0]);
 
-  const openSession = () => {
-    setIsSessionOpen(true);
-    setIsAlertsOpen(false);
-  };
-
-  const openAlerts = () => {
-    setIsAlertsOpen(true);
-    setIsSessionOpen(false);
+  const handleSessionSelect = (session) => {
+    setActiveSession(session);
+    // If needed, you can load previous messages for this session here
   };
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Top nav */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow p-4 flex justify-between items-center z-20">
-        <div className="font-bold cursor-pointer" onClick={openSession}>
-          Qlasar
-        </div>
-        <button
-          onClick={openAlerts}
-          className="bg-blue-500 text-white px-3 py-1 rounded"
-        >
-          Proactive Alerts
-        </button>
+    <div className="app-container" style={styles.appContainer}>
+      {/* Sidebar for Sessions */}
+      <SessionSidebar sessions={sessions} onSelect={handleSessionSelect} />
+
+      {/* Main Chat Area */}
+      <div style={styles.mainContent}>
+        <h1 style={styles.header}>Qlasar</h1>
+        
+        {/* Chat Window */}
+        <ChatWindow key={activeSession.name} />
+
+        {/* Proactive Alerts */}
+        <ProactiveAlerts />
       </div>
-
-      {/* Sidebars */}
-      {isSessionOpen && <SessionSidebar close={() => setIsSessionOpen(false)} />}
-      {isAlertsOpen && <ProactiveAlerts close={() => setIsAlertsOpen(false)} />}
-
-      {/* Main Chat */}
-      <ChatWindow isDimmed={isSessionOpen || isAlertsOpen} />
     </div>
   );
 }
 
-export default App;
+const styles = {
+  appContainer: {
+    display: "flex",
+    height: "100vh",
+    fontFamily: "Arial, sans-serif",
+  },
+  mainContent: {
+    flex: 1,
+    padding: "20px",
+    display: "flex",
+    flexDirection: "column",
+  },
+  header: {
+    textAlign: "center",
+    marginBottom: "20px",
+  },
+};
