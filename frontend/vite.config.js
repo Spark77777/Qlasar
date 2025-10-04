@@ -1,17 +1,10 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  root: '.',  // root is frontend folder
   plugins: [react()],
+  root: '.',              // project root (where index.html is)
   build: {
-    outDir: 'dist',   // output goes to frontend/dist
-    emptyOutDir: true
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+    outDir: 'dist',       // Netlify expects /dist
   }
-});
+})
