@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  root: './frontend', // <-- tell Vite the index.html is here
   plugins: [react()],
-  root: 'frontend',
   build: {
-    outDir: '../backend/static',
+    outDir: 'dist', // relative to root
     emptyOutDir: true,
   },
   resolve: {
