@@ -11,15 +11,23 @@ export default function ChatWindow({ isDimmed }) {
     setInput("");
 
     try {
-      const res = await fetch("https://YOUR_RENDER_BACKEND_URL/api/chat", {
+      const res = await fetch("https://YOUR_RENDER_BACKEND_URL/api/qlasar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, history: messages.map(m => [m.role==="user"?m.content:"", m.role==="assistant"?m.content:""]).filter(([u,b])=>u||b) }),
+        body: JSON.stringify({
+          message: userMsg,
+          history: messages
+            .map((m) => [
+              m.role === "user" ? m.content : "",
+              m.role === "assistant" ? m.content : "",
+            ])
+            .filter(([u, b]) => u || b),
+        }),
       });
       const data = await res.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: "assistant", content: "❌ Error connecting to backend" }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "❌ Error connecting to backend" }]);
     }
   };
 
@@ -27,7 +35,10 @@ export default function ChatWindow({ isDimmed }) {
     <div className={`transition-opacity duration-300 ${isDimmed ? "opacity-30" : "opacity-100"} pt-20 p-4`}>
       <div className="flex flex-col gap-2 max-w-xl mx-auto">
         {messages.map((m, idx) => (
-          <div key={idx} className={`p-2 rounded ${m.role==="user"?"bg-blue-100 self-end":"bg-gray-200 self-start"}`}>
+          <div
+            key={idx}
+            className={`p-2 rounded ${m.role === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"}`}
+          >
             {m.content}
           </div>
         ))}
@@ -37,12 +48,14 @@ export default function ChatWindow({ isDimmed }) {
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           className="flex-1 border rounded p-2"
           placeholder="Type your message..."
-          onKeyDown={e => e.key==="Enter" && sendMessage()}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">Send</button>
+        <button onClick={sendMessage} className="bg-blue-500 text-white px-4 rounded">
+          Send
+        </button>
       </div>
     </div>
   );
