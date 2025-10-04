@@ -1,7 +1,10 @@
-name = "qlasar"
-compatibility_date = "2025-10-04"
+name = "qlasar-pages"
+type = "javascript"
 
 [build]
 command = "npm run build"
 cwd = "frontend"
-watch_dir = "frontend"
+publish = "frontend/dist"
+
+[site]
+bucket = "frontend/dist"
