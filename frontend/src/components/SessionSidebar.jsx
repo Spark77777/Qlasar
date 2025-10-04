@@ -1,18 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 
-export default function SessionSidebar({ close }) {
+export default function SessionSidebar({ sessions, onSelect }) {
+  const [selected, setSelected] = useState(null);
+
+  const handleSelect = (session) => {
+    setSelected(session);
+    onSelect(session);
+  };
+
   return (
-    <div className="fixed top-0 left-0 bottom-0 w-80 bg-white shadow-lg z-30 p-4 overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-bold text-lg">Sessions</h2>
-        <button onClick={close} className="text-gray-500 hover:text-gray-800">✕</button>
-      </div>
-      <div className="flex flex-col gap-2">
-        {/* Example session items */}
-        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 1</div>
-        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 2</div>
-        <div className="p-2 rounded bg-gray-100 cursor-pointer">Session 3</div>
-      </div>
+    <div className="session-sidebar">
+      <h2>Sessions</h2>
+      <ul>
+        {sessions.map((session, index) => (
+          <li
+            key={index}
+            className={selected === session ? "selected" : ""}
+            onClick={() => handleSelect(session)}
+          >
+            {session.name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
