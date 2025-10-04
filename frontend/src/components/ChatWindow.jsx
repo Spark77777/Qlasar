@@ -3,15 +3,17 @@ import React, { useState } from "react";
 export default function ChatWindow({ isDimmed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMsg = input;
     setMessages([...messages, { role: "user", content: userMsg }]);
     setInput("");
+    setLoading(true);
 
     try {
-      const res = await fetch("https://qlasar.onrender.com", {
+      const res = await fetch("https://qlasar.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -24,24 +26,38 @@ export default function ChatWindow({ isDimmed }) {
             .filter(([u, b]) => u || b),
         }),
       });
+
       const data = await res.json();
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
     } catch (err) {
-      setMessages((prev) => [...prev, { role: "assistant", content: "❌ Error connecting to backend" }]);
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "❌ Error connecting to backend" },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className={`transition-opacity duration-300 ${isDimmed ? "opacity-30" : "opacity-100"} pt-20 p-4`}>
+    <div
+      className={`transition-opacity duration-300 ${
+        isDimmed ? "opacity-30" : "opacity-100"
+      } pt-20 p-4`}
+    >
       <div className="flex flex-col gap-2 max-w-xl mx-auto">
         {messages.map((m, idx) => (
           <div
             key={idx}
-            className={`p-2 rounded ${m.role === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"}`}
+            className={`p-2 rounded ${
+              m.role === "user" ? "bg-blue-100 self-end" : "bg-gray-200 self-start"
+            }`}
           >
             {m.content}
           </div>
         ))}
+        {loading && <div className="text-gray-500 italic">Qlasar is thinking...</div>}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white p-4 flex gap-2 shadow">
