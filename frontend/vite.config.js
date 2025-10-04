@@ -1,17 +1,18 @@
+// frontend/vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  root: './frontend', // <-- tell Vite the index.html is here
+  root: '.',  // <-- root is current folder (frontend/)
   plugins: [react()],
   build: {
-    outDir: 'dist', // relative to root
-    emptyOutDir: true,
+    outDir: 'dist',  // Vite will output frontend/dist
+    emptyOutDir: true
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './frontend/src'),
-    },
-  },
+      '@': path.resolve(__dirname, './src')
+    }
+  }
 });
