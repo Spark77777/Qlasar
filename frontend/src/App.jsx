@@ -11,12 +11,24 @@ function App() {
     <div className="relative min-h-screen bg-gray-50">
       {/* Top nav */}
       <div className="fixed top-0 left-0 right-0 bg-white shadow p-4 flex justify-between z-20">
-        <div className="font-bold cursor-pointer" onClick={() => {
-          setIsSessionOpen(true); setIsAlertsOpen(false);
-        }}>Qlasar</div>
-        <button onClick={() => {
-          setIsAlertsOpen(true); setIsSessionOpen(false);
-        }} className="bg-blue-500 text-white px-3 py-1 rounded">Proactive Alerts</button>
+        <div
+          className="font-bold cursor-pointer"
+          onClick={() => {
+            setIsSessionOpen(true);
+            setIsAlertsOpen(false);
+          }}
+        >
+          Qlasar
+        </div>
+        <button
+          onClick={() => {
+            setIsAlertsOpen(true);
+            setIsSessionOpen(false);
+          }}
+          className="bg-blue-500 text-white px-3 py-1 rounded"
+        >
+          Proactive Alerts
+        </button>
       </div>
 
       {/* Sidebars */}
