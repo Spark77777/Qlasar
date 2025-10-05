@@ -10,24 +10,26 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cors());
 
-// ✅ Example API route
+// ✅ API route
 app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
-  // Example dummy response
-  res.json({ reply: `Qlasar received: ${message}` });
+  res.json({ response: `Qlasar received: ${message}` });
 });
 
 // ✅ Serve frontend build
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-// ✅ Handle React Router (avoid blank page)
+// ✅ React Router fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ✅ Use Render’s dynamic port
+// ✅ Optional test
+app.get("/ping", (req, res) => res.send("pong"));
+
+// ✅ Start
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
