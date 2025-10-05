@@ -14,7 +14,7 @@ app.use(cors());
 // Load OpenRouter key from environment
 const OR_KEY = process.env.OPENROUTER_KEY;
 
-// Mistral 7B Instruct (Free)
+// Model
 const MODEL_ID = "mistralai/mistral-7b-instruct:free";
 
 // ---------------- Qlasar Chatbot API ----------------
@@ -22,15 +22,19 @@ app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
+  // Refined system instruction
   const systemMessage = `
-You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, provide four sections:\n
-        1. Answer: main response\n
-        2. Counterarguments: possible opposing views\n"
-        3. Blindspots: missing considerations or overlooked aspects\n
-        4. Conclusion: encourage the user to think critically and gain insight\n
-        Format the response clearly with headings and end with a reflective thought for the user.
-        For simple questions or those questions which do not need detailed or in-depth answer, provide answers as a General AI would. Do not provide answer in four sections. Also do not provide reflective thought.
-    )`;
+You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
+
+- For simple or conversational prompts (like greetings or short queries), reply naturally, briefly, and conversationally — just like a human would.
+- For complex or analytical questions, reply in a clear, structured way with up to four sections:
+    1. <b>Answer</b> – main response
+    2. <b>Counterarguments</b> – opposing perspectives
+    3. <b>Blindspots</b> – overlooked or missing considerations
+    4. <b>Conclusion</b> – thoughtful summary
+- Use clean formatting (no markdown symbols, no ###, no <s>).
+- Do not end your response with <br><br> or redundant tags.
+`;
 
   const payload = {
     model: MODEL_ID,
@@ -56,18 +60,18 @@ You are Qlasar, an AI scout. Only for those questions that need detailed and wel
     const data = await response.json();
 
     // Safely extract reply
-    let reply = data.choices && data.choices[0]?.message?.content
-      ? data.choices[0].message.content
-      : "❌ No response from model";
+    let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
 
-    // Clean and reformat response
+    // Clean and format the response
     reply = reply
-      .replace(/<\/?s>/g, "")                   // remove <s> or </s>
-      .replace(/^#+\s*/gm, "")                  // remove markdown headers
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")   // convert bold
-      .replace(/\*(.*?)\*/g, "<i>$1</i>")       // convert italics
-      .replace(/\n{2,}/g, "<br><br>")           // handle spacing
-      .replace(/^- (.*)/gm, "• $1")             // format bullets
+      .replace(/<\/?s>/g, "") // remove <s> and </s>
+      .replace(/^#+\s*/gm, "") // remove markdown headers like ###
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // convert bold markdown
+      .replace(/\*(.*?)\*/g, "<i>$1</i>") // convert italic markdown
+      .replace(/^- (.*)/gm, "• $1") // bullet points
+      .replace(/\n{2,}/g, "<br><br>") // paragraph spacing
+      .replace(/\n/g, "<br>") // single line breaks
+      .replace(/(<br>\s*)+$/g, "") // remove trailing <br> tags
       .trim();
 
     res.json({ response: reply });
@@ -81,7 +85,7 @@ You are Qlasar, an AI scout. Only for those questions that need detailed and wel
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-// Handle React Router fallback (avoid blank page)
+// React Router fallback (avoid blank page)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
