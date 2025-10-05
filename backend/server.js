@@ -22,46 +22,33 @@ app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
-  const userText = message.trim();
+  // Determine if input looks unclear / gibberish
+  const unclearPatterns = [/^[a-z]{1,3}$/i, /^[^a-zA-Z0-9\s]{1,3}$/]; // short random letters
+  const isUnclear = unclearPatterns.some((pat) => pat.test(message.trim()));
 
-  // Determine if input is short, unclear, or possibly mistyped
-  const isUnclear = userText.length <= 3 || /^[^a-zA-Z0-9]+$/.test(userText);
+  // Refined system instruction
+  const systemMessage = `
+You are Qlasar, an AI scout. Answer questions intelligently.
 
-  // System prompt for normal messages
-  const normalSystemPrompt = `
-You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
-
-- For simple or conversational prompts (like greetings or short queries), reply naturally, briefly, and conversationally — just like a human would.
-- For complex or analytical questions, reply in a clear, structured way with up to four sections:
+- For short or unclear messages (like random letters or gibberish), respond with a polite clarification question, e.g., "Did you mean...?" or "Could you clarify that?" Keep it concise and friendly.
+- For regular user questions, provide answers normally.
+- For detailed or analytical questions, provide up to four sections:
     1. <b>Answer</b> – main response
     2. <b>Counterarguments</b> – opposing perspectives
     3. <b>Blindspots</b> – overlooked or missing considerations
     4. <b>Conclusion</b> – thoughtful summary
-- Use clean formatting (no markdown symbols, no ###, no <s>).
-- Do not end your response with <br><br> or redundant tags.
+- Use clean formatting (no markdown ###, no <s>, no redundant <br><br> tags)
 `;
-
-  // Clever clarification system prompt
-  const cleverClarificationPrompt = `
-You are Qlasar, an AI scout. The user has entered a short, unclear, or possibly mistyped input.
-Instead of providing a generic answer, try to infer what the user might have meant.
-- Suggest the most likely intended meaning in a polite, conversational way.
-- Use phrases like "Did you mean '...'?" or "Perhaps you meant '...'?".
-- Keep the response concise and human-like.
-- If you cannot guess, politely ask for clarification.
-`;
-
-  const systemMessage = isUnclear ? cleverClarificationPrompt : normalSystemPrompt;
 
   const payload = {
     model: MODEL_ID,
     messages: [
       { role: "system", content: systemMessage },
-      { role: "user", content: userText }
+      { role: "user", content: message }
     ],
     temperature: 0.7,
     top_p: 0.95,
-    max_tokens: isUnclear ? 60 : 1024 // shorter for clarification
+    max_tokens: isUnclear ? 200 : 1024, // enough tokens for clarification
   };
 
   try {
@@ -78,16 +65,16 @@ Instead of providing a generic answer, try to infer what the user might have mea
 
     let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
 
-    // Clean and format the response
+    // Clean and format response
     reply = reply
-      .replace(/<\/?s>/g, "")             // remove <s> and </s>
-      .replace(/^#+\s*/gm, "")            // remove markdown headers like ###
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // convert bold markdown
-      .replace(/\*(.*?)\*/g, "<i>$1</i>")     // convert italic markdown
-      .replace(/^- (.*)/gm, "• $1")           // bullet points
-      .replace(/\n{2,}/g, "<br><br>")        // paragraph spacing
-      .replace(/\n/g, "<br>")                // single line breaks
-      .replace(/(<br>\s*)+$/g, "")           // remove trailing <br> tags
+      .replace(/<\/?s>/g, "")
+      .replace(/^#+\s*/gm, "")
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+      .replace(/\*(.*?)\*/g, "<i>$1</i>")
+      .replace(/^- (.*)/gm, "• $1")
+      .replace(/\n{2,}/g, "<br><br>")
+      .replace(/\n/g, "<br>")
+      .replace(/(<br>\s*)+$/g, "")
       .trim();
 
     res.json({ response: reply });
@@ -100,12 +87,9 @@ Instead of providing a generic answer, try to infer what the user might have mea
 // ---------------- Serve Frontend Build ----------------
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
-
-// React Router fallback (avoid blank page)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
