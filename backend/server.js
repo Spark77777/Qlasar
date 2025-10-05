@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import fetch from "node-fetch"; // Node 18+ has fetch built-in, otherwise install node-fetch
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
