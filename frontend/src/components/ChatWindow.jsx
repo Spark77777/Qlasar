@@ -3,8 +3,7 @@ import React, { useState } from "react";
 export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
-
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = ""; // relative path, same domain
 
   const handleSend = async () => {
     if (!input) return;
@@ -13,10 +12,10 @@ export default function ChatWindow() {
     setMessages([...messages, userMessage]);
 
     try {
-      const response = await fetch(`${backendUrl}/api/message`, {
+      const response = await fetch(`/api/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, history: messages.map(m => [m.text, m.sender === "bot" ? m.text : ""]) }),
       });
 
       if (!response.ok) throw new Error("Backend error");
