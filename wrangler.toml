@@ -1,12 +1,8 @@
-name = "qlasar-frontend"
-type = "javascript"
-account_id = "41eab5653dbfa595e11425a38f8f76cf"
-workers_dev = true
-compatibility_date = "2025-10-05"
+# wrangler.toml for Cloudflare Pages + React frontend
 
-# Correct output dir
-# If your frontend code is in frontend/, Vite outputs to frontend/dist
-pages_build_output_dir = "frontend/dist"
+# Directory where your built frontend is output
+pages_build_output_dir = "../dist"
 
-[build]
-command = "npm --prefix frontend run build"
+# Optional environment variables for your frontend build
+[env.production]
+VITE_BACKEND_URL = "https://qlasar.onrender.com"
