@@ -1,12 +1,12 @@
 name = "qlasar-frontend"
+type = "javascript"
+account_id = "41eab5653dbfa595e11425a38f8f76cf"
+workers_dev = true
 compatibility_date = "2025-10-05"
 
-# ✅ This is the directory where Vite outputs its build files
-pages_build_output_dir = "dist"
+# Correct output dir
+# If your frontend code is in frontend/, Vite outputs to frontend/dist
+pages_build_output_dir = "frontend/dist"
 
-[vars]
-# Backend URL (Render deployment)
-VITE_BACKEND_URL = "https://qlasar.onrender.com"
-
-# Optional: you can add environment variables accessible via import.meta.env
-NODE_VERSION = "22.16.0"
+[build]
+command = "npm --prefix frontend run build"
