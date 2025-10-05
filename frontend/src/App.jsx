@@ -4,28 +4,45 @@ import ProactiveAlerts from "./ProactiveAlerts";
 import SessionSidebar from "./SessionSidebar";
 
 export default function App() {
+  // Session state
   const [sessions, setSessions] = useState([
-    { name: "Session 1" },
-    { name: "Session 2" },
+    { name: "Session 1", messages: [] },
+    { name: "Session 2", messages: [] },
   ]);
   const [activeSession, setActiveSession] = useState(sessions[0]);
 
   const handleSessionSelect = (session) => {
     setActiveSession(session);
-    // If needed, you can load previous messages for this session here
+  };
+
+  const updateSessionMessages = (newMessage) => {
+    const updatedSessions = sessions.map((session) =>
+      session.name === activeSession.name
+        ? { ...session, messages: [...session.messages, newMessage] }
+        : session
+    );
+    setSessions(updatedSessions);
   };
 
   return (
-    <div className="app-container" style={styles.appContainer}>
-      {/* Sidebar for Sessions */}
-      <SessionSidebar sessions={sessions} onSelect={handleSessionSelect} />
+    <div style={styles.appContainer}>
+      {/* Sidebar */}
+      <SessionSidebar
+        sessions={sessions}
+        onSelect={handleSessionSelect}
+        activeSession={activeSession}
+      />
 
-      {/* Main Chat Area */}
+      {/* Main Content */}
       <div style={styles.mainContent}>
         <h1 style={styles.header}>Qlasar</h1>
-        
+
         {/* Chat Window */}
-        <ChatWindow key={activeSession.name} />
+        <ChatWindow
+          key={activeSession.name}
+          session={activeSession}
+          updateSessionMessages={updateSessionMessages}
+        />
 
         {/* Proactive Alerts */}
         <ProactiveAlerts />
