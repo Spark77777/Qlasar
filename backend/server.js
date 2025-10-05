@@ -22,22 +22,18 @@ app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
-  // Determine if input looks unclear / gibberish
-  const unclearPatterns = [/^[a-z]{1,3}$/i, /^[^a-zA-Z0-9\s]{1,3}$/]; // short random letters
-  const isUnclear = unclearPatterns.some((pat) => pat.test(message.trim()));
-
   // Refined system instruction
   const systemMessage = `
-You are Qlasar, an AI scout. Answer questions intelligently.
+You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 
-- For short or unclear messages (like random letters or gibberish), respond with a polite clarification question, e.g., "Did you mean...?" or "Could you clarify that?" Keep it concise and friendly.
-- For regular user questions, provide answers normally.
-- For detailed or analytical questions, provide up to four sections:
+- For simple or conversational prompts (like greetings or short queries), reply naturally, briefly, and conversationally — just like a human would.
+- For complex or analytical questions, reply in a clear, structured way with up to four sections:
     1. <b>Answer</b> – main response
     2. <b>Counterarguments</b> – opposing perspectives
     3. <b>Blindspots</b> – overlooked or missing considerations
     4. <b>Conclusion</b> – thoughtful summary
-- Use clean formatting (no markdown ###, no <s>, no redundant <br><br> tags)
+- Use clean formatting (no markdown symbols, no ###, no <s>).
+- Do not end your response with <br><br> or redundant tags.
 `;
 
   const payload = {
@@ -48,7 +44,7 @@ You are Qlasar, an AI scout. Answer questions intelligently.
     ],
     temperature: 0.7,
     top_p: 0.95,
-    max_tokens: isUnclear ? 200 : 1024, // enough tokens for clarification
+    max_tokens: 1024
   };
 
   try {
@@ -63,18 +59,19 @@ You are Qlasar, an AI scout. Answer questions intelligently.
 
     const data = await response.json();
 
+    // Safely extract reply
     let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
 
-    // Clean and format response
+    // Clean and format the response
     reply = reply
-      .replace(/<\/?s>/g, "")
-      .replace(/^#+\s*/gm, "")
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-      .replace(/\*(.*?)\*/g, "<i>$1</i>")
-      .replace(/^- (.*)/gm, "• $1")
-      .replace(/\n{2,}/g, "<br><br>")
-      .replace(/\n/g, "<br>")
-      .replace(/(<br>\s*)+$/g, "")
+      .replace(/<\/?s>/g, "") // remove <s> and </s>
+      .replace(/^#+\s*/gm, "") // remove markdown headers like ###
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // convert bold markdown
+      .replace(/\*(.*?)\*/g, "<i>$1</i>") // convert italic markdown
+      .replace(/^- (.*)/gm, "• $1") // bullet points
+      .replace(/\n{2,}/g, "<br><br>") // paragraph spacing
+      .replace(/\n/g, "<br>") // single line breaks
+      .replace(/(<br>\s*)+$/g, "") // remove trailing <br> tags
       .trim();
 
     res.json({ response: reply });
@@ -87,9 +84,12 @@ You are Qlasar, an AI scout. Answer questions intelligently.
 // ---------------- Serve Frontend Build ----------------
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
+
+// React Router fallback (avoid blank page)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
+// Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
