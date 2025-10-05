@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const [isThinking, setIsThinking] = useState(false);
+  const [dots, setDots] = useState("");
   const scrollRef = useRef(null);
 
   // Scroll to bottom on new message
@@ -10,13 +12,29 @@ export default function ChatWindow() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, dots]);
+
+  // Animate dots while thinking
+  useEffect(() => {
+    if (!isThinking) {
+      setDots("");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isThinking]);
 
   const handleSend = async () => {
-    if (!input) return;
+    if (!input.trim()) return;
 
     const userMessage = { sender: "user", text: input };
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsThinking(true);
 
     try {
       const response = await fetch("/api/message", {
@@ -34,9 +52,9 @@ export default function ChatWindow() {
       const errorMessage = { sender: "bot", text: "❌ Couldn't reach backend" };
       setMessages((prev) => [...prev, errorMessage]);
       console.error(err);
+    } finally {
+      setIsThinking(false);
     }
-
-    setInput("");
   };
 
   return (
@@ -72,11 +90,28 @@ export default function ChatWindow() {
                 maxWidth: "80%",
                 wordWrap: "break-word",
               }}
-            >
-              {msg.text}
-            </span>
+              dangerouslySetInnerHTML={{ __html: msg.text }}
+            />
           </div>
         ))}
+
+        {/* Qlasar is thinking indicator */}
+        {isThinking && (
+          <div style={{ margin: "8px 0", textAlign: "left" }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "8px 12px",
+                borderRadius: "12px",
+                backgroundColor: "#e0e0e0",
+                color: "#555",
+                fontStyle: "italic",
+              }}
+            >
+               Qlasar is thinking{dots}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Input */}
