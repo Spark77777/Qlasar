@@ -4,32 +4,30 @@ import { fileURLToPath } from "url";
 import cors from "cors";
 
 const app = express();
+const port = process.env.PORT || 5000;
+
+// Path setup for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.json());
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// ✅ API route
-app.post("/api/message", async (req, res) => {
+// API route
+app.post("/api/message", (req, res) => {
   const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message provided" });
-
-  res.json({ response: `Qlasar received: ${message}` });
+  res.json({ reply: `Qlasar says: I received '${message}'` });
 });
 
-// ✅ Serve frontend build
-const frontendPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendPath));
+// Serve frontend
+app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-// ✅ React Router fallback
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
 });
 
-// ✅ Optional test
-app.get("/ping", (req, res) => res.send("pong"));
-
-// ✅ Start
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start server
+app.listen(port, () => {
+  console.log(`✅ Server running on port ${port}`);
+});
