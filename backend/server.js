@@ -22,8 +22,13 @@ app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
-  // Refined system instruction
-  const systemMessage = `
+  const userText = message.trim();
+
+  // Determine if input is short, unclear, or possibly mistyped
+  const isUnclear = userText.length <= 3 || /^[^a-zA-Z0-9]+$/.test(userText);
+
+  // System prompt for normal messages
+  const normalSystemPrompt = `
 You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 
 - For simple or conversational prompts (like greetings or short queries), reply naturally, briefly, and conversationally — just like a human would.
@@ -36,15 +41,27 @@ You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 - Do not end your response with <br><br> or redundant tags.
 `;
 
+  // Clever clarification system prompt
+  const cleverClarificationPrompt = `
+You are Qlasar, an AI scout. The user has entered a short, unclear, or possibly mistyped input.
+Instead of providing a generic answer, try to infer what the user might have meant.
+- Suggest the most likely intended meaning in a polite, conversational way.
+- Use phrases like "Did you mean '...'?" or "Perhaps you meant '...'?".
+- Keep the response concise and human-like.
+- If you cannot guess, politely ask for clarification.
+`;
+
+  const systemMessage = isUnclear ? cleverClarificationPrompt : normalSystemPrompt;
+
   const payload = {
     model: MODEL_ID,
     messages: [
       { role: "system", content: systemMessage },
-      { role: "user", content: message }
+      { role: "user", content: userText }
     ],
     temperature: 0.7,
     top_p: 0.95,
-    max_tokens: 1024
+    max_tokens: isUnclear ? 60 : 1024 // shorter for clarification
   };
 
   try {
@@ -59,19 +76,18 @@ You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 
     const data = await response.json();
 
-    // Safely extract reply
     let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
 
     // Clean and format the response
     reply = reply
-      .replace(/<\/?s>/g, "") // remove <s> and </s>
-      .replace(/^#+\s*/gm, "") // remove markdown headers like ###
+      .replace(/<\/?s>/g, "")             // remove <s> and </s>
+      .replace(/^#+\s*/gm, "")            // remove markdown headers like ###
       .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // convert bold markdown
-      .replace(/\*(.*?)\*/g, "<i>$1</i>") // convert italic markdown
-      .replace(/^- (.*)/gm, "• $1") // bullet points
-      .replace(/\n{2,}/g, "<br><br>") // paragraph spacing
-      .replace(/\n/g, "<br>") // single line breaks
-      .replace(/(<br>\s*)+$/g, "") // remove trailing <br> tags
+      .replace(/\*(.*?)\*/g, "<i>$1</i>")     // convert italic markdown
+      .replace(/^- (.*)/gm, "• $1")           // bullet points
+      .replace(/\n{2,}/g, "<br><br>")        // paragraph spacing
+      .replace(/\n/g, "<br>")                // single line breaks
+      .replace(/(<br>\s*)+$/g, "")           // remove trailing <br> tags
       .trim();
 
     res.json({ response: reply });
