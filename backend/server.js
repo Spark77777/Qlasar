@@ -1,44 +1,33 @@
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import cors from "cors";
-import fetch from "node-fetch";
-import dotenv from "dotenv";
 
-dotenv.config();
 const app = express();
-app.use(cors());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.json());
+app.use(cors());
 
-const PORT = process.env.PORT || 8000;
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+// ✅ Example API route
+app.post("/api/message", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: "No message provided" });
 
-app.get("/", (req, res) => {
-  res.json({ message: "Qlasar backend is running" });
+  // Example dummy response
+  res.json({ reply: `Qlasar received: ${message}` });
 });
 
-app.post("/ask", async (req, res) => {
-  try {
-    const { question } = req.body;
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: [
-          { role: "system", content: "You are Qlasar, a helpful AI assistant." },
-          { role: "user", content: question },
-        ],
-      }),
-    });
-    const data = await response.json();
-    const answer = data.choices[0].message.content;
-    res.json({ answer });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ answer: "Error connecting to OpenRouter API." });
-  }
+// ✅ Serve frontend build
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
+
+// ✅ Handle React Router (avoid blank page)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));
+// ✅ Use Render’s dynamic port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
