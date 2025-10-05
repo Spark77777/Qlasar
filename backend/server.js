@@ -15,7 +15,7 @@ app.use(cors());
 const OR_KEY = process.env.OPENROUTER_KEY;
 
 // Mistral 7B Instruct
-const MODEL_ID = "mistral-7b-instruct:free";
+const MODEL_ID = "mistralai/mistral-7b-instruct:free";
 
 // ---------------- Qlasar Chatbot API ----------------
 app.post("/api/message", async (req, res) => {
