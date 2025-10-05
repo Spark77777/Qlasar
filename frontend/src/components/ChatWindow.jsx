@@ -4,7 +4,8 @@ export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
 
-  const backendUrl = ""; // same domain
+  // Same-origin backend URL (frontend + backend on the same Render domain)
+  const backendUrl = ""; // empty string means same origin
 
   const handleSend = async () => {
     if (!input) return;
@@ -22,6 +23,7 @@ export default function ChatWindow() {
       if (!response.ok) throw new Error("Backend error");
 
       const data = await response.json();
+
       const botMessage = { sender: "bot", text: data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
@@ -48,6 +50,7 @@ export default function ChatWindow() {
         onChange={(e) => setInput(e.target.value)}
         placeholder="Type a message..."
         style={{ width: "80%", marginRight: "5px" }}
+        onKeyDown={(e) => e.key === "Enter" && handleSend()}
       />
       <button onClick={handleSend}>Send</button>
     </div>
