@@ -4,13 +4,13 @@ export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = ""; // same domain
 
   const handleSend = async () => {
     if (!input) return;
 
     const userMessage = { sender: "user", text: input };
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       const response = await fetch(`${backendUrl}/api/message`, {
@@ -25,9 +25,9 @@ export default function ChatWindow() {
       const botMessage = { sender: "bot", text: data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
+      console.error(err);
       const errorMessage = { sender: "bot", text: "Couldn't reach backend" };
       setMessages((prev) => [...prev, errorMessage]);
-      console.error(err);
     }
 
     setInput("");
