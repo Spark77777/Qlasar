@@ -22,18 +22,14 @@ app.post("/api/message", async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: "No message provided" });
 
-  // Refined system instruction
+  // Simplified system prompt with clarification
   const systemMessage = `
-You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
+You are Qlasar, an AI scout. Respond clearly and helpfully.
 
-- For simple or conversational prompts (like greetings or short queries), reply naturally, briefly, and conversationally — just like a human would.
-- For complex or analytical questions, reply in a clear, structured way with up to four sections:
-    1. <b>Answer</b> – main response
-    2. <b>Counterarguments</b> – opposing perspectives
-    3. <b>Blindspots</b> – overlooked or missing considerations
-    4. <b>Conclusion</b> – thoughtful summary
-- Use clean formatting (no markdown symbols, no ###, no <s>).
-- Do not end your response with <br><br> or redundant tags.
+- For normal messages, answer concisely or in structured four-section format (Answer, Counterarguments, Blindspots, Conclusion) if the question is complex.
+- For gibberish, unclear, or short nonsensical messages, do not try to answer directly. Instead, ask for clarification politely, e.g., "Did you mean this or that?" or "Could you clarify your question?".
+- Use clean formatting: no <s> tags, no markdown headers like ###, no trailing <br><br>.
+- Use bold <b> and italics <i> only if necessary.
 `;
 
   const payload = {
@@ -44,7 +40,7 @@ You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
     ],
     temperature: 0.7,
     top_p: 0.95,
-    max_tokens: 1024
+    max_tokens: 512
   };
 
   try {
@@ -59,19 +55,18 @@ You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 
     const data = await response.json();
 
-    // Safely extract reply
     let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
 
-    // Clean and format the response
+    // Clean formatting
     reply = reply
-      .replace(/<\/?s>/g, "") // remove <s> and </s>
-      .replace(/^#+\s*/gm, "") // remove markdown headers like ###
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>") // convert bold markdown
-      .replace(/\*(.*?)\*/g, "<i>$1</i>") // convert italic markdown
-      .replace(/^- (.*)/gm, "• $1") // bullet points
-      .replace(/\n{2,}/g, "<br><br>") // paragraph spacing
-      .replace(/\n/g, "<br>") // single line breaks
-      .replace(/(<br>\s*)+$/g, "") // remove trailing <br> tags
+      .replace(/<\/?s>/g, "")
+      .replace(/^#+\s*/gm, "")
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
+      .replace(/\*(.*?)\*/g, "<i>$1</i>")
+      .replace(/^- (.*)/gm, "• $1")
+      .replace(/\n{2,}/g, "<br><br>")
+      .replace(/\n/g, "<br>")
+      .replace(/(<br>\s*)+$/g, "")
       .trim();
 
     res.json({ response: reply });
@@ -85,11 +80,10 @@ You are Qlasar, an AI scout designed to adapt tone and depth intelligently.
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-// React Router fallback (avoid blank page)
+// React Router fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
