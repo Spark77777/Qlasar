@@ -1,45 +1,21 @@
 import React from "react";
 
-export default function SessionSidebar({ sessions, onSelect }) {
+export default function SessionBar({ isOpen, onClose }) {
   return (
-    <div style={styles.sidebar}>
-      <h2 style={styles.header}>Sessions</h2>
-      {sessions.map((session, idx) => (
-        <div
-          key={idx}
-          style={styles.sessionItem}
-          onClick={() => onSelect(session)}
-        >
-          {session.name}
-        </div>
-      ))}
+    <div
+      className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-50 ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
+      <div className="flex justify-between items-center p-4 border-b">
+        <h2 className="font-bold text-lg">Sessions</h2>
+        <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+          ✕
+        </button>
+      </div>
+      <div className="p-4"> {/* Add session content here */}
+        No sessions yet.
+      </div>
     </div>
   );
 }
-
-const styles = {
-  sidebar: {
-    width: "200px",
-    borderRight: "1px solid #ccc",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    backgroundColor: "#f9f9f9",
-  },
-  header: {
-    marginBottom: "10px",
-    fontSize: "18px",
-    textAlign: "center",
-  },
-  sessionItem: {
-    padding: "8px",
-    marginBottom: "5px",
-    cursor: "pointer",
-    borderRadius: "4px",
-    backgroundColor: "#fff",
-    transition: "background-color 0.2s",
-  },
-  sessionItemHover: {
-    backgroundColor: "#e0e0e0",
-  },
-};
