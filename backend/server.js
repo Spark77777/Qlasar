@@ -14,7 +14,7 @@ app.use(cors());
 // Load OpenRouter key from environment
 const OR_KEY = process.env.OPENROUTER_KEY;
 
-// Mistral 7B Instruct
+// Mistral 7B Instruct (Free)
 const MODEL_ID = "mistralai/mistral-7b-instruct:free";
 
 // ---------------- Qlasar Chatbot API ----------------
@@ -23,10 +23,14 @@ app.post("/api/message", async (req, res) => {
   if (!message) return res.status(400).json({ error: "No message provided" });
 
   const systemMessage = `
-You are Qlasar, an AI scout. Answer user questions clearly. 
-For detailed questions, provide sections: Answer, Counterarguments, Blindspots, Conclusion.
-For simple questions, answer normally.
-`;
+You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, provide four sections:\n
+        1. Answer: main response\n
+        2. Counterarguments: possible opposing views\n"
+        3. Blindspots: missing considerations or overlooked aspects\n
+        4. Conclusion: encourage the user to think critically and gain insight\n
+        Format the response clearly with headings and end with a reflective thought for the user.
+        For simple questions or those questions which do not need detailed or in-depth answer, provide answers as a General AI would. Do not provide answer in four sections. Also do not provide reflective thought.
+    )`;
 
   const payload = {
     model: MODEL_ID,
@@ -51,27 +55,37 @@ For simple questions, answer normally.
 
     const data = await response.json();
 
-    // Safely check if the response has choices
-    const reply = data.choices && data.choices[0]?.message?.content
+    // Safely extract reply
+    let reply = data.choices && data.choices[0]?.message?.content
       ? data.choices[0].message.content
       : "❌ No response from model";
 
+    // Clean and reformat response
+    reply = reply
+      .replace(/<\/?s>/g, "")                   // remove <s> or </s>
+      .replace(/^#+\s*/gm, "")                  // remove markdown headers
+      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")   // convert bold
+      .replace(/\*(.*?)\*/g, "<i>$1</i>")       // convert italics
+      .replace(/\n{2,}/g, "<br><br>")           // handle spacing
+      .replace(/^- (.*)/gm, "• $1")             // format bullets
+      .trim();
+
     res.json({ response: reply });
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     res.json({ response: `❌ Error: ${err.message}` });
   }
 });
 
-// ---------------- Serve frontend build ----------------
+// ---------------- Serve Frontend Build ----------------
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-// Handle React Router (avoid blank page)
+// Handle React Router fallback (avoid blank page)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
