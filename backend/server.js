@@ -4,30 +4,34 @@ import { fileURLToPath } from "url";
 import cors from "cors";
 
 const app = express();
-const port = process.env.PORT || 5000;
-
-// Path setup for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// API route
-app.post("/api/message", (req, res) => {
+// ⚡ Enable CORS for frontend
+app.use(cors({
+  origin: "*" // You can restrict this to your frontend URL for production
+}));
+
+// ✅ API route
+app.post("/api/message", async (req, res) => {
   const { message } = req.body;
-  res.json({ reply: `Qlasar says: I received '${message}'` });
+  if (!message) return res.status(400).json({ error: "No message provided" });
+
+  // Dummy response (replace with your backend logic)
+  res.json({ response: `Qlasar received: ${message}` });
 });
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "../frontend/build")));
+// ✅ Serve frontend build
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
 
+// ✅ Catch-all for React Router (avoid Not Found)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/build/index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
-});
+// ⚡ Use dynamic port for Render
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
