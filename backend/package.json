@@ -1,5 +1,5 @@
 {
-  "name": "qlasar-backend",
+  "name": "qlasar",
   "version": "1.0.0",
   "description": "Backend for QlasarAI",
   "main": "index.js",
