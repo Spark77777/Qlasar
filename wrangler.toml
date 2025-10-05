@@ -1,4 +1,5 @@
-# wrangler.toml for Cloudflare Pages + React frontend
+# Name of your Cloudflare Pages project
+name = "qlasar"
 
 # Directory where your built frontend is output
 pages_build_output_dir = "../dist"
