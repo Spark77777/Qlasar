@@ -4,14 +4,13 @@ export default function ChatWindow() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
 
-  // Same-origin backend URL (frontend + backend on the same Render domain)
-  const backendUrl = ""; // empty string means same origin
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleSend = async () => {
     if (!input) return;
 
     const userMessage = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages([...messages, userMessage]);
 
     try {
       const response = await fetch(`${backendUrl}/api/message`, {
@@ -23,13 +22,12 @@ export default function ChatWindow() {
       if (!response.ok) throw new Error("Backend error");
 
       const data = await response.json();
-
       const botMessage = { sender: "bot", text: data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      console.error(err);
       const errorMessage = { sender: "bot", text: "Couldn't reach backend" };
       setMessages((prev) => [...prev, errorMessage]);
+      console.error(err);
     }
 
     setInput("");
@@ -48,9 +46,8 @@ export default function ChatWindow() {
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Type a message..."
+        placeholder="Type your message..."
         style={{ width: "80%", marginRight: "5px" }}
-        onKeyDown={(e) => e.key === "Enter" && handleSend()}
       />
       <button onClick={handleSend}>Send</button>
     </div>
