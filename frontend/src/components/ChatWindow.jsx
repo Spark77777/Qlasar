@@ -1,60 +1,55 @@
 import React, { useState } from "react";
 
-export default function ChatWindow({ session }) {
-  const [messages, setMessages] = useState([]);
+export default function ChatWindow() {
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
 
-  const sendMessage = async () => {
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  const handleSend = async () => {
     if (!input) return;
-    const newMessage = { sender: "user", text: input };
-    setMessages([...messages, newMessage]);
+
+    const userMessage = { sender: "user", text: input };
+    setMessages([...messages, userMessage]);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/analyze`, {
+      const response = await fetch(`${backendUrl}/api/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
 
-      const data = await res.json();
-      console.log("API response:", data); // Debug log
-      setMessages((prev) => [...prev, { sender: "bot", text: data.response || "No response" }]);
+      if (!response.ok) throw new Error("Backend error");
+
+      const data = await response.json();
+      const botMessage = { sender: "bot", text: data.response };
+      setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      console.error("API call failed:", err); // Network error log
-      setMessages((prev) => [...prev, { sender: "bot", text: "Error: Could not reach backend." }]);
+      const errorMessage = { sender: "bot", text: "Couldn't reach backend" };
+      setMessages((prev) => [...prev, errorMessage]);
+      console.error(err);
     }
 
     setInput("");
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.messages}>
+    <div style={{ border: "1px solid #ccc", padding: "10px", flex: 1 }}>
+      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
         {messages.map((msg, idx) => (
-          <div key={idx} style={msg.sender === "user" ? styles.userMsg : styles.botMsg}>
-            {msg.text}
+          <div key={idx} style={{ margin: "5px 0" }}>
+            <strong>{msg.sender}:</strong> {msg.text}
           </div>
         ))}
       </div>
-      <div style={styles.inputContainer}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={`Message for ${session.name}`}
-          style={styles.input}
-        />
-        <button onClick={sendMessage} style={styles.button}>Send</button>
-      </div>
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type a message..."
+        style={{ width: "80%", marginRight: "5px" }}
+      />
+      <button onClick={handleSend}>Send</button>
     </div>
   );
 }
-
-const styles = {
-  container: { flex: 1, display: "flex", flexDirection: "column", border: "1px solid #ccc", borderRadius: "5px", padding: "10px" },
-  messages: { flex: 1, overflowY: "auto", marginBottom: "10px" },
-  userMsg: { textAlign: "right", margin: "5px", color: "blue" },
-  botMsg: { textAlign: "left", margin: "5px", color: "green" },
-  inputContainer: { display: "flex" },
-  input: { flex: 1, padding: "5px" },
-  button: { padding: "5px 10px", marginLeft: "5px" },
-};
