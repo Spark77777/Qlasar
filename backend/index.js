@@ -1,40 +1,54 @@
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
-import OpenAI from "openai";
+import fetch from "node-fetch";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+// ✅ Health route
+app.get("/", (req, res) => {
+  res.send("🚀 Qlasar backend is live and running successfully!");
 });
 
-// Root route for chat
-app.post("/", async (req, res) => {
+// ✅ Chat route (for Grok model via OpenRouter)
+app.post("/api/chat", async (req, res) => {
   try {
-    const { message } = req.body;
-    if (!message) return res.status(400).json({ error: "Message is required" });
+    const { messages } = req.body;
 
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: message }],
-      max_tokens: 2000
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "Invalid request: 'messages' must be an array." });
+    }
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_KEY}`, // 👈 Updated key name
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "x-ai/grok-beta", // ✅ Grok Fast 4 Free model
+        messages: messages,
+      }),
     });
 
-    const answer = response.choices?.[0]?.message?.content || "Qlasar couldn't generate a response.";
-    res.json({ answer });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Qlasar couldn't generate a response." });
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("Grok API error:", data.error);
+      return res.status(500).json({ error: data.error.message || "Grok API error" });
+    }
+
+    const reply = data.choices?.[0]?.message?.content || "No response from Grok.";
+    res.json({ reply });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Failed to connect to Grok (OpenRouter)." });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Qlasar backend running at http://localhost:${port}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`⚡ Qlasar backend running on port ${PORT}`));
