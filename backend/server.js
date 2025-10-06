@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 
 const app = express();
@@ -12,16 +13,16 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(cors());
 
-// Load environment variables
+// ---------------- Environment Variables ----------------
 const OR_KEY = process.env.OPENROUTER_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Initialize Supabase (backend-only)
+// ---------------- Initialize Supabase ----------------
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// ---------------- Qlasar Chatbot API ----------------
-const MODEL_ID = "deepseek/deepseek-chat-v3.1:free"; // updated model
+// ---------------- Qlasar AI Chat API ----------------
+const MODEL_ID = "deepseek/deepseek-chat-v3.1:free";
 
 app.post("/api/message", async (req, res) => {
   const { message } = req.body;
@@ -30,21 +31,19 @@ app.post("/api/message", async (req, res) => {
   const systemMessage = `
 You are Qlasar, an AI scout. Respond clearly and helpfully.
 
-- For normal messages, answer concisely or in structured four-section format (Answer, Counterarguments, Blindspots, Conclusion) if the question is complex.
-- For gibberish, unclear, or short nonsensical messages, do not try to answer directly. Instead, ask for clarification politely.
-- Use clean formatting: no <s> tags, no markdown headers like ###, no trailing <br><br>.
-- Use bold <b> and italics <i> only if necessary.
+- Answer concisely or in structured four-section format (Answer, Counterarguments, Blindspots, Conclusion).
+- For gibberish or unclear questions, ask for clarification politely.
+- Use clean formatting; bold <b> and italics <i> only if necessary.
 `;
 
   const payload = {
     model: MODEL_ID,
-    messages: [
+    input: [
       { role: "system", content: systemMessage },
       { role: "user", content: message }
     ],
     temperature: 0.7,
-    top_p: 0.95,
-    max_tokens: 512
+    max_output_tokens: 512
   };
 
   try {
@@ -58,8 +57,13 @@ You are Qlasar, an AI scout. Respond clearly and helpfully.
     });
 
     const data = await response.json();
+    console.log("OpenRouter Response:", JSON.stringify(data, null, 2));
 
-    let reply = data.choices?.[0]?.message?.content || "❌ No response from model";
+    let reply = "❌ No response from model";
+
+    if (data?.choices?.length > 0) {
+      reply = data.choices[0]?.message?.content || data.choices[0]?.text || reply;
+    }
 
     // Clean formatting
     reply = reply
@@ -75,14 +79,12 @@ You are Qlasar, an AI scout. Respond clearly and helpfully.
 
     res.json({ response: reply });
   } catch (err) {
-    console.error("Error:", err);
+    console.error("Error calling DeepSeek:", err);
     res.json({ response: `❌ Error: ${err.message}` });
   }
 });
 
 // ---------------- Authentication APIs ----------------
-
-// Signup new user
 app.post("/api/signup", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
@@ -103,7 +105,6 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-// Login existing user
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
@@ -120,19 +121,16 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// ---------------- Serve Frontend Build ----------------
+// ---------------- Serve Frontend ----------------
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
-
-// React Router fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ---------------- Heartbeat to Supabase ----------------
+// ---------------- Supabase Heartbeat ----------------
 const heartbeat = async () => {
   try {
-    // lightweight GET to sessions endpoint
     const resp = await fetch(`${SUPABASE_URL}/rest/v1/sessions?select=id&limit=1`, {
       method: "GET",
       headers: {
@@ -153,7 +151,7 @@ const heartbeat = async () => {
   }
 };
 
-// Run heartbeat every 4 minutes
+// Run heartbeat every 4 minutes to prevent idle pause
 setInterval(heartbeat, 4 * 60 * 1000);
 heartbeat(); // Initial heartbeat
 
