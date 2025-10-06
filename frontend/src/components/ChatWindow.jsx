@@ -30,40 +30,51 @@ const ChatWindow = () => {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // 🔹 Send Message
-  const handleSend = () => {
+  // 🔹 Send Message & AI Response
+  const handleSend = async () => {
     if (!input.trim()) return;
+
     const newMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
     setIsTyping(true);
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    // Simulated AI Response
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+
+      const data = await res.json();
+      const aiMessage = { sender: "ai", text: data.response || "❌ No response" };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      console.error("AI Error:", err);
       setMessages((prev) => [
         ...prev,
-        { sender: "ai", text: "Got it! Here's what I found for you." },
+        { sender: "ai", text: "❌ Error: Could not get AI response." },
       ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
-  // 🔹 Handle Login / Signup form submit
+  // 🔹 Handle Login / Signup
   const handleAuth = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
+
     try {
       if (showAuth === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) alert(error.message);
-        else alert("Account created! Please check your email for verification.");
+        else alert("Account created! Check your email for verification.");
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) alert(error.message);
         else setShowAuth(false);
       }
@@ -143,8 +154,9 @@ const ChatWindow = () => {
                   ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
                   : "bg-white text-gray-800 border border-gray-200 rounded-bl-none"
               }`}
+              dangerouslySetInnerHTML={msg.sender === "ai" ? { __html: msg.text } : undefined}
             >
-              {msg.text}
+              {msg.sender === "user" ? msg.text : null}
             </div>
           </div>
         ))}
