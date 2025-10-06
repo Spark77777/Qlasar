@@ -1,3 +1,25 @@
+// backend/server.js
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import cors from "cors";
+import { createClient } from "@supabase/supabase-js";
+
+const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.json());
+app.use(cors());
+
+// Load environment variables
+const OR_KEY = process.env.OPENROUTER_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Initialize Supabase (backend-only)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
 // ---------------- Qlasar Chatbot API ----------------
 const MODEL_ID = "deepseek/deepseek-chat-v3.1:free"; // updated model
 
@@ -9,7 +31,7 @@ app.post("/api/message", async (req, res) => {
 You are Qlasar, an AI scout. Respond clearly and helpfully.
 
 - For normal messages, answer concisely or in structured four-section format (Answer, Counterarguments, Blindspots, Conclusion) if the question is complex.
-- For gibberish, unclear, or short nonsensical messages, do not try to answer directly. Instead, ask for clarification politely, e.g., "Did you mean this or that?" or "Could you clarify your question?".
+- For gibberish, unclear, or short nonsensical messages, do not try to answer directly. Instead, ask for clarification politely.
 - Use clean formatting: no <s> tags, no markdown headers like ###, no trailing <br><br>.
 - Use bold <b> and italics <i> only if necessary.
 `;
@@ -57,3 +79,84 @@ You are Qlasar, an AI scout. Respond clearly and helpfully.
     res.json({ response: `❌ Error: ${err.message}` });
   }
 });
+
+// ---------------- Authentication APIs ----------------
+
+// Signup new user
+app.post("/api/signup", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: "Account created successfully", user: data.user });
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Login existing user
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: "Logged in successfully", session: data.session });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ---------------- Serve Frontend Build ----------------
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
+
+// React Router fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+// ---------------- Heartbeat to Supabase ----------------
+const heartbeat = async () => {
+  try {
+    // lightweight GET to sessions endpoint
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/sessions?select=id&limit=1`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    });
+
+    if (!resp.ok) {
+      console.warn("⚠️ Supabase heartbeat failed:", resp.status);
+      return;
+    }
+
+    const data = await resp.json();
+    console.log(`💓 Supabase heartbeat successful. Sample ID: ${data?.[0]?.id || "N/A"}`);
+  } catch (err) {
+    console.error("❌ Heartbeat error:", err.message);
+  }
+};
+
+// Run heartbeat every 4 minutes
+setInterval(heartbeat, 4 * 60 * 1000);
+heartbeat(); // Initial heartbeat
+
+// ---------------- Start Server ----------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
