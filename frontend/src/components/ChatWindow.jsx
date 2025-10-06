@@ -8,6 +8,7 @@ const ChatWindow = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -16,6 +17,9 @@ const ChatWindow = () => {
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
     setIsTyping(true);
+
+    // Reset textarea height
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     // Simulate AI response
     setTimeout(() => {
@@ -78,13 +82,17 @@ const ChatWindow = () => {
       {/* Input Area (Right-Aligned Compact Box) */}
       <div className="w-full flex justify-end px-4 pb-5">
         <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md border shadow-md rounded-full px-4 py-2 max-w-md w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             placeholder="What shall we explore?"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            className="flex-1 bg-transparent border-none text-sm px-2 py-2 focus:outline-none"
+            onChange={(e) => {
+              setInput(e.target.value);
+              e.target.style.height = "auto"; // reset
+              e.target.style.height = `${e.target.scrollHeight}px`; // auto-expand
+            }}
+            rows={1}
+            className="flex-1 bg-transparent border-none text-sm px-2 py-2 resize-none focus:outline-none overflow-hidden"
           />
           <button
             onClick={handleSend}
