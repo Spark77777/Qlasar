@@ -80,7 +80,7 @@ const ChatWindow = () => {
         <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md border shadow-md rounded-full px-4 py-2 max-w-md w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
           <input
             type="text"
-            placeholder="Type your message..."
+            placeholder="What shall we explore?"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
