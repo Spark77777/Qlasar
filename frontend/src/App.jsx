@@ -1,171 +1,70 @@
-import React, { useState } from "react";
-import ChatWindow from "./components/ChatWindow";
-import ProactiveAlerts from "./components/ProactiveAlerts";
-import SessionSidebar from "./components/SessionSidebar";
+import { useState } from "react";
 
-export default function App() {
-  const [sessions, setSessions] = useState([{ name: "Session 1" }]);
-  const [activeSession, setActiveSession] = useState(sessions[0]);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+function App() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const userMsg = { role: "user", content: input };
+    setMessages([...messages, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+
+      const data = await res.json();
+      const botMsg = { role: "assistant", content: data.response };
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (err) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "❌ Error sending message" }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        height: "100vh",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#f5f5f5",
-        overflow: "hidden",
-      }}
-    >
-      {/* Desktop Sidebar */}
-      <div
-        style={{
-          flexShrink: 0,
-          width: "250px",
-          borderRight: "1px solid #ddd",
-          overflowY: "auto",
-          backgroundColor: "#fff",
-          boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
-        }}
-        className="desktop-sidebar"
-      >
-        <SessionSidebar sessions={sessions} onSelect={setActiveSession} />
-      </div>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-lg p-4 flex flex-col h-[80vh]">
+        <div className="flex-1 overflow-y-auto mb-4 space-y-2">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`p-3 rounded-xl ${
+                msg.role === "user"
+                  ? "bg-blue-600 self-end text-right"
+                  : "bg-gray-700 self-start text-left"
+              }`}
+              dangerouslySetInnerHTML={{ __html: msg.content }}
+            />
+          ))}
+          {loading && <div className="text-gray-400 italic">Qlasar is thinking...</div>}
+        </div>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "250px",
-            height: "100vh",
-            backgroundColor: "#fff",
-            borderRight: "1px solid #ddd",
-            zIndex: 1000,
-            overflowY: "auto",
-            boxShadow: "2px 0 8px rgba(0,0,0,0.2)",
-            transition: "transform 0.3s ease-in-out",
-          }}
-        >
-          <button
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              margin: "10px",
-              padding: "5px 10px",
-              cursor: "pointer",
-              backgroundColor: "#e0e0e0",
-              border: "none",
-              borderRadius: "5px",
-            }}
-          >
-            Close
-          </button>
-          <SessionSidebar
-            sessions={sessions}
-            onSelect={(s) => {
-              setActiveSession(s);
-              setSidebarOpen(false);
-            }}
+        <div className="flex">
+          <input
+            className="flex-1 p-3 rounded-xl bg-gray-700 outline-none"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          padding: "10px",
-          overflow: "hidden",
-        }}
-      >
-        {/* Mobile Hamburger */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="mobile-hamburger"
-          style={{
-            display: "none",
-            marginBottom: "10px",
-            padding: "5px 10px",
-            cursor: "pointer",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          ☰ Sessions
-        </button>
-
-        <h1 style={{ textAlign: "center", marginBottom: "15px", color: "#1976d2" }}>
-          Qlasar
-        </h1>
-
-        {/* Chat + Alerts Container */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            flex: 1,
-            minHeight: 0,
-            gap: "10px",
-          }}
-        >
-          {/* Chat Window */}
-          <div
-            style={{
-              flex: 2,
-              backgroundColor: "#fff",
-              borderRadius: "10px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              padding: "10px",
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            }}
+          <button
+            onClick={sendMessage}
+            className="ml-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 rounded-xl"
           >
-            <ChatWindow key={activeSession.name} />
-          </div>
-
-          {/* Proactive Alerts */}
-          <div
-            style={{
-              flex: 1,
-              backgroundColor: "#fff",
-              borderRadius: "10px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              padding: "10px",
-              display: "flex",
-              flexDirection: "column",
-              maxHeight: "100%",
-              overflowY: "auto",
-            }}
-          >
-            <ProactiveAlerts />
-          </div>
+            Send
+          </button>
         </div>
       </div>
-
-      {/* Responsive Styles */}
-      <style>
-        {`
-          @media (max-width: 768px) {
-            .desktop-sidebar {
-              display: none;
-            }
-            .mobile-hamburger {
-              display: block;
-            }
-            div[style*="flexDirection: row"] {
-              flex-direction: column;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 }
+
+export default App;
