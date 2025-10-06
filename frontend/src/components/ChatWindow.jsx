@@ -36,7 +36,6 @@ const ChatWindow = () => {
       {/* Top Bar */}
       <div className="flex justify-between items-center px-5 py-3 bg-white shadow-sm border-b">
         <div className="font-bold text-xl text-blue-600">Qlasar</div>
-        <div className="text-gray-500 font-medium">Session</div>
         <div className="w-8 h-8 bg-gray-200 rounded-full" />
       </div>
 
