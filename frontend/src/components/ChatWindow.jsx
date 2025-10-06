@@ -10,6 +10,7 @@ const ChatWindow = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -21,7 +22,7 @@ const ChatWindow = () => {
     };
     getUser();
 
-    // Listen to auth state changes
+    // Listen to auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -29,17 +30,16 @@ const ChatWindow = () => {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // 🔹 Send Message
   const handleSend = () => {
     if (!input.trim()) return;
-
     const newMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
     setIsTyping(true);
-
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    // Simulate AI response
+    // Simulated AI Response
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
@@ -49,27 +49,37 @@ const ChatWindow = () => {
     }, 1500);
   };
 
+  // 🔹 Handle Login / Signup form submit
   const handleAuth = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
-
     try {
-      const { error } = showAuth === "signup"
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert(error.message);
-      else setShowAuth(false);
+      if (showAuth === "signup") {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) alert(error.message);
+        else alert("Account created! Please check your email for verification.");
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) alert(error.message);
+        else setShowAuth(false);
+      }
     } catch (err) {
       console.error(err);
     }
   };
 
+  // 🔹 Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setShowMenu(false);
   };
 
+  // 🔹 Scroll on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
@@ -77,27 +87,45 @@ const ChatWindow = () => {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Top Bar */}
-      <div className="flex justify-between items-center px-5 py-3 bg-white shadow-sm border-b">
+      <div className="relative flex justify-between items-center px-5 py-3 bg-white shadow-sm border-b">
         <div className="font-bold text-xl text-blue-600">Qlasar</div>
 
-        {/* Profile Icon */}
-        {user ? (
-          <div
-            className="w-9 h-9 flex items-center justify-center bg-blue-500 text-white rounded-full font-semibold cursor-pointer hover:bg-blue-600 transition"
-            onClick={handleLogout}
-            title="Click to logout"
-          >
-            {user.email.charAt(0).toUpperCase()}
-          </div>
-        ) : (
-          <button
-            className="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition"
-            onClick={() => setShowAuth("login")}
-            title="Login / Signup"
-          >
-            <User size={18} className="text-gray-600" />
-          </button>
-        )}
+        {/* Profile Section */}
+        <div className="relative">
+          {user ? (
+            <>
+              <div
+                className="w-9 h-9 flex items-center justify-center bg-blue-500 text-white rounded-full font-semibold cursor-pointer hover:bg-blue-600 transition"
+                onClick={() => setShowMenu(!showMenu)}
+              >
+                {user.email.charAt(0).toUpperCase()}
+              </div>
+
+              {/* Dropdown Menu */}
+              {showMenu && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-xl shadow-md text-sm z-50">
+                  <div className="px-4 py-2 border-b text-gray-600 truncate">
+                    {user.email}
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 rounded-b-xl"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <button
+              className="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition"
+              onClick={() => setShowAuth("login")}
+              title="Login / Signup"
+            >
+              <User size={18} className="text-gray-600" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Chat Area */}
@@ -163,7 +191,7 @@ const ChatWindow = () => {
       {/* Auth Modal */}
       {showAuth && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-[90%] max-w-sm">
+          <div className="relative bg-white rounded-2xl shadow-lg p-6 w-[90%] max-w-sm">
             <h2 className="text-lg font-semibold text-center mb-4 text-gray-700">
               {showAuth === "signup" ? "Create Account" : "Login"}
             </h2>
