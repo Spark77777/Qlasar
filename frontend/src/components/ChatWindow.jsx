@@ -76,22 +76,24 @@ const ChatWindow = () => {
         <div ref={chatEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="px-4 py-3 bg-white/80 backdrop-blur-md border-t shadow-lg flex items-center gap-3">
-        <input
-          type="text"
-          placeholder="Type your message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          className="flex-1 bg-white border border-gray-300 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
-        />
-        <button
-          onClick={handleSend}
-          className="p-3 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
-        >
-          <Send size={18} />
-        </button>
+      {/* Input Area (Right-Aligned Compact Box) */}
+      <div className="w-full flex justify-end px-4 pb-5">
+        <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md border shadow-md rounded-full px-4 py-2 max-w-md w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            className="flex-1 bg-transparent border-none text-sm px-2 py-2 focus:outline-none"
+          />
+          <button
+            onClick={handleSend}
+            className="p-2 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
+          >
+            <Send size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
