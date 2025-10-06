@@ -83,7 +83,7 @@ You are Qlasar, an AI scout. Respond clearly and helpfully.
 
 // ---------------- Authentication APIs ----------------
 
-// Signup new user
+// Signup new user (backend with service role key)
 app.post("/api/signup", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
@@ -97,7 +97,7 @@ app.post("/api/signup", async (req, res) => {
 
     if (error) return res.status(400).json({ error: error.message });
 
-    res.json({ message: "Account created successfully", user: data });
+    res.json({ message: "Account created successfully", user: data.user });
   } catch (err) {
     console.error("Signup error:", err);
     res.status(500).json({ error: "Internal server error" });
