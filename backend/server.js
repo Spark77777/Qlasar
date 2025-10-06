@@ -3,7 +3,6 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
-import fetch from "node-fetch"; // Ensure node-fetch is installed
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
