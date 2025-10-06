@@ -3,6 +3,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import { createClient } from "@supabase/supabase-js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +16,9 @@ app.use(cors());
 const OR_KEY = process.env.OPENROUTER_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Initialize Supabase (backend-only)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Model
 const MODEL_ID = "mistralai/mistral-7b-instruct:free";
@@ -77,6 +81,46 @@ You are Qlasar, an AI scout. Respond clearly and helpfully.
   }
 });
 
+// ---------------- Authentication APIs ----------------
+
+// Signup new user
+app.post("/api/signup", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: "Account created successfully", user: data });
+  } catch (err) {
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Login existing user
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) return res.status(400).json({ error: error.message });
+
+    res.json({ message: "Logged in successfully", session: data.session });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ---------------- Serve Frontend Build ----------------
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
@@ -109,7 +153,7 @@ const heartbeat = async () => {
 
 // Run heartbeat every 5 minutes
 setInterval(heartbeat, 5 * 60 * 1000);
-heartbeat(); // Initial heartbeat on server start
+heartbeat(); // Initial heartbeat
 
 // ---------------- Start Server ----------------
 const PORT = process.env.PORT || 3000;
