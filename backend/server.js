@@ -1,160 +1,115 @@
-// backend/server.js
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import cors from "cors";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 app.use(express.json());
-app.use(cors());
 
-// ---------------- Environment Variables ----------------
-const OR_KEY = process.env.OPENROUTER_KEY;
+// --- ENVIRONMENT VARIABLES ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 
-// ---------------- Initialize Supabase ----------------
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+// --- CHECK ENV ---
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("❌ Missing Supabase credentials in environment variables!");
+  process.exit(1);
+}
+if (!OPENROUTER_KEY) {
+  console.error("❌ Missing OpenRouter API key in environment variables!");
+  process.exit(1);
+}
 
-// ---------------- Qlasar AI Chat API ----------------
-const MODEL_ID = "deepseek/deepseek-chat-v3.1:free";
+// --- SUPABASE CLIENT ---
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-app.post("/api/message", async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message provided" });
-
-  const systemMessage = `
-You are Qlasar, an AI scout. Respond clearly and helpfully.
-
-- Answer concisely or in structured four-section format (Answer, Counterarguments, Blindspots, Conclusion).
-- For gibberish or unclear questions, ask for clarification politely.
-- Use clean formatting; bold <b> and italics <i> only if necessary.
-`;
-
-  const payload = {
-    model: MODEL_ID,
-    input: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: message }
-    ],
-    temperature: 0.7,
-    max_output_tokens: 512
-  };
-
+// --- OPENROUTER KEY CHECK ---
+(async () => {
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
+    const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
       headers: {
-        "Authorization": `Bearer ${OR_KEY}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(payload)
     });
-
-    const data = await response.json();
-    console.log("OpenRouter Response:", JSON.stringify(data, null, 2));
-
-    let reply = "❌ No response from model";
-
-    if (data?.choices?.length > 0) {
-      reply = data.choices[0]?.message?.content || data.choices[0]?.text || reply;
-    }
-
-    // Clean formatting
-    reply = reply
-      .replace(/<\/?s>/g, "")
-      .replace(/^#+\s*/gm, "")
-      .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")
-      .replace(/\*(.*?)\*/g, "<i>$1</i>")
-      .replace(/^- (.*)/gm, "• $1")
-      .replace(/\n{2,}/g, "<br><br>")
-      .replace(/\n/g, "<br>")
-      .replace(/(<br>\s*)+$/g, "")
-      .trim();
-
-    res.json({ response: reply });
+    const data = await res.json();
+    console.log("✅ OpenRouter Key Status:\n", JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error("Error calling DeepSeek:", err);
-    res.json({ response: `❌ Error: ${err.message}` });
+    console.error("❌ Error checking OpenRouter key:", err.message);
   }
-});
+})();
 
-// ---------------- Authentication APIs ----------------
-app.post("/api/signup", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
-
-  try {
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
-    });
-
-    if (error) return res.status(400).json({ error: error.message });
-
-    res.json({ message: "Account created successfully", user: data.user });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
-
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) return res.status(400).json({ error: error.message });
-
-    res.json({ message: "Logged in successfully", session: data.session });
-  } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// ---------------- Serve Frontend ----------------
-const frontendPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendPath));
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
-
-// ---------------- Supabase Heartbeat ----------------
+// --- SUPABASE HEARTBEAT ---
 const heartbeat = async () => {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/sessions?select=id&limit=1`, {
-      method: "GET",
-      headers: {
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      },
-    });
-
-    if (!resp.ok) {
-      console.warn("⚠️ Supabase heartbeat failed:", resp.status);
-      return;
-    }
-
-    const data = await resp.json();
-    console.log(`💓 Supabase heartbeat successful. Sample ID: ${data?.[0]?.id || "N/A"}`);
+    const { error } = await supabase.from("Session").select("id").limit(1);
+    if (error) throw error;
+    console.log("💓 Supabase heartbeat OK");
   } catch (err) {
-    console.error("❌ Heartbeat error:", err.message);
+    console.error("⚠️ Supabase heartbeat failed:", err.message);
   }
 };
 
-// Run heartbeat every 4 minutes to prevent idle pause
-setInterval(heartbeat, 4 * 60 * 1000);
-heartbeat(); // Initial heartbeat
+// Run heartbeat every 4 minutes (Render’s idle timeout is ~5min)
+setInterval(heartbeat, 240000);
+heartbeat();
 
-// ---------------- Start Server ----------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
+// --- API ROUTES ---
+
+// Test route
+app.get("/", (req, res) => {
+  res.send("🚀 Server is running and healthy!");
+});
+
+// Store a new session
+app.post("/session", async (req, res) => {
+  try {
+    const { session_name, messages } = req.body;
+    const { error } = await supabase
+      .from("Session")
+      .insert([{ name: session_name, messages }]);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to store session:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Generate model response
+app.post("/generate", async (req, res) => {
+  try {
+    const { messages } = req.body;
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!data || !data.choices || !data.choices[0]?.message) {
+      console.error("⚠️ No valid response from model:", data);
+      return res.status(500).json({ error: "No response from model." });
+    }
+
+    res.json({ reply: data.choices[0].message });
+  } catch (err) {
+    console.error("❌ Model request failed:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- START SERVER ---
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
