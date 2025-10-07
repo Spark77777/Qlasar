@@ -87,4 +87,4 @@ res.sendFile(path.join(frontendPath, "index.html"));
 
 // Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(🚀 Qlasar server running on port ${PORT}));
+app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
