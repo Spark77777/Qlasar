@@ -14,7 +14,7 @@ const ChatWindow = () => {
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 🔹 Check if user is logged in
+  // 🔹 Check login
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -22,7 +22,6 @@ const ChatWindow = () => {
     };
     getUser();
 
-    // Listen to auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -30,7 +29,7 @@ const ChatWindow = () => {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // 🔹 Send Message & AI Response
+  // 🔹 Send message + get AI response
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -41,33 +40,65 @@ const ChatWindow = () => {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      // Convert messages to OpenRouter format
-      const formattedMessages = [...messages, newMessage].map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
+      // Convert message format to match app.py logic
+      const formattedMessages = [
+        {
+          role: "system",
+          content:
+            "You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answers, provide four sections:\n" +
+            "1. Answer\n2. Counterarguments\n3. Blindspots\n4. Conclusion.\n" +
+            "For simple questions, respond normally without these sections.",
+        },
+        ...[...messages, newMessage].map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text,
+        })),
+      ];
 
+      console.log("🛰 Sending request to backend...");
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: formattedMessages }),
+        body: JSON.stringify({
+          model: "x-ai/grok-4-fast:free",
+          messages: formattedMessages,
+          temperature: 0.7,
+          top_p: 0.95,
+          max_tokens: 1024,
+        }),
       });
 
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("❌ Server error:", errText);
+        throw new Error(`Server returned ${res.status}`);
+      }
+
       const data = await res.json();
-      const aiMessage = { sender: "ai", text: data.reply || "❌ No response" };
+      console.log("✅ API raw response:", data);
+
+      // Get reply safely
+      const reply =
+        data.reply ||
+        data.message ||
+        data.content ||
+        data?.choices?.[0]?.message?.content ||
+        "❌ No valid response from model.";
+
+      const aiMessage = { sender: "ai", text: reply };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error("AI Error:", err);
       setMessages((prev) => [
         ...prev,
-        { sender: "ai", text: "❌ Error: Could not get AI response." },
+        { sender: "ai", text: `❌ Error: ${err.message}` },
       ]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  // 🔹 Handle Login / Signup
+  // 🔹 Auth handlers
   const handleAuth = async (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -88,14 +119,13 @@ const ChatWindow = () => {
     }
   };
 
-  // 🔹 Logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setShowMenu(false);
   };
 
-  // 🔹 Scroll on new messages
+  // 🔹 Auto-scroll
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
@@ -105,8 +135,6 @@ const ChatWindow = () => {
       {/* Top Bar */}
       <div className="relative flex justify-between items-center px-5 py-3 bg-white shadow-sm border-b">
         <div className="font-bold text-xl text-blue-600">Qlasar</div>
-
-        {/* Profile Section */}
         <div className="relative">
           {user ? (
             <>
@@ -116,8 +144,6 @@ const ChatWindow = () => {
               >
                 {user.email.charAt(0).toUpperCase()}
               </div>
-
-              {/* Dropdown Menu */}
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-40 bg-white border rounded-xl shadow-md text-sm z-50">
                   <div className="px-4 py-2 border-b text-gray-600 truncate">
@@ -177,7 +203,6 @@ const ChatWindow = () => {
             </div>
           </div>
         )}
-
         <div ref={chatEndRef} />
       </div>
 
