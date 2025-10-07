@@ -41,15 +41,20 @@ const ChatWindow = () => {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      const res = await fetch("/api/message", {
+      // Convert messages to OpenRouter format
+      const formattedMessages = [...messages, newMessage].map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text,
+      }));
+
+      const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ messages: formattedMessages }),
       });
 
       const data = await res.json();
-      const aiMessage = { sender: "ai", text: data.response || "❌ No response" };
-
+      const aiMessage = { sender: "ai", text: data.reply || "❌ No response" };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error("AI Error:", err);
