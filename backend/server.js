@@ -2,6 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -58,12 +59,10 @@ heartbeat();
 
 // --- API ROUTES ---
 
-// Test route
 app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
-// Store a new session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -78,7 +77,6 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
-// Generate model response
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
@@ -110,12 +108,22 @@ app.post("/api/generate", async (req, res) => {
 });
 
 // --- SERVE FRONTEND ---
-const frontendPath = path.join(process.cwd(), "frontend/dist");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendPath = path.join(__dirname, "../frontend/dist");
+
 app.use(express.static(frontendPath));
 
-// React/Vite fallback for SPA routing
+// React/Vite SPA fallback
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+  const indexFile = path.join(frontendPath, "index.html");
+  console.log("📂 Serving frontend:", indexFile);
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      console.error("❌ Error serving frontend:", err);
+      res.status(500).send("Frontend not found.");
+    }
+  });
 });
 
 // --- START SERVER ---
