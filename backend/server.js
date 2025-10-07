@@ -72,7 +72,7 @@ res.json({ response: reply });
 
 } catch (err) {
 console.error("Error:", err);
-res.json({ response: ❌ Error: ${err.message} });
+res.json({ response: `❌ Error: ${err.message}` });
 }
 });
 
