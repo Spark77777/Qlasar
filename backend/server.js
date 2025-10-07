@@ -1,157 +1,84 @@
+// backend/server.js
 import express from "express";
-import cors from "cors";
-import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-
-dotenv.config();
+import cors from "cors";
 
 const app = express();
-
-// --- MIDDLEWARES ---
-app.use(cors()); // ✅ Allows frontend (Render/Vercel/etc.) to connect
-app.use(express.json());
-
-// --- ENVIRONMENT VARIABLES ---
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
-
-// --- CHECK ENV ---
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error("❌ Missing Supabase credentials in environment variables!");
-  process.exit(1);
-}
-if (!OPENROUTER_KEY) {
-  console.error("❌ Missing OpenRouter API key in environment variables!");
-  process.exit(1);
-}
-
-// --- SUPABASE CLIENT ---
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// --- OPENROUTER KEY CHECK ---
-(async () => {
-  try {
-    const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await res.json();
-    console.log("✅ OpenRouter Key Status:\n", JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.error("❌ Error checking OpenRouter key:", err.message);
-  }
-})();
-
-// --- SUPABASE HEARTBEAT ---
-const heartbeat = async () => {
-  try {
-    const { error } = await supabase.from("Session").select("id").limit(1);
-    if (error) throw error;
-    console.log("💓 Supabase heartbeat OK");
-  } catch (err) {
-    console.error("⚠️ Supabase heartbeat failed:", err.message);
-  }
-};
-setInterval(heartbeat, 240000); // every 4 minutes
-heartbeat();
-
-// --- API ROUTES ---
-
-// ✅ Health check
-app.get("/api/health", (req, res) => {
-  res.send("🚀 Server is running and healthy!");
-});
-
-// ✅ Store session
-app.post("/api/session", async (req, res) => {
-  try {
-    const { session_name, messages } = req.body;
-    const { error } = await supabase
-      .from("Session")
-      .insert([{ name: session_name, messages }]);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Failed to store session:", err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ✅ Generate AI response
-app.post("/api/generate", async (req, res) => {
-  try {
-    const { messages } = req.body;
-
-    if (!messages || !Array.isArray(messages)) {
-      console.warn("⚠️ Invalid messages payload:", messages);
-      return res.status(400).json({ error: "Invalid messages array." });
-    }
-
-    const formattedMessages = messages.map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.text,
-    }));
-
-    const payload = {
-      model: "deepseek/deepseek-chat-v3.1:free",
-      messages: formattedMessages,
-      temperature: 0.7,
-      max_output_tokens: 512,
-    };
-
-    console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
-
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
-
-    if (!data?.choices?.[0]?.message?.content) {
-      console.error("⚠️ No valid response from model:", data);
-      return res.status(500).json({
-        error: "Couldn't get AI response. See server logs for details.",
-        rawResponse: data,
-      });
-    }
-
-    res.json({ reply: data.choices[0].message.content });
-  } catch (err) {
-    console.error("❌ Model request failed:", err.message);
-    res.status(500).json({ error: `Model request failed: ${err.message}` });
-  }
-});
-
-// --- SERVE FRONTEND ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const frontendPath = path.join(__dirname, "../frontend/dist");
 
-app.use(express.static(frontendPath));
+app.use(express.json());
+app.use(cors());
 
-// ✅ SPA fallback
-app.get("*", (req, res) => {
-  const indexFile = path.join(frontendPath, "index.html");
-  console.log("📂 Serving frontend:", indexFile);
-  res.sendFile(indexFile, (err) => {
-    if (err) {
-      console.error("❌ Error serving frontend:", err);
-      res.status(500).send("Frontend not found.");
-    }
-  });
+// Load OpenRouter key from environment
+const OR_KEY = process.env.OPENROUTER_KEY;
+
+// Mistral 7B Instruct (Free)
+const MODEL_ID = "mistralai/mistral-7b-instruct:free";
+
+// ---------------- Qlasar Chatbot API ----------------
+app.post("/api/message", async (req, res) => {
+const { message } = req.body;
+if (!message) return res.status(400).json({ error: "No message provided" });
+
+const systemMessage =    You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answer, provide four sections:\n   1. Answer: main response\n   2. Counterarguments: possible opposing views\n"   3. Blindspots: missing considerations or overlooked aspects\n   4. Conclusion: encourage the user to think critically and gain insight\n   Format the response clearly with headings and end with a reflective thought for the user.   For simple questions or those questions which do not need detailed or in-depth answer, provide answers as a General AI would. Do not provide answer in four sections. Also do not provide reflective thought.   );
+
+const payload = {
+model: MODEL_ID,
+messages: [
+{ role: "system", content: systemMessage },
+{ role: "user", content: message }
+],
+temperature: 0.7,
+top_p: 0.95,
+max_tokens: 1024
+};
+
+try {
+const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+method: "POST",
+headers: {
+"Authorization": Bearer ${OR_KEY},
+"Content-Type": "application/json"
+},
+body: JSON.stringify(payload)
 });
 
-// --- START SERVER ---
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+const data = await response.json();  
+
+// Safely extract reply  
+let reply = data.choices && data.choices[0]?.message?.content  
+  ? data.choices[0].message.content  
+  : "❌ No response from model";  
+
+// Clean and reformat response  
+reply = reply  
+  .replace(/<\/?s>/g, "")                   // remove <s> or </s>  
+  .replace(/^#+\s*/gm, "")                  // remove markdown headers  
+  .replace(/\*\*(.*?)\*\*/g, "<b>$1</b>")   // convert bold  
+  .replace(/\*(.*?)\*/g, "<i>$1</i>")       // convert italics  
+  .replace(/\n{2,}/g, "<br><br>")           // handle spacing  
+  .replace(/^- (.*)/gm, "• $1")             // format bullets  
+  .trim();  
+
+res.json({ response: reply });
+
+} catch (err) {
+console.error("Error:", err);
+res.json({ response: ❌ Error: ${err.message} });
+}
+});
+
+// ---------------- Serve Frontend Build ----------------
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
+
+// Handle React Router fallback (avoid blank page)
+app.get("*", (req, res) => {
+res.sendFile(path.join(frontendPath, "index.html"));
+});
+
+// Use Render’s dynamic port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(🚀 Qlasar server running on port ${PORT}));
