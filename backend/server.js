@@ -64,7 +64,7 @@ app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
-// Store a new session
+// Store session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -84,12 +84,19 @@ app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
 
+    if (!messages || !Array.isArray(messages)) {
+      console.warn("⚠️ Invalid messages payload:", messages);
+      return res.status(400).json({ error: "Invalid messages array." });
+    }
+
     const payload = {
-      model: "deepseek/deepseek-chat-v3.1:free", // ✅ Correct model
-      input: messages, // ✅ Must be `input`
+      model: "deepseek/deepseek-chat-v3.1:free",
+      input: messages,
       temperature: 0.7,
       max_output_tokens: 512,
     };
+
+    console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -102,15 +109,20 @@ app.post("/api/generate", async (req, res) => {
 
     const data = await response.json();
 
+    console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
+
     if (!data?.choices?.[0]?.message?.content) {
-      console.error("⚠️ No valid response from model:", data);
-      return res.status(500).json({ error: "No response from model." });
+      console.error("⚠️ No valid response from model.");
+      return res.status(500).json({
+        error: "Couldn't get AI response. See server logs for details.",
+        rawResponse: data,
+      });
     }
 
     res.json({ reply: data.choices[0].message.content });
   } catch (err) {
     console.error("❌ Model request failed:", err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: `Model request failed: ${err.message}` });
   }
 });
 
@@ -121,7 +133,7 @@ const frontendPath = path.join(__dirname, "../frontend/dist");
 
 app.use(express.static(frontendPath));
 
-// SPA fallback for React/Vite routing
+// React/Vite SPA fallback
 app.get("*", (req, res) => {
   const indexFile = path.join(frontendPath, "index.html");
   console.log("📂 Serving frontend:", indexFile);
