@@ -1,6 +1,7 @@
 import express from "express";
 import fetch from "node-fetch";
 import { createClient } from "@supabase/supabase-js";
+import path from "path";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -52,20 +53,18 @@ const heartbeat = async () => {
     console.error("⚠️ Supabase heartbeat failed:", err.message);
   }
 };
-
-// Run heartbeat every 4 minutes (Render’s idle timeout is ~5min)
-setInterval(heartbeat, 240000);
+setInterval(heartbeat, 240000); // every 4 minutes
 heartbeat();
 
 // --- API ROUTES ---
 
 // Test route
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
 // Store a new session
-app.post("/session", async (req, res) => {
+app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
     const { error } = await supabase
@@ -80,7 +79,7 @@ app.post("/session", async (req, res) => {
 });
 
 // Generate model response
-app.post("/generate", async (req, res) => {
+app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
 
@@ -98,7 +97,7 @@ app.post("/generate", async (req, res) => {
 
     const data = await response.json();
 
-    if (!data || !data.choices || !data.choices[0]?.message) {
+    if (!data?.choices?.[0]?.message) {
       console.error("⚠️ No valid response from model:", data);
       return res.status(500).json({ error: "No response from model." });
     }
@@ -108,6 +107,15 @@ app.post("/generate", async (req, res) => {
     console.error("❌ Model request failed:", err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// --- SERVE FRONTEND ---
+const frontendPath = path.join(process.cwd(), "frontend/dist");
+app.use(express.static(frontendPath));
+
+// React/Vite fallback for SPA routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // --- START SERVER ---
