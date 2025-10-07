@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 
 if (!OPENROUTER_KEY) {
