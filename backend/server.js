@@ -88,7 +88,7 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "deepseek/deepseek-chat-v3.1:free",
         messages,
       }),
     });
