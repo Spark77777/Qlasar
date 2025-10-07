@@ -1,5 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
+import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,6 +9,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+
+// --- MIDDLEWARES ---
+app.use(cors()); // ✅ Allows frontend (Render/Vercel/etc.) to connect
 app.use(express.json());
 
 // --- ENVIRONMENT VARIABLES ---
@@ -59,12 +63,12 @@ heartbeat();
 
 // --- API ROUTES ---
 
-// Health check
+// ✅ Health check
 app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
-// Store session
+// ✅ Store session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -79,7 +83,7 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
-// Generate AI response
+// ✅ Generate AI response
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
@@ -89,17 +93,16 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
-    // Map frontend messages to OpenRouter format
-    const formattedMessages = messages.map(msg => ({
-      role: msg.sender === "user" ? "user" : "assistant", // convert sender to role
-      content: msg.text
+    const formattedMessages = messages.map((msg) => ({
+      role: msg.sender === "user" ? "user" : "assistant",
+      content: msg.text,
     }));
 
     const payload = {
       model: "deepseek/deepseek-chat-v3.1:free",
-      messages: formattedMessages, // ✅ correct field name
+      messages: formattedMessages,
       temperature: 0.7,
-      max_output_tokens: 512
+      max_output_tokens: 512,
     };
 
     console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
@@ -138,7 +141,7 @@ const frontendPath = path.join(__dirname, "../frontend/dist");
 
 app.use(express.static(frontendPath));
 
-// React/Vite SPA fallback
+// ✅ SPA fallback
 app.get("*", (req, res) => {
   const indexFile = path.join(frontendPath, "index.html");
   console.log("📂 Serving frontend:", indexFile);
