@@ -24,9 +24,7 @@ const ChatWindow = () => {
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
+      (_event, session) => setUser(session?.user || null)
     );
 
     return () => listener.subscription.unsubscribe();
@@ -34,7 +32,7 @@ const ChatWindow = () => {
 
   // 🔹 Send message + get AI response
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isTyping) return; // prevent multiple requests
 
     const newMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, newMessage]);
@@ -44,35 +42,26 @@ const ChatWindow = () => {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      console.log("🛰 Sending request to backend...");
-
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }), // ✅ backend expects this
+        body: JSON.stringify({ message: input }),
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("❌ Server error:", errText);
-        throw new Error(`Server returned ${res.status}`);
+        const errData = await res.json();
+        const errorMessage =
+          res.status === 429
+            ? "⚠️ Rate limit exceeded. Try again in a few seconds."
+            : errData.error || `Server returned ${res.status}`;
+        setMessages((prev) => [...prev, { sender: "ai", text: errorMessage }]);
+        return;
       }
 
       const data = await res.json();
-      console.log("✅ API raw response:", data);
-
-      // Get reply safely
-      const reply =
-        data.reply ||
-        data.message ||
-        data.content ||
-        data?.choices?.[0]?.message?.content ||
-        "❌ No valid response from model.";
-
-      const aiMessage = { sender: "ai", text: reply };
-      setMessages((prev) => [...prev, aiMessage]);
+      const reply = data.response || "❌ No valid response from model.";
+      setMessages((prev) => [...prev, { sender: "ai", text: reply }]);
     } catch (err) {
-      console.error("AI Error:", err);
       setMessages((prev) => [
         ...prev,
         { sender: "ai", text: `❌ Error: ${err.message}` },
@@ -213,6 +202,7 @@ const ChatWindow = () => {
           <button
             onClick={handleSend}
             className="p-2 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
+            disabled={isTyping} // Disable while AI is responding
           >
             <Send size={18} />
           </button>
