@@ -89,11 +89,17 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
+    // Map messages to OpenRouter format (role + content)
+    const input = messages.map(msg => ({
+      role: msg.role,        // 'system', 'user', or 'assistant'
+      content: msg.content   // message text
+    }));
+
     const payload = {
       model: "deepseek/deepseek-chat-v3.1:free",
-      input: messages,
+      input,                  // <-- OpenRouter expects 'input' array
       temperature: 0.7,
-      max_output_tokens: 512,
+      max_output_tokens: 512
     };
 
     console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
