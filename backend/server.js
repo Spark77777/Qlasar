@@ -59,10 +59,12 @@ heartbeat();
 
 // --- API ROUTES ---
 
+// Health check
 app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
+// Store a new session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -77,9 +79,17 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
+// Generate AI response
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
+
+    const payload = {
+      model: "deepseek/deepseek-chat-v3.1:free", // ✅ Correct model
+      input: messages, // ✅ Must be `input`
+      temperature: 0.7,
+      max_output_tokens: 512,
+    };
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -87,20 +97,17 @@ app.post("/api/generate", async (req, res) => {
         Authorization: `Bearer ${OPENROUTER_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3.1:free",
-        messages,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
 
-    if (!data?.choices?.[0]?.message) {
+    if (!data?.choices?.[0]?.message?.content) {
       console.error("⚠️ No valid response from model:", data);
       return res.status(500).json({ error: "No response from model." });
     }
 
-    res.json({ reply: data.choices[0].message });
+    res.json({ reply: data.choices[0].message.content });
   } catch (err) {
     console.error("❌ Model request failed:", err.message);
     res.status(500).json({ error: err.message });
@@ -114,7 +121,7 @@ const frontendPath = path.join(__dirname, "../frontend/dist");
 
 app.use(express.static(frontendPath));
 
-// React/Vite SPA fallback
+// SPA fallback for React/Vite routing
 app.get("*", (req, res) => {
   const indexFile = path.join(frontendPath, "index.html");
   console.log("📂 Serving frontend:", indexFile);
