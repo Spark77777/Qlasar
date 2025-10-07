@@ -57,17 +57,10 @@ const ChatWindow = () => {
 
       console.log("🛰 Sending request to backend...");
       const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "x-ai/grok-4-fast:free",
-          messages: formattedMessages,
-          temperature: 0.7,
-          top_p: 0.95,
-          max_tokens: 1024,
-        }),
-      });
-
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ message: input }), // ✅ backend expects this
+});
       if (!res.ok) {
         const errText = await res.text();
         console.error("❌ Server error:", errText);
