@@ -11,6 +11,7 @@ const ChatWindow = () => {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -22,9 +23,11 @@ const ChatWindow = () => {
     };
     getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      }
+    );
 
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -37,30 +40,18 @@ const ChatWindow = () => {
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
     setIsTyping(true);
+
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
-      // Convert message format to match app.py logic
-      const formattedMessages = [
-        {
-          role: "system",
-          content:
-            "You are Qlasar, an AI scout. Only for those questions that need detailed and well-structured answers, provide four sections:\n" +
-            "1. Answer\n2. Counterarguments\n3. Blindspots\n4. Conclusion.\n" +
-            "For simple questions, respond normally without these sections.",
-        },
-        ...[...messages, newMessage].map((msg) => ({
-          role: msg.sender === "user" ? "user" : "assistant",
-          content: msg.text,
-        })),
-      ];
-
       console.log("🛰 Sending request to backend...");
+
       const res = await fetch("/api/generate", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ message: input }), // ✅ backend expects this
-});
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }), // ✅ backend expects this
+      });
+
       if (!res.ok) {
         const errText = await res.text();
         console.error("❌ Server error:", errText);
@@ -103,7 +94,10 @@ const ChatWindow = () => {
         if (error) alert(error.message);
         else alert("Account created! Check your email for verification.");
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) alert(error.message);
         else setShowAuth(false);
       }
@@ -178,7 +172,9 @@ const ChatWindow = () => {
                   ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
                   : "bg-white text-gray-800 border border-gray-200 rounded-bl-none"
               }`}
-              dangerouslySetInnerHTML={msg.sender === "ai" ? { __html: msg.text } : undefined}
+              dangerouslySetInnerHTML={
+                msg.sender === "ai" ? { __html: msg.text } : undefined
+              }
             >
               {msg.sender === "user" ? msg.text : null}
             </div>
