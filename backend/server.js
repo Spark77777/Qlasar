@@ -1,3 +1,4 @@
+// backend/server.js
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -7,16 +8,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔹 Setup paths
+// ✅ For ES Modules (__dirname fix)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 5000;
-const OR_KEY = process.env.OPENROUTER_KEY; // Your OpenRouter API key
+const OR_KEY = process.env.OPENROUTER_KEY;
 
-// ======================
-// 🔹 API ROUTE
-// ======================
+// ---------------- API Route ----------------
 app.post("/api/generate", async (req, res) => {
   try {
     const { message } = req.body;
@@ -34,9 +33,7 @@ app.post("/api/generate", async (req, res) => {
     });
 
     if (response.status === 429) {
-      return res
-        .status(429)
-        .json({ error: "Rate limit exceeded. Please wait a few seconds and try again." });
+      return res.status(429).json({ error: "Rate limit exceeded. Please wait a few seconds and try again." });
     }
 
     if (!response.ok) {
@@ -53,19 +50,14 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// ======================
-// 🔹 FRONTEND (React) SERVE
-// ======================
+// ---------------- Serve Vite Frontend ----------------
+const frontendPath = path.join(__dirname, "../frontend/dist"); // adjust if folder name differs
+app.use(express.static(frontendPath));
 
-// Serve static frontend files (assuming built files are in "client/dist")
-app.use(express.static(path.join(__dirname, "client/dist")));
-
-// Handle all other routes (React Router or direct URL access)
+// ✅ Handle SPA routing (important for React Router)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client/dist", "index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ======================
-// 🔹 START SERVER
-// ======================
+// ---------------- Start Server ----------------
 app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
