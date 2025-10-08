@@ -16,7 +16,7 @@ const ChatWindow = () => {
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // 🔹 Check login
+  // 🔹 Check login and load sessions
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -32,7 +32,11 @@ const ChatWindow = () => {
         const u = session?.user || null;
         setUser(u);
         if (u) loadSessions(u.id);
-        else setSessions([]);
+        else {
+          setSessions([]);
+          setActiveSession(null);
+          setMessages([]);
+        }
       }
     );
 
@@ -55,6 +59,7 @@ const ChatWindow = () => {
 
   // 🔹 Load messages
   const loadMessages = async (sessionId) => {
+    if (!sessionId) return setMessages([]);
     const { data, error } = await supabase
       .from("Messages")
       .select("*")
@@ -126,9 +131,12 @@ const ChatWindow = () => {
     }
   };
 
-  // 🔹 Select session
+  // 🔹 Select / create session
   const selectSession = async (id) => {
+    if (!user) return alert("Login first to manage sessions.");
+
     if (id === "new") {
+      // Create new session
       const { data, error } = await supabase
         .from("Session")
         .insert({
@@ -142,11 +150,12 @@ const ChatWindow = () => {
         setSessions((prev) => [...prev, data]);
         setActiveSession(data.id);
         setMessages([]);
-      }
+      } else console.error("Error creating session:", error);
     } else {
       setActiveSession(id);
       await loadMessages(id);
     }
+
     setShowSidebar(false);
   };
 
@@ -216,7 +225,9 @@ const ChatWindow = () => {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                msg.sender === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
                 className={`max-w-[75%] px-4 py-3 text-sm rounded-2xl shadow-sm ${
@@ -224,7 +235,9 @@ const ChatWindow = () => {
                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
                     : "bg-white text-gray-800 border border-gray-200 rounded-bl-none"
                 }`}
-                dangerouslySetInnerHTML={msg.sender === "ai" ? { __html: msg.text } : undefined}
+                dangerouslySetInnerHTML={
+                  msg.sender === "ai" ? { __html: msg.text } : undefined
+                }
               >
                 {msg.sender === "user" ? msg.text : null}
               </div>
@@ -263,7 +276,7 @@ const ChatWindow = () => {
             <button
               onClick={handleSend}
               className="p-2 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
-              disabled={isTyping || !input.trim()}
+              disabled={isTyping || !input.trim() || !activeSession}
             >
               <Send size={18} />
             </button>
