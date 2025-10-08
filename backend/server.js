@@ -1,13 +1,22 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 🔹 Setup paths
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const PORT = process.env.PORT || 5000;
 const OR_KEY = process.env.OPENROUTER_KEY; // Your OpenRouter API key
 
+// ======================
+// 🔹 API ROUTE
+// ======================
 app.post("/api/generate", async (req, res) => {
   try {
     const { message } = req.body;
@@ -25,8 +34,9 @@ app.post("/api/generate", async (req, res) => {
     });
 
     if (response.status === 429) {
-      // Rate limit exceeded
-      return res.status(429).json({ error: "Rate limit exceeded. Please wait a few seconds and try again." });
+      return res
+        .status(429)
+        .json({ error: "Rate limit exceeded. Please wait a few seconds and try again." });
     }
 
     if (!response.ok) {
@@ -43,4 +53,19 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
+// ======================
+// 🔹 FRONTEND (React) SERVE
+// ======================
+
+// Serve static frontend files (assuming built files are in "client/dist")
+app.use(express.static(path.join(__dirname, "client/dist")));
+
+// Handle all other routes (React Router or direct URL access)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/dist", "index.html"));
+});
+
+// ======================
+// 🔹 START SERVER
+// ======================
 app.listen(PORT, () => console.log(`🚀 Qlasar server running on port ${PORT}`));
