@@ -4,17 +4,14 @@ import { supabase } from "../lib/supabaseClient";
 import SessionSidebar from "./SessionSidebar";
 
 const ChatWindow = () => {
-  const [messages, setMessages] = useState([
-    { sender: "ai", text: "Hi there 👋, how can I help you today?" },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [user, setUser] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [activeSession, setActiveSession] = useState("main");
-  const [sessions, setSessions] = useState([]); // array of session objects {id, name}
+  const [activeSession, setActiveSession] = useState(null);
+  const [sessions, setSessions] = useState([]);
 
   const chatEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -23,16 +20,51 @@ const ChatWindow = () => {
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
-      if (data?.user) setUser(data.user);
+      if (data?.user) {
+        setUser(data.user);
+        await loadSessions(data.user.id);
+      }
     };
     getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => setUser(session?.user || null)
+      (_event, session) => {
+        const u = session?.user || null;
+        setUser(u);
+        if (u) loadSessions(u.id);
+        else setSessions([]);
+      }
     );
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // 🔹 Load sessions
+  const loadSessions = async (userId) => {
+    const { data, error } = await supabase
+      .from("Session")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true });
+
+    if (!error && data) {
+      setSessions(data);
+      if (data.length > 0 && !activeSession) selectSession(data[0].id);
+    }
+  };
+
+  // 🔹 Load messages
+  const loadMessages = async (sessionId) => {
+    const { data, error } = await supabase
+      .from("Messages")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true });
+
+    if (!error && data)
+      setMessages(data.map((m) => ({ sender: m.sender, text: m.text })));
+    else setMessages([]);
+  };
 
   // 🔹 Auto-scroll
   useEffect(() => {
@@ -41,7 +73,7 @@ const ChatWindow = () => {
 
   // 🔹 Send message
   const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
+    if (!input.trim() || isTyping || !activeSession) return;
 
     const newMessage = { sender: "user", text: input };
     setMessages((prev) => [...prev, newMessage]);
@@ -50,24 +82,39 @@ const ChatWindow = () => {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     try {
+      // Insert user message
+      await supabase.from("Messages").insert({
+        session_id: activeSession,
+        sender: "user",
+        text: input,
+      });
+
+      // AI response
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
 
-      if (!res.ok) {
+      let reply = "❌ No valid response from model.";
+      if (res.ok) {
+        const data = await res.json();
+        reply = data.response || reply;
+
+        // Store AI response
+        await supabase.from("Messages").insert({
+          session_id: activeSession,
+          sender: "ai",
+          text: reply,
+        });
+      } else {
         const errData = await res.json();
-        const errorMessage =
+        reply =
           res.status === 429
-            ? "⚠️ Rate limit exceeded. Try again in a few seconds."
+            ? "⚠️ Rate limit exceeded. Try again later."
             : errData.error || `Server returned ${res.status}`;
-        setMessages((prev) => [...prev, { sender: "ai", text: errorMessage }]);
-        return;
       }
 
-      const data = await res.json();
-      const reply = data.response || "❌ No valid response from model.";
       setMessages((prev) => [...prev, { sender: "ai", text: reply }]);
     } catch (err) {
       setMessages((prev) => [
@@ -79,17 +126,26 @@ const ChatWindow = () => {
     }
   };
 
-  // 🔹 Handle selecting session / Proactive Alerts
-  const handleSelectSession = (id) => {
+  // 🔹 Select session
+  const selectSession = async (id) => {
     if (id === "new") {
-      const newSession = {
-        id: Date.now().toString(),
-        name: `Session ${sessions.length + 1}`,
-      };
-      setSessions((prev) => [...prev, newSession]);
-      setActiveSession(newSession.id);
+      const { data, error } = await supabase
+        .from("Session")
+        .insert({
+          user_id: user.id,
+          session_name: `Session ${sessions.length + 1}`,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setSessions((prev) => [...prev, data]);
+        setActiveSession(data.id);
+        setMessages([]);
+      }
     } else {
       setActiveSession(id);
+      await loadMessages(id);
     }
     setShowSidebar(false);
   };
@@ -100,7 +156,7 @@ const ChatWindow = () => {
       {showSidebar && (
         <SessionSidebar
           onClose={() => setShowSidebar(false)}
-          onSelectSession={handleSelectSession}
+          onSelectSession={selectSession}
           sessions={sessions}
         />
       )}
@@ -146,8 +202,8 @@ const ChatWindow = () => {
             ) : (
               <button
                 className="w-9 h-9 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 transition"
-                onClick={() => setShowAuth("login")}
                 title="Login / Signup"
+                onClick={() => setShowSidebar(true)}
               >
                 <User size={18} className="text-gray-600" />
               </button>
@@ -160,9 +216,7 @@ const ChatWindow = () => {
           {messages.map((msg, idx) => (
             <div
               key={idx}
-              className={`flex ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
                 className={`max-w-[75%] px-4 py-3 text-sm rounded-2xl shadow-sm ${
@@ -170,16 +224,13 @@ const ChatWindow = () => {
                     ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-br-none"
                     : "bg-white text-gray-800 border border-gray-200 rounded-bl-none"
                 }`}
-                dangerouslySetInnerHTML={
-                  msg.sender === "ai" ? { __html: msg.text } : undefined
-                }
+                dangerouslySetInnerHTML={msg.sender === "ai" ? { __html: msg.text } : undefined}
               >
                 {msg.sender === "user" ? msg.text : null}
               </div>
             </div>
           ))}
 
-          {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm">
@@ -212,7 +263,7 @@ const ChatWindow = () => {
             <button
               onClick={handleSend}
               className="p-2 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
-              disabled={isTyping}
+              disabled={isTyping || !input.trim()}
             >
               <Send size={18} />
             </button>
