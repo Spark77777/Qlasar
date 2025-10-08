@@ -28,7 +28,7 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo:free", // stable free model
+        model: "deepseek/deepseek-chat-v3.1:free", // stable free model
         messages: [{ role: "user", content: message }],
       }),
     });
