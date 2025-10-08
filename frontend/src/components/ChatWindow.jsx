@@ -12,7 +12,6 @@ const ChatWindow = () => {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-
   const [showSidebar, setShowSidebar] = useState(false);
   const [activeSession, setActiveSession] = useState("main");
   const [sessions, setSessions] = useState([]); // array of session objects {id, name}
@@ -180,8 +179,48 @@ const ChatWindow = () => {
             </div>
           ))}
 
+          {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start">
               <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm">
                 <span className="flex space-x-1">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                </span>
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="w-full flex justify-end px-4 pb-5">
+          <div className="flex items-center gap-3 bg-white/80 backdrop-blur-md border shadow-md rounded-full px-4 py-2 max-w-md w-full sm:w-[70%] md:w-[50%] lg:w-[40%]">
+            <textarea
+              ref={textareaRef}
+              placeholder="What shall we explore?"
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
+              rows={1}
+              className="flex-1 bg-transparent border-none text-sm px-2 py-2 resize-none focus:outline-none overflow-hidden"
+            />
+            <button
+              onClick={handleSend}
+              className="p-2 bg-blue-500 hover:bg-blue-600 transition text-white rounded-full shadow-md"
+              disabled={isTyping}
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatWindow;
