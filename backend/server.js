@@ -1,3 +1,4 @@
+// backend/server.js
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -7,6 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ ES Modules (__dirname fix)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -26,20 +28,26 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo:free", // ✅ reliable free model
+        model: "openai/gpt-3.5-turbo:free", // most stable free model
         messages: [{ role: "user", content: message }],
       }),
     });
 
     const data = await response.json();
-    console.log("📤 Raw response:", data);
+    console.log("📤 Raw response:", JSON.stringify(data, null, 2));
 
-    // Extract AI content safely
+    // ✅ Robust extraction
     let aiContent = "⚠️ No valid response from AI.";
+
     if (data?.choices?.length > 0) {
-      aiContent = data.choices[0]?.message?.content || data.choices[0]?.text || aiContent;
+      const choice = data.choices[0];
+      aiContent =
+        choice?.message?.content || // OpenAI-style response
+        choice?.text ||             // Some OpenRouter free models
+        aiContent;
     }
 
+    console.log("💬 AI reply:", aiContent);
     res.json({ response: aiContent });
   } catch (err) {
     console.error("❌ Server Error:", err.message);
@@ -51,6 +59,7 @@ app.post("/api/generate", async (req, res) => {
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
+// ✅ SPA routing (React Router)
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
