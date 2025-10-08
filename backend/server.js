@@ -28,7 +28,7 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3.1:free", // stable free model
+        model: "qwen/qwen3-8b:free", // stable free model
         messages: [{ role: "user", content: message }],
       }),
     });
