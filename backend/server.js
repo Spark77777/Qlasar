@@ -28,7 +28,7 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo:free", // most stable free model
+        model: "openai/gpt-3.5-turbo:free", // stable free model
         messages: [{ role: "user", content: message }],
       }),
     });
@@ -36,16 +36,11 @@ app.post("/api/generate", async (req, res) => {
     const data = await response.json();
     console.log("📤 Raw response:", JSON.stringify(data, null, 2));
 
-    // ✅ Robust extraction
-    let aiContent = "⚠️ No valid response from AI.";
-
-    if (data?.choices?.length > 0) {
-      const choice = data.choices[0];
-      aiContent =
-        choice?.message?.content || // OpenAI-style response
-        choice?.text ||             // Some OpenRouter free models
-        aiContent;
-    }
+    // ✅ Robust extraction of AI response
+    let aiContent =
+      data?.choices?.[0]?.message?.content ||
+      data?.choices?.[0]?.text ||
+      JSON.stringify(data); // fallback: return raw JSON
 
     console.log("💬 AI reply:", aiContent);
     res.json({ response: aiContent });
