@@ -1,4 +1,3 @@
-// backend/server.js
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -8,7 +7,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ For ES Modules (__dirname fix)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -19,10 +17,7 @@ const OR_KEY = process.env.OPENROUTER_KEY;
 app.post("/api/generate", async (req, res) => {
   try {
     const { message } = req.body;
-
-    if (!message || !message.trim()) {
-      return res.status(400).json({ error: "Message is required." });
-    }
+    console.log("📥 User input:", message);
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -31,40 +26,24 @@ app.post("/api/generate", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3.1:free", // can replace with another available model
+        model: "openai/gpt-3.5-turbo:free", // ✅ reliable free model
         messages: [{ role: "user", content: message }],
       }),
     });
 
-    // Handle rate limit
-    if (response.status === 429) {
-      return res.status(429).json({
-        error: "Rate limit exceeded. Please wait a few seconds and try again.",
-      });
-    }
-
-    // Handle other API errors
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("❌ OpenRouter API Error:", errText);
-      return res.status(response.status).json({
-        error: `OpenRouter API returned ${response.status}: ${errText}`,
-      });
-    }
-
-    // Parse response safely
     const data = await response.json();
-    console.log("✅ OpenRouter Response:", JSON.stringify(data, null, 2));
+    console.log("📤 Raw response:", data);
 
-    let aiReply =
-      data?.choices?.[0]?.message?.content ||
-      data?.message ||
-      "⚠️ No valid response from AI.";
+    // Extract AI content safely
+    let aiContent = "⚠️ No valid response from AI.";
+    if (data?.choices?.length > 0) {
+      aiContent = data.choices[0]?.message?.content || data.choices[0]?.text || aiContent;
+    }
 
-    res.json({ response: aiReply });
+    res.json({ response: aiContent });
   } catch (err) {
-    console.error("💥 Server Error:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Server Error:", err.message);
+    res.status(500).json({ response: "⚠️ Server error. Try again later." });
   }
 });
 
@@ -72,7 +51,6 @@ app.post("/api/generate", async (req, res) => {
 const frontendPath = path.join(__dirname, "../frontend/dist");
 app.use(express.static(frontendPath));
 
-// ✅ Handle SPA routing
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
