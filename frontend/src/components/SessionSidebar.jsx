@@ -1,50 +1,8 @@
-import React, { useEffect, useState } from "react";
+
+import React from "react";
 import { X, Plus } from "lucide-react";
-import { supabase } from "../lib/supabaseClient";
 
-const SessionSidebar = ({ onClose, onSelectSession, activeSession }) => {
-  const [sessions, setSessions] = useState([]);
-  const [user, setUser] = useState(null);
-
-  // Fetch user and their sessions
-  useEffect(() => {
-    const fetchUserAndSessions = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData?.user) return;
-      setUser(userData.user);
-
-      const { data: sessionsData, error } = await supabase
-        .from("Session")
-        .select("*")
-        .eq("user_id", userData.user.id)
-        .order("created_at", { ascending: true });
-
-      if (error) console.error("Error fetching sessions:", error);
-      else setSessions(sessionsData || []);
-    };
-
-    fetchUserAndSessions();
-  }, []);
-
-  // Create a new session
-  const handleNewSession = async () => {
-    if (!user) return;
-
-    const newSessionName = `Session ${sessions.length + 1}`;
-    const { data, error } = await supabase
-      .from("Session")
-      .insert([{ user_id: user.id, session_name: newSessionName }])
-      .select()
-      .single();
-
-    if (error) console.error("Error creating session:", error);
-    else {
-      setSessions((prev) => [...prev, data]);
-      onSelectSession(data.id);
-      onClose();
-    }
-  };
-
+const SessionSidebar = ({ onClose, onSelectSession, sessions = [], activeSession }) => {
   // Handle selecting a session or Proactive Alerts
   const handleSelect = (id) => {
     onSelectSession(id);
@@ -73,7 +31,7 @@ const SessionSidebar = ({ onClose, onSelectSession, activeSession }) => {
 
       {/* + Session */}
       <button
-        onClick={handleNewSession}
+        onClick={() => handleSelect("new")}
         className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-gray-600 font-medium"
       >
         <Plus size={16} /> + Session
