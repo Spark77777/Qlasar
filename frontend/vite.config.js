@@ -5,9 +5,9 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "./", // ✅ important: makes asset URLs relative
+  base: "/", // ⬅️ CHANGE THIS LINE (from "./" to "/")
   build: {
-    outDir: path.resolve(__dirname, "../backend/public"), // where Express serves from
+    outDir: path.resolve(__dirname, "../backend/public"),
     emptyOutDir: true,
   },
   server: {
