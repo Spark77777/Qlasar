@@ -12,7 +12,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const OR_KEY = process.env.OPENROUTER_KEY;
 
 // ---------------- API Route ----------------
