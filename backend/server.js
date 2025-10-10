@@ -12,7 +12,7 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 const OR_KEY = process.env.OPENROUTER_KEY;
 
 // ---------------- API Route ----------------
@@ -50,13 +50,13 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// ---------------- Serve Vite Frontend ----------------
-const frontendPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendPath));
+// ---------------- Serve Frontend ----------------
+// ✅ Serve the frontend build (from backend/public)
+app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ SPA routing (React Router)
+// ✅ SPA routing (React Router support)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // ---------------- Start Server ----------------
