@@ -5,7 +5,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "./", // ✅ Ensures relative paths for assets
+  base: "", // ✅ Ensures relative paths for assets
   build: {
     outDir: path.resolve(__dirname, "dist"), // ✅ Stay inside frontend folder
     emptyOutDir: true,
