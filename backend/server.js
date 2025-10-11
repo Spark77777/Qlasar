@@ -49,18 +49,35 @@ app.post("/api/generate", async (req, res) => {
 });
 
 // ---------------- Serve Frontend ----------------
-// ✅ Explicit known path for Render build environment
-const frontendPath = "/opt/render/project/src/frontend/dist";
+const possibleFrontendPaths = [
+  path.join(__dirname, "public"),
+  path.join(__dirname, "../frontend/dist"),
+  "/opt/render/project/src/frontend/dist", // explicit for Render
+];
 
-if (fs.existsSync(frontendPath)) {
-  console.log(`✅ Serving frontend from: ${frontendPath}`);
-  app.use(express.static(frontendPath));
-} else {
-  console.error(`❌ Frontend path not found: ${frontendPath}`);
-  console.error("➡️ Run `npm run build` in the frontend directory.");
+let frontendPath = null;
+for (const p of possibleFrontendPaths) {
+  if (fs.existsSync(p) && fs.existsSync(path.join(p, "index.html"))) {
+    frontendPath = p;
+    console.log(`✅ Frontend build detected at: ${frontendPath}`);
+    break;
+  }
 }
 
-// ✅ SPA routing (for React Router)
+if (!frontendPath) {
+  console.error("❌ No frontend build detected!");
+  console.error("➡️ Run `npm run build` in the frontend directory.");
+  process.exit(1);
+}
+
+// ✅ Log each static file request for debugging
+app.use(express.static(frontendPath, {
+  setHeaders: (res, filePath) => {
+    console.log(`📄 Serving file: ${filePath}`);
+  }
+}));
+
+// ✅ SPA routing (React Router support)
 app.get("*", (req, res) => {
   const indexPath = path.join(frontendPath, "index.html");
 
