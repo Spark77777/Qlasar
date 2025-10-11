@@ -4,7 +4,6 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createRequire } from "module";
 
 const app = express();
 app.use(cors());
@@ -49,66 +48,32 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// ---------------- Frontend Path Resolver (Auto from vite.config.js) ----------------
-function resolveFrontendPath() {
-  const viteConfigPath = path.join(__dirname, "../frontend/vite.config.js");
-  if (!fs.existsSync(viteConfigPath)) {
-    console.warn("⚠️ vite.config.js not found, falling back to default paths.");
-    return defaultFrontendPaths();
-  }
-
-  try {
-    // Dynamically import vite config
-    const require = createRequire(import.meta.url);
-    const viteConfig = require(viteConfigPath);
-
-    let outDir = "dist"; // default
-    if (viteConfig?.build?.outDir) {
-      outDir = viteConfig.build.outDir;
-    }
-
-    // Resolve absolute path
-    const frontendBuildPath = path.isAbsolute(outDir) ? outDir : path.join(__dirname, "../frontend", outDir);
-
-    if (fs.existsSync(frontendBuildPath) && fs.existsSync(path.join(frontendBuildPath, "index.html"))) {
-      console.log(`✅ Frontend build detected at: ${frontendBuildPath}`);
-      return frontendBuildPath;
-    } else {
-      console.warn(`⚠️ Frontend build folder not found at: ${frontendBuildPath}`);
-      return defaultFrontendPaths();
-    }
-  } catch (err) {
-    console.error("❌ Error reading vite.config.js:", err);
-    return defaultFrontendPaths();
-  }
-}
-
-function defaultFrontendPaths() {
-  const possiblePaths = [
-    path.join(__dirname, "public"),
-    path.join(__dirname, "../frontend/dist"),
-    path.join(__dirname, "../frontend/build"),
-  ];
-
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p) && fs.existsSync(path.join(p, "index.html"))) {
-      console.log(`✅ Frontend build detected at: ${p}`);
-      return p;
-    }
-  }
-
-  console.error("❌ No frontend build detected! Run `npm run build` in frontend.");
-  process.exit(1);
-}
-
-const frontendPath = resolveFrontendPath();
-
 // ---------------- Serve Frontend ----------------
-app.use(express.static(frontendPath));
+// ✅ Explicit known path for Render build environment
+const frontendPath = "/opt/render/project/src/frontend/dist";
 
-// ✅ SPA routing (React Router support)
+if (fs.existsSync(frontendPath)) {
+  console.log(`✅ Serving frontend from: ${frontendPath}`);
+  app.use(express.static(frontendPath));
+} else {
+  console.error(`❌ Frontend path not found: ${frontendPath}`);
+  console.error("➡️ Run `npm run build` in the frontend directory.");
+}
+
+// ✅ SPA routing (for React Router)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+  const indexPath = path.join(frontendPath, "index.html");
+
+  if (!fs.existsSync(indexPath)) {
+    console.error(`❌ index.html not found at: ${indexPath}`);
+    return res.status(404).send(`
+      <h2>❌ Frontend not found!</h2>
+      <p>Expected file: ${indexPath}</p>
+    `);
+  }
+
+  console.log("📄 Serving index.html");
+  res.sendFile(indexPath);
 });
 
 // ---------------- Start Server ----------------
