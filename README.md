@@ -39,7 +39,7 @@ Early contributors will:
 
 ● Receive permanent contributor roles once the foundation matures.
 
-● Be part of building the first proactive AI system guided by a cosmological theory.
+● Be part of building the first proactive AI system.
 
 
 Contributions now = Founding recognition later.
