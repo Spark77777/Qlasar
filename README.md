@@ -54,3 +54,13 @@ Backend: Node.js, Express
 Database: Supabase
 
 Hosting: Render / Vercel
+
+Looking for:
+
+React + Tailwind contributors
+
+Node.js + Express developers
+
+API integrators (LLMs, Supabase, etc.)
+
+Vision-driven collaborators 🚀
