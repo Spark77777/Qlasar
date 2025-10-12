@@ -25,7 +25,9 @@ Qlasar learns from interaction, not instruction.
 🧠 Core Architecture:
 
 Frontend (React + Vite): Dynamic, sleek chat interface for interacting with Qlasar.
+
 Backend (Node.js + Express): API layer that connects user input to the AI models and manages sessions.
+
 ARES (Agentic Reasoning and Execution System): 🧩 Private, closed-source intelligence layer that powers Qlasar’s deep reasoning and proactivity.
 
 💡 Why Contribute?:
