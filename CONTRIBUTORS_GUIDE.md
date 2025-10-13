@@ -21,4 +21,4 @@ git `clone` https://github.com/your-username/Qlasar
 
 `cd` Qlasar
 
-> Replace <your-username> with your GitHub username (e.g., Spark77777).
+> Replace your-username with your GitHub username (e.g., Spark77777).
