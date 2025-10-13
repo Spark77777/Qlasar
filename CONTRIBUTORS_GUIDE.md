@@ -16,7 +16,9 @@ This guide explains how to contribute code, ideas, and improvements to help buil
 Download your forked version to your local computer:
 
 git `clone` https://github.com/your-username/Qlasar
+
 .git
+
 `cd` Qlasar
 
 > Replace <your-username> with your GitHub username (e.g., Spark77777).
