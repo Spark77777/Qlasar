@@ -53,6 +53,18 @@ Upload your changes to your GitHub fork:
 
 git push origin feature-name
 
+### 6️⃣ Open a Pull Request (PR)
+
+1. Go to your fork on GitHub.
+
+2. Click **“Compare & pull request.”**
+
+3. Add a short but clear **title and description** of your changes.
+
+4. Submit your PR to the **main Qlasar repository** —
+👉 https://github.com/Spark77777/Qlasar
+
+Your PR will be reviewed by the maintainers. Once approved, it’ll be merged into the main project. 🎉
 
 
 
