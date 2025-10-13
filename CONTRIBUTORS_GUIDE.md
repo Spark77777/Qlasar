@@ -15,7 +15,7 @@ This guide explains how to contribute code, ideas, and improvements to help buil
 
 Download your forked version to your local computer:
 
-git `clone` https://github.com/<your-username>/Qlasar
+git `clone` https://github.com/your-username/Qlasar
 .git
 `cd` Qlasar
 
