@@ -7,6 +7,6 @@ This guide explains how to contribute code, ideas, and improvements to help buil
 
 ### 1️⃣ Fork the Repository
 
-● Click “Fork” in the top-right corner.
+● Click **“Fork”** in the top-right corner.
 
-● You now have your own copy of Qlasar to work on.
+● You now have **your own copy** of Qlasar to work on.
