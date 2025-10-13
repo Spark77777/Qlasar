@@ -44,6 +44,7 @@ git checkout -b fix-session-bug
 Then commit your changes:
 
 git add .
+
 git commit -m "Fix: resolved session timeout issue"
 
 
