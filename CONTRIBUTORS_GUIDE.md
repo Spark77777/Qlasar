@@ -33,3 +33,17 @@ Example:
 
 git checkout -b fix-session-bug
 
+## 4️⃣ Make Your Changes
+
+● Open Qlasar in your code editor (VS Code recommended).
+
+● Implement your fix, enhancement, or feature.
+
+● Test locally to ensure stability.
+
+Then commit your changes:
+
+git add .
+git commit -m "Fix: resolved session timeout issue"
+
+
