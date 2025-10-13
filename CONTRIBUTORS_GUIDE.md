@@ -22,3 +22,14 @@ git `clone` https://github.com/your-username/Qlasar
 `cd` Qlasar
 
 > Replace your-username with your GitHub username (e.g., Spark77777).
+
+### 3️⃣ Create a New Branch
+
+Before making any changes:
+
+git checkout -b feature-name
+
+Example:
+
+git checkout -b fix-session-bug
+
