@@ -5,7 +5,7 @@ This guide explains how to contribute code, ideas, and improvements to help buil
 
 ## 🛠️ How to Suggest Changes (Step-by-Step)
 
-1️⃣ Fork the Repository
+### 1️⃣ Fork the Repository
 
 ● Click “Fork” in the top-right corner.
 
