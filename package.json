@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^4.19.0",
+    "@supabase/supabase-js": "^2.44.3",
     "cors": "^2.8.5"
   }
 }
