@@ -1,100 +1,155 @@
-// backend/server.js
 import express from "express";
-import cors from "cors";
-import fs from "fs";
+import fetch from "node-fetch";
+import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-// ✅ ES Modules (__dirname fix)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// --- ENVIRONMENT VARIABLES ---
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 
-const PORT = process.env.PORT || 3000;
-const OR_KEY = process.env.OPENROUTER_KEY;
+// --- CHECK ENV ---
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("❌ Missing Supabase credentials in environment variables!");
+  process.exit(1);
+}
+if (!OPENROUTER_KEY) {
+  console.error("❌ Missing OpenRouter API key in environment variables!");
+  process.exit(1);
+}
 
-// ---------------- API Route ----------------
+// --- SUPABASE CLIENT ---
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- OPENROUTER KEY CHECK ---
+(async () => {
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await res.json();
+    console.log("✅ OpenRouter Key Status:\n", JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error("❌ Error checking OpenRouter key:", err.message);
+  }
+})();
+
+// --- SUPABASE HEARTBEAT ---
+const heartbeat = async () => {
+  try {
+    const { error } = await supabase.from("Session").select("id").limit(1);
+    if (error) throw error;
+    console.log("💓 Supabase heartbeat OK");
+  } catch (err) {
+    console.error("⚠️ Supabase heartbeat failed:", err.message);
+  }
+};
+setInterval(heartbeat, 240000); // every 4 minutes
+heartbeat();
+
+// --- API ROUTES ---
+
+// Health check
+app.get("/api/health", (req, res) => {
+  res.send("🚀 Server is running and healthy!");
+});
+
+// Store session
+app.post("/api/session", async (req, res) => {
+  try {
+    const { session_name, messages } = req.body;
+    const { error } = await supabase
+      .from("Session")
+      .insert([{ name: session_name, messages }]);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to store session:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Generate AI response
 app.post("/api/generate", async (req, res) => {
   try {
-    const { message } = req.body;
-    console.log("📥 User input:", message);
+    const { messages } = req.body;
+
+    if (!messages || !Array.isArray(messages)) {
+      console.warn("⚠️ Invalid messages payload:", messages);
+      return res.status(400).json({ error: "Invalid messages array." });
+    }
+
+    // Map frontend messages to OpenRouter format
+    const formattedMessages = messages.map(msg => ({
+      role: msg.sender === "user" ? "user" : "assistant", // convert sender to role
+      content: msg.text
+    }));
+
+    const payload = {
+      model: "deepseek/deepseek-chat-v3.1:free",
+      messages: formattedMessages, // ✅ correct field name
+      temperature: 0.7,
+      max_output_tokens: 512
+    };
+
+    console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OR_KEY}`,
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "qwen/qwen3-8b:free",
-        messages: [{ role: "user", content: message }],
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();
-    const aiContent =
-      data?.choices?.[0]?.message?.content ||
-      data?.choices?.[0]?.text ||
-      JSON.stringify(data);
+    console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
 
-    console.log("💬 AI reply:", aiContent);
-    res.json({ response: aiContent });
+    if (!data?.choices?.[0]?.message?.content) {
+      console.error("⚠️ No valid response from model:", data);
+      return res.status(500).json({
+        error: "Couldn't get AI response. See server logs for details.",
+        rawResponse: data,
+      });
+    }
+
+    res.json({ reply: data.choices[0].message.content });
   } catch (err) {
-    console.error("❌ Server Error:", err.message);
-    res.status(500).json({ response: "⚠️ Server error. Try again later." });
+    console.error("❌ Model request failed:", err.message);
+    res.status(500).json({ error: `Model request failed: ${err.message}` });
   }
 });
 
-// ---------------- Serve Frontend ----------------
-const possibleFrontendPaths = [
-  path.join(__dirname, "public"),
-  path.join(__dirname, "../frontend/dist"),
-  "/opt/render/project/src/frontend/dist", // explicit for Render
-];
+// --- SERVE FRONTEND ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendPath = path.join(__dirname, "../frontend/dist");
 
-let frontendPath = null;
-for (const p of possibleFrontendPaths) {
-  if (fs.existsSync(p) && fs.existsSync(path.join(p, "index.html"))) {
-    frontendPath = p;
-    console.log(`✅ Frontend build detected at: ${frontendPath}`);
-    break;
-  }
-}
+app.use(express.static(frontendPath));
 
-if (!frontendPath) {
-  console.error("❌ No frontend build detected!");
-  console.error("➡️ Run `npm run build` in the frontend directory.");
-  process.exit(1);
-}
-
-// ✅ Log each static file request for debugging
-app.use(express.static(frontendPath, {
-  setHeaders: (res, filePath) => {
-    console.log(`📄 Serving file: ${filePath}`);
-  }
-}));
-
-// ✅ SPA routing (React Router support)
+// React/Vite SPA fallback
 app.get("*", (req, res) => {
-  const indexPath = path.join(frontendPath, "index.html");
-
-  if (!fs.existsSync(indexPath)) {
-    console.error(`❌ index.html not found at: ${indexPath}`);
-    return res.status(404).send(`
-      <h2>❌ Frontend not found!</h2>
-      <p>Expected file: ${indexPath}</p>
-    `);
-  }
-
-  console.log("📄 Serving index.html");
-  res.sendFile(indexPath);
+  const indexFile = path.join(frontendPath, "index.html");
+  console.log("📂 Serving frontend:", indexFile);
+  res.sendFile(indexFile, (err) => {
+    if (err) {
+      console.error("❌ Error serving frontend:", err);
+      res.status(500).send("Frontend not found.");
+    }
+  });
 });
 
-// ---------------- Start Server ----------------
-app.listen(PORT, () => {
-  console.log(`🚀 Qlasar server running on port ${PORT}`);
-  console.log(`🌐 Access it at: http://localhost:${PORT}`);
-});
+// --- START SERVER ---
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
