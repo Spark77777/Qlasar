@@ -1,6 +1,41 @@
 const input = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
+const header = document.querySelector('header');
+
+// Create sidebar dynamically
+const sidebar = document.createElement('div');
+sidebar.id = 'sidebar';
+sidebar.innerHTML = `
+  <h2>Proactive Alerts</h2>
+  <div id="alerts-container"></div>
+`;
+document.body.appendChild(sidebar);
+
+const alertsContainer = document.getElementById('alerts-container');
+
+// Dummy alerts for demo
+const demoAlerts = [
+  "Crypto prices are rising!",
+  "New anime episode released today.",
+  "Trending music track: 'Echoes of Time'.",
+  "Stock market update: Tech sector up 2%."
+];
+
+// Populate alerts in sidebar
+demoAlerts.forEach(alertText => {
+  const alert = document.createElement('div');
+  alert.classList.add('alert');
+  alert.textContent = alertText;
+  alertsContainer.appendChild(alert);
+});
+
+// Toggle sidebar on clicking header (Qlasar text)
+let sidebarVisible = false;
+header.addEventListener('click', () => {
+  sidebarVisible = !sidebarVisible;
+  sidebar.style.left = sidebarVisible ? '0' : '-300px';
+});
 
 sendBtn.addEventListener('click', sendMessage);
 
