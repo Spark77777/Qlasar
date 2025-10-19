@@ -11,7 +11,7 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Add user message
+  // User message
   const userMsg = document.createElement('div');
   userMsg.classList.add('message', 'user');
   userMsg.textContent = text;
@@ -20,7 +20,7 @@ function sendMessage() {
   input.value = '';
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  // Add AI typing indicator
+  // AI typing indicator
   const aiMsg = document.createElement('div');
   aiMsg.classList.add('message', 'ai');
   aiMsg.textContent = "Qlasar is typing...";
