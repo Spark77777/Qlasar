@@ -2,57 +2,53 @@ const input = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
 const chatWindow = document.getElementById("chat-window");
 
-// Auto-expand textarea height
+// Auto-expand textarea
 function autoExpand() {
   input.style.height = "auto";
-  const newHeight = Math.min(input.scrollHeight, 120);
-  input.style.height = newHeight + "px";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
 }
 
-// Scroll chat to bottom smoothly
+// Scroll to bottom
 function scrollToBottom() {
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: "smooth" });
 }
 
-// Function to send message
+// Send message function
 function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Create user message bubble
+  // User bubble
   const userMsg = document.createElement("div");
   userMsg.classList.add("message", "user");
-  userMsg.innerHTML = input.value.replace(/\n/g, "<br>"); // Preserve multiline
+  userMsg.innerHTML = input.value.replace(/\n/g, "<br>");
   chatWindow.appendChild(userMsg);
   scrollToBottom();
 
   // Clear input
   input.value = "";
-  input.style.height = "auto";
+  autoExpand();
 
-  // Create AI message bubble
+  // AI typing placeholder
   const aiMsg = document.createElement("div");
-  aiMsg.classList.add("message", "ai");
-  aiMsg.textContent = "Qlasar is typing...";
+  aiMsg.classList.add("message", "ai", "typing");
+  aiMsg.innerHTML = "<span></span>";
   chatWindow.appendChild(aiMsg);
   scrollToBottom();
 
   // Simulate AI response
   setTimeout(() => {
-    aiMsg.innerHTML = "Hello, I am Qlasar.<br>How can I assist you today?";
+    aiMsg.classList.remove("typing");
+    const reply = "Hello! I am Qlasar.\nThis is a multiline example.\nYour messages stay formatted.";
+    aiMsg.innerHTML = reply.replace(/\n/g, "<br>");
     scrollToBottom();
-  }, 800);
+  }, 1200);
 }
 
-// Handle Enter and Ctrl+Enter
+// Key handling: Enter = newline, Ctrl+Enter = send
 input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && e.ctrlKey) {
-    e.preventDefault();
-    sendMessage();
-  } else if (e.key === "Enter" && !e.ctrlKey) {
-    // allow newline, just auto expand
-    setTimeout(autoExpand, 0);
-  }
+  if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); sendMessage(); }
+  else if (e.key === "Enter" && !e.ctrlKey) { setTimeout(autoExpand, 0); }
 });
 
 // Listeners
