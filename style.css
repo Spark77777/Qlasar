@@ -112,6 +112,10 @@ footer {
   background: transparent;
   color: #fff;
   font-size: 1rem;
+  resize: none; /* prevent manual resizing */
+  overflow-y: auto;
+  line-height: 1.4;
+  max-height: 120px; /* limit auto-expand */
 }
 
 #message-input::placeholder {
