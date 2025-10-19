@@ -1,15 +1,21 @@
-// support two possible textarea ids (message-input or user-input)
-const input = document.getElementById('message-input') || document.getElementById('user-input');
+// Robust, backward-compatible frontend script for Qlasar chat UI.
+// - Enter = newline, Ctrl+Enter = send
+// - Preserves multiline (converts \n -> <br> safely)
+// - Auto-expands textarea
+// - Adds both possible CSS classes for compatibility
+
+// Find the input (tries common ids), send button and chat window
+const input = document.getElementById('message-input') || document.getElementById('user-input') || document.querySelector('textarea');
 const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
 
 if (!input || !sendBtn || !chatWindow) {
-  console.error('Required DOM elements not found. Ensure IDs: message-input or user-input, send-btn, chat-window.');
+  console.error('script.js: required elements missing. Expect IDs: message-input or user-input (textarea), send-btn, chat-window.');
 }
 
-// Helper: escape HTML to prevent injection
+// Escape HTML to avoid injection
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -17,75 +23,96 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// Convert newlines to <br> and escape HTML
+// Convert newlines to <br> safely
 function nl2brEscaped(text) {
-  const escaped = escapeHtml(text);
-  return escaped.replace(/\n/g, "<br>");
+  return escapeHtml(text).replace(/\n/g, "<br>");
 }
 
-// Auto-expand textarea height (keeps behavior you had)
+// Auto-expand textarea height with a reasonable max
 function autoExpand() {
+  if (!input) return;
   input.style.height = 'auto';
-  const newHeight = Math.min(input.scrollHeight, 120); // keep max-height consistent with CSS
-  input.style.height = newHeight + 'px';
+  const max = 200; // px - safe maximum
+  const newH = Math.min(input.scrollHeight, max);
+  input.style.height = newH + 'px';
 }
 
-// Smooth scroll helper
+// Smooth scroll
 function scrollToBottom() {
+  if (!chatWindow) return;
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
 }
 
-// Send logic (preserves multiline)
-function sendMessage() {
-  // preserve internal newlines; remove \r for consistency and trim ends
-  const raw = (input.value || "").replace(/\r/g, "");
-  const text = raw.trim();
-  if (!text) return;
-
-  // create user bubble and preserve newlines
+// Create and append user message preserving multiline
+function appendUserMessage(rawText) {
   const userMsg = document.createElement('div');
-  userMsg.classList.add('message', 'user-message'); // match your CSS classes (user-message)
-  userMsg.innerHTML = nl2brEscaped(text);
+
+  // Add broad set of classes so CSS matches whichever naming you used
+  userMsg.classList.add('message');
+  userMsg.classList.add('user');         // matches .message.user if present
+  userMsg.classList.add('user-message'); // matches .user-message if present
+
+  userMsg.innerHTML = nl2brEscaped(rawText);
   chatWindow.appendChild(userMsg);
+  scrollToBottom();
+}
+
+// Create and append bot message content (can update later)
+function appendBotPlaceholder() {
+  const aiMsg = document.createElement('div');
+  aiMsg.classList.add('message');
+  aiMsg.classList.add('ai');          // matches .message.ai
+  aiMsg.classList.add('bot-message'); // matches .bot-message
+  aiMsg.innerHTML = '<em>Qlasar is typing...</em>';
+  chatWindow.appendChild(aiMsg);
+  scrollToBottom();
+  return aiMsg;
+}
+
+// Main send function
+function sendMessage() {
+  if (!input) return;
+  // keep \n inside, normalize CRLF -> LF
+  const raw = (input.value || "").replace(/\r/g, "");
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  appendUserMessage(raw); // pass raw to preserve internal blank lines
 
   // clear input and reset height
   input.value = '';
   input.style.height = 'auto';
-  scrollToBottom();
+  autoExpand();
 
-  // AI typing bubble
-  const aiMsg = document.createElement('div');
-  aiMsg.classList.add('message', 'bot-message'); // match your CSS classes (bot-message)
-  aiMsg.innerHTML = '<em>Qlasar is typing...</em>';
-  chatWindow.appendChild(aiMsg);
-  scrollToBottom();
+  // add bot placeholder
+  const aiMsg = appendBotPlaceholder();
 
-  // simulate AI response (replace with real API later)
+  // simulate response (replace with API call later)
   setTimeout(() => {
-    const reply = "Hello! I am Qlasar.\nThis is a sample multiline response.\nWe preserve line breaks.";
+    const reply = "Hello! I am Qlasar.\nThis reply preserves line breaks.\nYou can see multiple lines.";
     aiMsg.innerHTML = nl2brEscaped(reply);
     scrollToBottom();
   }, 900);
 }
 
 // Key handling: Enter adds newline, Ctrl+Enter sends
-input.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && e.ctrlKey) {
-    e.preventDefault();
-    sendMessage();
-  } else if (e.key === 'Enter' && !e.ctrlKey) {
-    // allow newline insertion (default) but ensure textarea grows
-    // no preventDefault so newline will be inserted
-    // use setTimeout to let newline be inserted, then expand
-    setTimeout(autoExpand, 0);
-  }
-});
+if (input) {
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      sendMessage();
+    } else if (e.key === 'Enter' && !e.ctrlKey) {
+      // let default newline happen; schedule autoExpand after newline inserted
+      setTimeout(autoExpand, 0);
+    }
+  });
 
-// keep auto-expand on input
-input.addEventListener('input', autoExpand);
+  // Auto-expand on input
+  input.addEventListener('input', autoExpand);
 
-// send button
-sendBtn.addEventListener('click', sendMessage);
+  // ensure initial size
+  setTimeout(autoExpand, 0);
+}
 
-// ensure initial height is correct
-autoExpand();
+// Send button
+if (sendBtn) sendBtn.addEventListener('click', sendMessage);
