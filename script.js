@@ -18,17 +18,23 @@ function sendMessage() {
   chatWindow.appendChild(userMsg);
 
   input.value = '';
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  scrollToBottom();
 
   // AI typing indicator
   const aiMsg = document.createElement('div');
   aiMsg.classList.add('message', 'ai');
   aiMsg.textContent = "Qlasar is typing...";
   chatWindow.appendChild(aiMsg);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  scrollToBottom();
 
   // Simulate AI response
   setTimeout(() => {
     aiMsg.textContent = "Hello! I am Qlasar. I will answer your questions soon.";
+    scrollToBottom();
   }, 1200);
+}
+
+// Smooth scroll to bottom
+function scrollToBottom() {
+  chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
 }
