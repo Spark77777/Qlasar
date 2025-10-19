@@ -11,7 +11,7 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Add user message
+  // User message
   const userMsg = document.createElement('div');
   userMsg.classList.add('message', 'user');
   userMsg.textContent = text;
@@ -20,15 +20,15 @@ function sendMessage() {
   input.value = '';
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  // Add AI placeholder reply
+  // AI typing indicator
   const aiMsg = document.createElement('div');
   aiMsg.classList.add('message', 'ai');
-  aiMsg.textContent = "Qlasar is thinking...";
+  aiMsg.textContent = "Qlasar is typing...";
   chatWindow.appendChild(aiMsg);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
   // Simulate AI response
   setTimeout(() => {
     aiMsg.textContent = "Hello! I am Qlasar. I will answer your questions soon.";
-  }, 1000);
+  }, 1200);
 }
