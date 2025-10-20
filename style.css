@@ -60,20 +60,30 @@ header {
 .message {
   padding: 0.8rem 1.2rem;
   font-size: 0.95rem;
-  line-height: 1.5; 
+  line-height: 1.5;
   word-wrap: break-word;
   max-width: 70%;
   animation: fadeIn 0.3s ease;
-  margin-bottom: 0.4rem; 
-  white-space: pre-wrap; 
+  margin-bottom: 0.4rem;
+  white-space: pre-wrap;
 }
 
-/* Extra spacing: AI → next user bubble */
-.message.ai + .message.user { margin-top: 1.2rem; }
-/* Optional: AI → AI spacing */
-.message.ai + .message.ai { margin-top: 0.6rem; }
-/* Optional: user → user spacing */
-.message.user + .message.user { margin-top: 0.6rem; }
+/* Spacing between consecutive messages */
+/* Current User bubble → next AI bubble */
+.message.user + .message.ai {
+  margin-top: 1.6rem; /* noticeable gap */
+}
+
+/* Current AI bubble → next User bubble */
+.message.ai + .message.user {
+  margin-top: 1.2rem;
+}
+
+/* AI → AI or User → User spacing */
+.message.ai + .message.ai,
+.message.user + .message.user {
+  margin-top: 0.6rem;
+}
 
 /* Bot bubble */
 .message.ai {
@@ -193,7 +203,7 @@ footer {
 #sidebar {
   position: fixed;
   top: 0;
-  left: -300px; /* hidden initially */
+  left: -300px;
   width: 300px;
   height: 100%;
   background: rgba(10, 10, 20, 0.95);
