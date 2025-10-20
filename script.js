@@ -40,12 +40,10 @@ header.addEventListener('click', () => {
 sendBtn.addEventListener('click', sendMessage);
 
 input.addEventListener('keydown', function(e) {
-  // Ctrl + Enter to send
   if (e.key === 'Enter' && e.ctrlKey) {
     e.preventDefault();
     sendMessage();
   } else if (e.key === 'Enter' && !e.ctrlKey) {
-    // Enter alone just adds newline
     autoExpand();
   }
 });
@@ -58,7 +56,7 @@ function autoExpand() {
   input.style.height = Math.min(input.scrollHeight, 120) + 'px';
 }
 
-function sendMessage() {
+async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
@@ -74,16 +72,36 @@ function sendMessage() {
 
   // AI typing indicator
   const aiMsg = document.createElement('div');
-  aiMsg.classList.add('message', 'ai');
-  aiMsg.textContent = "Qlasar is typing...";
+  aiMsg.classList.add('message', 'ai', 'typing');
+  aiMsg.textContent = "";
   chatWindow.appendChild(aiMsg);
   scrollToBottom();
 
-  // Simulate AI response
-  setTimeout(() => {
-    aiMsg.textContent = "Hello! I am Qlasar. I will answer your questions soon.";
+  try {
+    // Collect all messages for backend
+    const messages = [];
+    document.querySelectorAll('.message').forEach(msg => {
+      if (msg.classList.contains('user')) messages.push({ sender: 'user', text: msg.textContent });
+      else if (msg.classList.contains('ai')) messages.push({ sender: 'ai', text: msg.textContent });
+    });
+
+    // Call backend API
+    const res = await fetch("https://qlasar-qx6y.onrender.com/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages })
+    });
+
+    const data = await res.json();
+    aiMsg.classList.remove('typing');
+    aiMsg.textContent = data.reply || "❌ Failed to get response";
     scrollToBottom();
-  }, 1200);
+
+  } catch (err) {
+    aiMsg.classList.remove('typing');
+    aiMsg.textContent = "❌ Error connecting to server";
+    console.error(err);
+  }
 }
 
 function scrollToBottom() {
