@@ -8,9 +8,7 @@ const app = express();
 
 // --- MIDDLEWARE ---
 app.use(express.json());
-
-// Enable CORS for all origins (you can restrict later if needed)
-app.use(cors());
+app.use(cors()); // Enable CORS for all origins
 
 // --- ENVIRONMENT VARIABLES ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -91,15 +89,29 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
+    // --- SYSTEM PROMPT ---
+    const systemMessage = {
+      role: "system",
+      content: `
+You are Qlasar, an AI scout. For each user question, provide four sections:
+1. Answer: main response
+2. Counterarguments: possible opposing views
+3. Blindspots: missing considerations or overlooked aspects
+4. Conclusion: encourage the user to think critically and gain insight
+Format the response clearly with headings and end with a reflective thought for the user.
+      `.trim()
+    };
+
     // Map frontend messages to OpenRouter format
     const formattedMessages = messages.map(msg => ({
       role: msg.sender === "user" ? "user" : "assistant",
       content: msg.text
     }));
 
+    // Combine system message with conversation
     const payload = {
       model: "deepseek/deepseek-chat-v3.1:free",
-      messages: formattedMessages,
+      messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 512
     };
