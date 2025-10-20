@@ -2,9 +2,15 @@ import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
+import cors from "cors";
 
 const app = express();
+
+// --- MIDDLEWARE ---
 app.use(express.json());
+
+// Enable CORS for all origins (you can restrict later if needed)
+app.use(cors());
 
 // --- ENVIRONMENT VARIABLES ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -87,13 +93,13 @@ app.post("/api/generate", async (req, res) => {
 
     // Map frontend messages to OpenRouter format
     const formattedMessages = messages.map(msg => ({
-      role: msg.sender === "user" ? "user" : "assistant", // convert sender to role
+      role: msg.sender === "user" ? "user" : "assistant",
       content: msg.text
     }));
 
     const payload = {
       model: "deepseek/deepseek-chat-v3.1:free",
-      messages: formattedMessages, // ✅ correct field name
+      messages: formattedMessages,
       temperature: 0.7,
       max_output_tokens: 512
     };
@@ -127,22 +133,15 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// --- SERVE FRONTEND ---
+// --- SERVE FRONTEND (optional) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
-
 app.use(express.static(frontendPath));
-
-// React/Vite SPA fallback
 app.get("*", (req, res) => {
   const indexFile = path.join(frontendPath, "index.html");
-  console.log("📂 Serving frontend:", indexFile);
-  res.sendFile(indexFile, (err) => {
-    if (err) {
-      console.error("❌ Error serving frontend:", err);
-      res.status(500).send("Frontend not found.");
-    }
+  res.sendFile(indexFile, err => {
+    if (err) res.status(500).send("Frontend not found.");
   });
 });
 
