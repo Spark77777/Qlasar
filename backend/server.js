@@ -117,7 +117,7 @@ Maintain clarity, logic, and tone consistency. Never generate your own questions
 
     // Combine system message with conversation
     const payload = {
-      model: "deepseek/deepseek-chat-v3.1:free",
+      model: "google/gemini-2.0-flash-exp:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 512
