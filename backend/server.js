@@ -105,14 +105,13 @@ For each user query:
 - If the question is simple, factual, or conversational — respond as a **normal helpful AI**, without using the four-section format and **without** a reflective thought.
 
 Maintain clarity, logic, and tone consistency. Never generate your own questions or assume what the user might ask next.
-      `.trim()
+      `.trim(),
     };
 
-
     // Map frontend messages to OpenRouter format
-    const formattedMessages = messages.map(msg => ({
+    const formattedMessages = messages.map((msg) => ({
       role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.text
+      content: msg.text,
     }));
 
     // Combine system message with conversation
@@ -120,27 +119,27 @@ Maintain clarity, logic, and tone consistency. Never generate your own questions
       model: "google/gemini-2.0-flash-exp:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
-      max_output_tokens: 512
+      max_output_tokens: 512,
     };
 
     console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${OPENROUTER_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(payload),
-});
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-if (!response.ok) {
-  const text = await response.text();
-  console.error("❌ OpenRouter HTTP Error:", response.status, text);
-  return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
-}
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("❌ OpenRouter HTTP Error:", response.status, text);
+      return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
+    }
 
-const data = await response.json();
+    const data = await response.json();
     console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
 
     if (!data?.choices?.[0]?.message?.content) {
@@ -162,10 +161,11 @@ const data = await response.json();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
+
 app.use(express.static(frontendPath));
 app.get("*", (req, res) => {
   const indexFile = path.join(frontendPath, "index.html");
-  res.sendFile(indexFile, err => {
+  res.sendFile(indexFile, (err) => {
     if (err) res.status(500).send("Frontend not found.");
   });
 });
