@@ -4,11 +4,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 
+// --- INITIAL SETUP ---
 const app = express();
-
-// --- MIDDLEWARE ---
 app.use(express.json());
-app.use(cors()); // Enable CORS for all origins
+app.use(cors());
 
 // --- ENVIRONMENT VARIABLES ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -54,10 +53,10 @@ const heartbeat = async () => {
     console.error("⚠️ Supabase heartbeat failed:", err.message);
   }
 };
-setInterval(heartbeat, 240000); // every 4 minutes
+setInterval(heartbeat, 240000);
 heartbeat();
 
-// --- API ROUTES ---
+// --- ROUTES ---
 
 // Health check
 app.get("/api/health", (req, res) => {
@@ -93,36 +92,41 @@ app.post("/api/generate", async (req, res) => {
     const systemMessage = {
       role: "system",
       content: `
-You are Qlasar, an AI scout designed to think deeply yet respond wisely.
+You are **Qlasar**, an AI Scout designed to reason deeply, think critically, and guide wisely.
 
 For each user query:
-- If the question is complex, abstract, or requires deep reasoning — respond in four structured sections:
-  1. **Answer** — Provide a direct, well-reasoned explanation.
-  2. **Counterarguments** — Present possible opposing views or alternative interpretations.
-  3. **Blindspots** — Mention what might be missing, uncertain, or easily overlooked.
-  4. **Conclusion** — Summarize insightfully and end with a brief *reflective thought* that encourages the user to think.
+- If it requires **in-depth reasoning or analysis**, respond in four structured sections:
+  1. **Answer** — Provide a direct, reasoned, and insightful explanation.
+  2. **Counterarguments** — Present balanced opposing views or interpretations.
+  3. **Blindspots** — Reveal missing angles, uncertainties, or overlooked aspects.
+  4. **Conclusion** — Summarize the key insight and end with a short *reflective thought*.
 
-- If the question is simple, factual, or conversational — respond as a **normal helpful AI**, without using the four-section format and **without** a reflective thought.
+- If the query is **simple, factual, or conversational**, respond naturally like a standard AI — concise, direct, and without using the 4-section format.
 
-Maintain clarity, logic, and tone consistency. Never generate your own questions or assume what the user might ask next.
-      `.trim(),
+Rules:
+- Never ask your own questions.
+- Never assume user intent.
+- Stay logical, fluent, and tonally consistent.
+- Always focus on clarity and balance.
+`.trim(),
     };
 
-    // Map frontend messages to OpenRouter format
+    // --- FORMAT MESSAGES ---
     const formattedMessages = messages.map((msg) => ({
       role: msg.sender === "user" ? "user" : "assistant",
       content: msg.text,
     }));
 
-    // Combine system message with conversation
+    // --- BUILD PAYLOAD ---
     const payload = {
       model: "google/gemini-2.0-flash-exp:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
-      max_output_tokens: 512,
+      max_output_tokens: 600,
     };
 
-    console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
+    console.log("📝 Sending request to OpenRouter...");
+    console.log(JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -133,31 +137,39 @@ Maintain clarity, logic, and tone consistency. Never generate your own questions
       body: JSON.stringify(payload),
     });
 
+    console.log("🌐 OpenRouter HTTP Status:", response.status);
+
+    const text = await response.text();
+
     if (!response.ok) {
-      const text = await response.text();
-      console.error("❌ OpenRouter HTTP Error:", response.status, text);
+      console.error("❌ OpenRouter Error:", response.status, text);
       return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
     }
 
-    const data = await response.json();
-    console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
-
-    if (!data?.choices?.[0]?.message?.content) {
-      console.error("⚠️ No valid response from model:", data);
-      return res.status(500).json({
-        error: "Couldn't get AI response. See server logs for details.",
-        rawResponse: data,
-      });
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error("⚠️ Failed to parse OpenRouter response:", text);
+      return res.status(500).json({ error: "Invalid JSON response from OpenRouter", raw: text });
     }
 
-    res.json({ reply: data.choices[0].message.content });
+    console.log("📦 Parsed OpenRouter Response:", JSON.stringify(data, null, 2));
+
+    const reply = data?.choices?.[0]?.message?.content;
+    if (!reply) {
+      console.error("⚠️ No valid message content:", data);
+      return res.status(500).json({ error: "No valid message from model", raw: data });
+    }
+
+    res.json({ reply });
   } catch (err) {
     console.error("❌ Model request failed:", err.message);
     res.status(500).json({ error: `Model request failed: ${err.message}` });
   }
 });
 
-// --- SERVE FRONTEND (optional) ---
+// --- SERVE FRONTEND (OPTIONAL) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
