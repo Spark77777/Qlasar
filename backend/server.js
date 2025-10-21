@@ -126,15 +126,21 @@ Maintain clarity, logic, and tone consistency. Never generate your own questions
     console.log("📝 Sending request to OpenRouter:", JSON.stringify(payload, null, 2));
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${OPENROUTER_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(payload),
+});
 
-    const data = await response.json();
+if (!response.ok) {
+  const text = await response.text();
+  console.error("❌ OpenRouter HTTP Error:", response.status, text);
+  return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
+}
+
+const data = await response.json();
     console.log("📦 OpenRouter response:", JSON.stringify(data, null, 2));
 
     if (!data?.choices?.[0]?.message?.content) {
