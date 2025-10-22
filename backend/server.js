@@ -119,7 +119,7 @@ Rules:
 
     // --- BUILD PAYLOAD ---
     const payload = {
-      model: "google/gemini-2.0-flash-exp:free",
+      model: "qwen/qwen3-235b-a22b:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
