@@ -143,7 +143,10 @@ Rules:
 
     if (!response.ok) {
       console.error("❌ OpenRouter Error:", response.status, text);
-      return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
+      return res.status(500).json({
+        error: `OpenRouter Error ${response.status}`,
+        details: text,
+      });
     }
 
     let data;
@@ -151,17 +154,24 @@ Rules:
       data = JSON.parse(text);
     } catch (parseErr) {
       console.error("⚠️ Failed to parse OpenRouter response:", text);
-      return res.status(500).json({ error: "Invalid JSON response from OpenRouter", raw: text });
+      return res.status(500).json({
+        error: "Invalid JSON response from OpenRouter",
+        raw: text,
+      });
     }
 
     console.log("📦 Parsed OpenRouter Response:", JSON.stringify(data, null, 2));
 
-    const reply = data?.choices?.[0]?.message?.content;
+    let reply = data?.choices?.[0]?.message?.content;
     if (!reply) {
       console.error("⚠️ No valid message content:", data);
       return res.status(500).json({ error: "No valid message from model", raw: data });
     }
 
+    // --- 🧹 CLEAN THINK BLOCKS ---
+    reply = reply.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    // --- SEND RESPONSE ---
     res.json({ reply });
   } catch (err) {
     console.error("❌ Model request failed:", err.message);
@@ -185,3 +195,4 @@ app.get("*", (req, res) => {
 // --- START SERVER ---
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+    
