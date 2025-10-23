@@ -14,21 +14,33 @@ document.body.appendChild(sidebar);
 
 const alertsContainer = document.getElementById('alerts-container');
 
-// Dummy alerts for demo
-const demoAlerts = [
-  "Crypto prices are rising!",
-  "New anime episode released today.",
-  "Trending music track: 'Echoes of Time'.",
-  "Stock market update: Tech sector up 2%."
-];
+// 🔄 Fetch real-time tech alerts from backend
+async function fetchTechAlerts() {
+  try {
+    const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
+    const data = await res.json();
 
-// Populate alerts in sidebar
-demoAlerts.forEach(alertText => {
-  const alert = document.createElement('div');
-  alert.classList.add('alert');
-  alert.textContent = alertText;
-  alertsContainer.appendChild(alert);
-});
+    alertsContainer.innerHTML = ""; // Clear old alerts
+
+    if (data.alerts && data.alerts.length > 0) {
+      data.alerts.forEach(alertText => {
+        const alert = document.createElement('div');
+        alert.classList.add('alert');
+        alert.textContent = alertText;
+        alertsContainer.appendChild(alert);
+      });
+    } else {
+      alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+    }
+  } catch (err) {
+    console.error("Error fetching tech alerts:", err);
+    alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
+  }
+}
+
+// Fetch alerts every 10 minutes
+fetchTechAlerts();
+setInterval(fetchTechAlerts, 10 * 60 * 1000);
 
 // Toggle sidebar on clicking header
 let sidebarVisible = false;
