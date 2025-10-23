@@ -14,10 +14,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 const NEWS_API_KEY = process.env.NEWS_API_KEY; // 🆕 Add this
-const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT || 
-  "You are Qlasar, an AI Scout that reasons deeply and guides wisely.";
-const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT || 
-  "You are Qlasar, an AI that provides real-time proactive tech alerts. Write 4–6 concise, high-intelligence alerts summarizing the latest tech news in 2 lines each. Use an insightful, forward-looking tone. Avoid markdown or bullet formatting.";
+const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
+const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT;
 
 // --- CHECK ENV ---
 if (!SUPABASE_URL || !SUPABASE_KEY) {
