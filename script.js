@@ -30,7 +30,7 @@ demoAlerts.forEach(alertText => {
   alertsContainer.appendChild(alert);
 });
 
-// Toggle sidebar on clicking header (Qlasar text)
+// Toggle sidebar on clicking header
 let sidebarVisible = false;
 header.addEventListener('click', () => {
   sidebarVisible = !sidebarVisible;
@@ -48,7 +48,6 @@ input.addEventListener('keydown', function(e) {
   }
 });
 
-// Auto-expand textarea height
 input.addEventListener('input', autoExpand);
 
 function autoExpand() {
@@ -94,7 +93,10 @@ async function sendMessage() {
 
     const data = await res.json();
     aiMsg.classList.remove('typing');
-    aiMsg.textContent = data.reply || "❌ Failed to get response";
+
+    // ✅ Use marked to render Markdown
+    aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to get response";
+
     scrollToBottom();
 
   } catch (err) {
