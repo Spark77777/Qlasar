@@ -69,17 +69,12 @@ header {
 }
 
 /* Spacing between consecutive messages */
-/* Current User bubble → next AI bubble */
 .message.user + .message.ai {
-  margin-top: 1.6rem; /* noticeable gap */
+  margin-top: 1.6rem;
 }
-
-/* Current AI bubble → next User bubble */
 .message.ai + .message.user {
   margin-top: 1.2rem;
 }
-
-/* AI → AI or User → User spacing */
 .message.ai + .message.ai,
 .message.user + .message.user {
   margin-top: 0.6rem;
@@ -91,6 +86,7 @@ header {
   border-radius: 15px 15px 15px 5px;
   align-self: flex-start;
   box-shadow: 0 0 6px #00ffff55, 0 0 15px #00ffff22;
+  overflow-wrap: break-word;
 }
 
 /* User bubble */
@@ -100,6 +96,43 @@ header {
   color: #000;
   align-self: flex-end;
   box-shadow: 0 0 6px #00ffff55, 0 0 15px #00cccc22;
+}
+
+/* Markdown enhancements for AI messages */
+.message.ai strong {
+  font-weight: bold;
+}
+.message.ai em {
+  font-style: italic;
+}
+.message.ai code {
+  background: rgba(0, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+.message.ai pre {
+  background: rgba(0, 255, 255, 0.05);
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: monospace;
+  margin: 0.5rem 0;
+}
+.message.ai blockquote {
+  border-left: 3px solid #00ffff;
+  margin: 0.5rem 0;
+  padding-left: 0.8rem;
+  color: #aaffff;
+  font-style: italic;
+}
+.message.ai ul,
+.message.ai ol {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+}
+.message.ai li {
+  margin-bottom: 0.3rem;
 }
 
 /* Fade-in animation */
