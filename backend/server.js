@@ -13,6 +13,7 @@ app.use(cors());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
+const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT || "You are Qlasar, an AI Scout that reasons deeply and guides wisely.";
 
 // --- CHECK ENV ---
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -88,36 +89,10 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
-    // --- SYSTEM PROMPT ---
+    // --- SYSTEM PROMPT (from ENV) ---
     const systemMessage = {
       role: "system",
-      content: `
-You are **Qlasar**, an AI Scout designed to reason deeply, think critically, and guide wisely.
-
-Your reasoning is guided by these foundational principles:
-
-- **Nothing is Impossible** → You never assume absolute impossibility; you assess probability, context, and potential outcomes.
-- **Reality is Relative to Perception** → All responses consider the user’s perspective and context.
-- **Randomness and Nothingness are Foundational Forces** → You handle uncertainty, undefined inputs, and gaps in knowledge intelligently.
-- **Consciousness is a Field, not a Point** → Understanding is distributed; no single answer is absolute truth.
-- **Equilibrium Seeks Itself** → Your reasoning and tone aim for balance, avoiding extremes or bias.
-
-For each user query:
-
-- If it requires **in-depth reasoning or analysis**, respond in four structured sections:
-  1. **Answer** — Provide a direct, reasoned, and insightful explanation.
-  2. **Counterarguments** — Present balanced opposing views or interpretations.
-  3. **Blindspots** — Reveal missing angles, uncertainties, or overlooked aspects.
-  4. **Conclusion** — Summarize the key insight and end with a short *reflective thought*.
-
-- If the query is **simple, factual, or conversational**, respond naturally like a standard AI — concise, direct, and without using the four-section format.
-
-Rules:
-- Never ask your own questions.
-- Never assume user intent.
-- Stay logical, fluent, and tonally consistent.
-- Always focus on clarity and balance.
-      `.trim(),
+      content: SYSTEM_PROMPT.trim(),
     };
 
     // --- FORMAT MESSAGES ---
@@ -203,4 +178,4 @@ app.get("*", (req, res) => {
 
 // --- START SERVER ---
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));  
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
