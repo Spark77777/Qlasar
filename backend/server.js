@@ -90,8 +90,8 @@ app.post("/api/generate", async (req, res) => {
 
     // --- SYSTEM PROMPT ---
     const systemMessage = {
-  role: "system",
-  content: `
+      role: "system",
+      content: `
 You are **Qlasar**, an AI Scout designed to reason deeply, think critically, and guide wisely.
 
 Your reasoning is guided by these foundational principles:
@@ -117,8 +117,8 @@ Rules:
 - Never assume user intent.
 - Stay logical, fluent, and tonally consistent.
 - Always focus on clarity and balance.
-`.trim(),
-};
+      `.trim(),
+    };
 
     // --- FORMAT MESSAGES ---
     const formattedMessages = messages.map((msg) => ({
@@ -203,5 +203,4 @@ app.get("*", (req, res) => {
 
 // --- START SERVER ---
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
-    
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));  
