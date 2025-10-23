@@ -22,25 +22,29 @@ async function fetchTechAlerts() {
 
     alertsContainer.innerHTML = ""; // Clear old alerts
 
-    if (data.alerts && data.alerts.length > 0) {
-      data.alerts.forEach(alertText => {
-        const alert = document.createElement('div');
-        alert.classList.add('alert');
-        alert.textContent = alertText;
-        alertsContainer.appendChild(alert);
-      });
-    } else {
-      alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+    if (data.alerts) {
+      // If the backend returns a string of alerts separated by newlines
+      const alertsArray = data.alerts.split("\n").filter(a => a.trim() !== "");
+      if (alertsArray.length > 0) {
+        alertsArray.forEach(alertText => {
+          const alert = document.createElement('div');
+          alert.classList.add('alert');
+          alert.textContent = alertText;
+          alertsContainer.appendChild(alert);
+        });
+        return;
+      }
     }
+
+    alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
   } catch (err) {
     console.error("Error fetching tech alerts:", err);
     alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
   }
 }
 
-// Fetch alerts every 10 minutes
+// 🔹 Fetch alerts only once on page load
 fetchTechAlerts();
-setInterval(fetchTechAlerts, 10 * 60 * 1000);
 
 // Toggle sidebar on clicking header
 let sidebarVisible = false;
