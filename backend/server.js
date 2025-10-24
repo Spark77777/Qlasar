@@ -13,7 +13,6 @@ app.use(cors());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
-const NEWS_API_KEY = process.env.NEWS_API_KEY; // 🆕 Add this
 const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
 const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT;
 
@@ -91,7 +90,7 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
-    const systemMessage = { role: "system", content: SYSTEM_PROMPT.trim() };
+    const systemMessage = { role: "system", content: SYSTEM_PROMPT?.trim() || "" };
 
     const formattedMessages = messages.map((msg) => ({
       role: msg.sender === "user" ? "user" : "assistant",
@@ -115,7 +114,6 @@ app.post("/api/generate", async (req, res) => {
       body: JSON.stringify(payload),
     });
 
-    console.log("🌐 OpenRouter HTTP Status:", response.status);
     const text = await response.text();
 
     if (!response.ok) {
@@ -142,76 +140,24 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-
-// 🆕 --- PROACTIVE ALERTS ROUTE ---
+// 🆕 --- DUMMY PROACTIVE ALERTS ROUTE ---
 app.get("/api/alerts", async (req, res) => {
   try {
-    if (!NEWS_API_KEY) {
-      return res.status(500).json({ error: "Missing NEWS_API_KEY in environment variables." });
-    }
+    const dummyAlerts = [
+      { id: 1, title: "AI Chip Breakthrough", summary: "New AI chip reduces power usage by 40%." },
+      { id: 2, title: "Quantum Leap", summary: "Researchers achieve stable quantum coherence for 10 seconds." },
+      { id: 3, title: "OpenAI releases new model", summary: "GPT-5 outperforms benchmarks with multimodal reasoning." },
+      { id: 4, title: "Tesla AI Day", summary: "Elon Musk announces new AI-driven manufacturing process." },
+    ];
 
-    console.log("📰 Fetching latest tech news...");
-    const newsResponse = await fetch(
-      `https://newsapi.org/v2/top-headlines?category=technology&language=en&pageSize=10&apiKey=${NEWS_API_KEY}`
-    );
-
-    const newsData = await newsResponse.json();
-
-    if (!newsResponse.ok) {
-      console.error("❌ NewsAPI Error:", newsData);
-      return res.status(500).json({ error: "Failed to fetch news", details: newsData });
-    }
-
-    const articles = newsData.articles || [];
-    const combinedText = articles
-      .map((a) => `Title: ${a.title}\nDescription: ${a.description}`)
-      .join("\n\n");
-
-    console.log("🧠 Summarizing tech news via OpenRouter...");
-
-    const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "qwen/qwen3-235b-a22b:free",
-        messages: [
-          { role: "system", content: PROACTIVE_SYSTEM_PROMPT },
-          { role: "user", content: combinedText },
-        ],
-        temperature: 0.7,
-        max_output_tokens: 500,
-      }),
-    });
-
-    const aiText = await aiResponse.text();
-    if (!aiResponse.ok) {
-      console.error("❌ OpenRouter (Proactive) Error:", aiResponse.status, aiText);
-      return res.status(500).json({ error: `OpenRouter Proactive Error ${aiResponse.status}`, details: aiText });
-    }
-
-    let aiData;
-    try {
-      aiData = JSON.parse(aiText);
-    } catch (parseErr) {
-      console.error("⚠️ Failed to parse AI response:", aiText);
-      return res.status(500).json({ error: "Invalid AI response JSON", raw: aiText });
-    }
-
-    let summary = aiData?.choices?.[0]?.message?.content || "No summary generated.";
-    summary = summary.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-
-    res.json({ alerts: summary });
+    res.json({ alerts: dummyAlerts });
   } catch (err) {
-    console.error("❌ Proactive Alerts failed:", err.message);
-    res.status(500).json({ error: `Proactive Alerts failed: ${err.message}` });
+    console.error("❌ Failed to fetch dummy alerts:", err.message);
+    res.status(500).json({ error: `Failed to fetch dummy alerts: ${err.message}` });
   }
 });
 
-
-// --- SERVE FRONTEND (OPTIONAL) ---
+// --- SERVE FRONTEND (STATIC) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
