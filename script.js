@@ -129,3 +129,4 @@ async function sendMessage() {
 function scrollToBottom() {
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
 }
+console.log("✅ Qlasar script loaded successfully!");
