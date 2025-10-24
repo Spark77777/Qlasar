@@ -18,21 +18,42 @@ async function fetchTechAlerts() {
 
     if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
       data.alerts.forEach(alertObj => {
-        const alert = document.createElement('div');
-        alert.classList.add('alert');
+        const alertCard = document.createElement('div');
+        alertCard.classList.add('alert-card');
 
         // ✅ Handle both object and string alerts
-        if (typeof alertObj === "object") {
-          const title = alertObj.title || alertObj.text || "Untitled Alert";
-          const source = alertObj.source
-            ? `<div style="color:#00ffff99;font-size:0.85rem;">${alertObj.source}</div>`
+        const title =
+          typeof alertObj === "object"
+            ? alertObj.title || alertObj.text || "Untitled Alert"
+            : alertObj;
+        const description =
+          typeof alertObj === "object"
+            ? alertObj.description || "No details available."
             : "";
-          alert.innerHTML = `<strong>${title}</strong>${source}`;
-        } else {
-          alert.textContent = alertObj;
-        }
+        const source =
+          typeof alertObj === "object" && alertObj.source
+            ? `<p><strong>Source:</strong> ${alertObj.source}</p>`
+            : "";
+        const link =
+          typeof alertObj === "object" && alertObj.link
+            ? `<a href="${alertObj.link}" target="_blank">Read more →</a>`
+            : "";
 
-        alertsContainer.appendChild(alert);
+        alertCard.innerHTML = `
+          <h3 class="alert-title">${title}</h3>
+          <div class="alert-details">
+            <p>${description}</p>
+            ${source}
+            ${link}
+          </div>
+        `;
+
+        // --- Expand/Collapse on click ---
+        alertCard.addEventListener("click", () => {
+          alertCard.classList.toggle("expanded");
+        });
+
+        alertsContainer.appendChild(alertCard);
       });
     } else {
       alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
@@ -97,8 +118,10 @@ async function sendMessage() {
     // Collect all messages for backend
     const messages = [];
     document.querySelectorAll('.message').forEach(msg => {
-      if (msg.classList.contains('user')) messages.push({ sender: 'user', text: msg.textContent });
-      else if (msg.classList.contains('ai')) messages.push({ sender: 'ai', text: msg.textContent });
+      if (msg.classList.contains('user'))
+        messages.push({ sender: 'user', text: msg.textContent });
+      else if (msg.classList.contains('ai'))
+        messages.push({ sender: 'ai', text: msg.textContent });
     });
 
     // Call backend API
@@ -115,7 +138,6 @@ async function sendMessage() {
     aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to get response";
 
     scrollToBottom();
-
   } catch (err) {
     aiMsg.classList.remove('typing');
     aiMsg.textContent = "❌ Error connecting to server";
