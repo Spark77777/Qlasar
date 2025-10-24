@@ -3,15 +3,7 @@ const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
 const header = document.querySelector('header');
 
-// --- Create sidebar dynamically ---
-const sidebar = document.createElement('div');
-sidebar.id = 'sidebar';
-sidebar.innerHTML = `
-  <h2>Proactive Alerts</h2>
-  <div id="alerts-container"></div>
-`;
-document.body.appendChild(sidebar);
-
+// --- Use the existing sidebar from HTML ---
 const alertsContainer = document.getElementById('alerts-container');
 
 // --- Fetch dummy tech alerts from backend ---
@@ -47,6 +39,7 @@ fetchTechAlerts();
 let sidebarVisible = false;
 header.addEventListener('click', () => {
   sidebarVisible = !sidebarVisible;
+  const sidebar = document.getElementById('sidebar');
   sidebar.style.left = sidebarVisible ? '0' : '-300px';
 });
 
