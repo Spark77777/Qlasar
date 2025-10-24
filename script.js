@@ -17,10 +17,21 @@ async function fetchTechAlerts() {
     alertsContainer.innerHTML = ""; // Clear old alerts
 
     if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
-      data.alerts.forEach(alertText => {
+      data.alerts.forEach(alertObj => {
         const alert = document.createElement('div');
         alert.classList.add('alert');
-        alert.textContent = alertText; // Treat each alert as a string
+
+        // ✅ Handle both object and string alerts
+        if (typeof alertObj === "object") {
+          const title = alertObj.title || alertObj.text || "Untitled Alert";
+          const source = alertObj.source
+            ? `<div style="color:#00ffff99;font-size:0.85rem;">${alertObj.source}</div>`
+            : "";
+          alert.innerHTML = `<strong>${title}</strong>${source}`;
+        } else {
+          alert.textContent = alertObj;
+        }
+
         alertsContainer.appendChild(alert);
       });
     } else {
@@ -45,7 +56,7 @@ header.addEventListener('click', () => {
 
 sendBtn.addEventListener('click', sendMessage);
 
-input.addEventListener('keydown', function(e) {
+input.addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && e.ctrlKey) {
     e.preventDefault();
     sendMessage();
