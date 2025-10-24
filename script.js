@@ -20,33 +20,20 @@ async function fetchTechAlerts() {
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
     const data = await res.json();
 
-    alertsContainer.innerHTML = "";
+    console.log("Alerts API response:", data); // Debug
 
-    const alerts = (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0)
-      ? data.alerts
-      : [
-          { title: "🔔 Qlasar Alert", summary: "Welcome to the Proactive Alerts panel." },
-          { title: "💡 New Insight", summary: "AI can now predict user interests proactively!" },
-          { title: "🚀 Qlasar Progress", summary: "Your AI system is live and running smoothly." }
-        ];
+    alertsContainer.innerHTML = ""; // Clear old alerts
 
-    alerts.forEach(alertObj => {
-      const alert = document.createElement('div');
-      alert.classList.add('alert');
-
-      const title = document.createElement('div');
-      title.classList.add('alert-title');
-      title.textContent = alertObj.title;
-
-      const summary = document.createElement('div');
-      summary.classList.add('alert-summary');
-      summary.textContent = alertObj.summary;
-
-      alert.appendChild(title);
-      alert.appendChild(summary);
-      alertsContainer.appendChild(alert);
-    });
-
+    if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
+      data.alerts.forEach(alertText => {
+        const alert = document.createElement('div');
+        alert.classList.add('alert');
+        alert.textContent = alertText; // Treat each alert as a string
+        alertsContainer.appendChild(alert);
+      });
+    } else {
+      alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+    }
   } catch (err) {
     console.error("Error fetching tech alerts:", err);
     alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
@@ -63,7 +50,6 @@ header.addEventListener('click', () => {
   sidebar.style.left = sidebarVisible ? '0' : '-300px';
 });
 
-// --- Chat logic ---
 sendBtn.addEventListener('click', sendMessage);
 
 input.addEventListener('keydown', function(e) {
@@ -86,6 +72,7 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
+  // User message
   const userMsg = document.createElement('div');
   userMsg.classList.add('message', 'user');
   userMsg.textContent = text;
@@ -95,6 +82,7 @@ async function sendMessage() {
   input.style.height = 'auto';
   scrollToBottom();
 
+  // AI typing indicator
   const aiMsg = document.createElement('div');
   aiMsg.classList.add('message', 'ai', 'typing');
   aiMsg.textContent = "";
@@ -102,12 +90,14 @@ async function sendMessage() {
   scrollToBottom();
 
   try {
+    // Collect all messages for backend
     const messages = [];
     document.querySelectorAll('.message').forEach(msg => {
       if (msg.classList.contains('user')) messages.push({ sender: 'user', text: msg.textContent });
       else if (msg.classList.contains('ai')) messages.push({ sender: 'ai', text: msg.textContent });
     });
 
+    // Call backend API
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -116,7 +106,10 @@ async function sendMessage() {
 
     const data = await res.json();
     aiMsg.classList.remove('typing');
+
+    // ✅ Use marked to render Markdown
     aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to get response";
+
     scrollToBottom();
 
   } catch (err) {
@@ -129,4 +122,3 @@ async function sendMessage() {
 function scrollToBottom() {
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
 }
-console.log("✅ Qlasar script loaded successfully!");
