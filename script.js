@@ -6,8 +6,19 @@ const header = document.querySelector('header');
 // --- Create sidebar dynamically ---
 const sidebar = document.createElement('div');
 sidebar.id = 'sidebar';
+sidebar.style.position = 'fixed';
+sidebar.style.top = '0';
+sidebar.style.left = '-300px';
+sidebar.style.width = '300px';
+sidebar.style.height = '100%';
+sidebar.style.backgroundColor = '#111';
+sidebar.style.color = '#fff';
+sidebar.style.padding = '15px';
+sidebar.style.overflowY = 'auto';
+sidebar.style.transition = 'left 0.3s ease';
+sidebar.style.zIndex = '1000';
 sidebar.innerHTML = `
-  <h2>Proactive Alerts</h2>
+  <h2 style="margin-top:0;color:#00e0ff;">Proactive Alerts</h2>
   <div id="alerts-container"></div>
 `;
 document.body.appendChild(sidebar);
@@ -16,13 +27,13 @@ const alertsContainer = document.getElementById('alerts-container');
 
 // --- Dummy alerts for immediate display ---
 const dummyAlerts = [
-  { title: "Crypto prices are rising!", summary: "Bitcoin and Ethereum surge amid bullish sentiment." },
-  { title: "New anime episode released today.", summary: "Fans excited as latest episode of 'Q-Tech' drops online." },
-  { title: "Trending music track: 'Echoes of Time'.", summary: "The new single is dominating global streaming charts." },
-  { title: "Stock market update: Tech sector up 2%.", summary: "Tech giants lead market recovery today with strong earnings." }
+  { title: "📰 AI Revolution in 2025", summary: "AI models like Qlasar are changing how humans interact with data." },
+  { title: "🚀 SpaceX Launch Successful", summary: "Next-gen Starship prototype completes orbital flight successfully." },
+  { title: "💡 Quantum Computing Milestone", summary: "Researchers achieve stable qubit coherence for 30 seconds." },
+  { title: "🌐 Tech Stocks Rise", summary: "NASDAQ tech sector surges 3.2% after strong quarterly reports." }
 ];
 
-// --- Function to render alerts ---
+// --- Render alerts ---
 function renderAlerts(alerts) {
   alertsContainer.innerHTML = ""; // Clear old alerts
 
@@ -30,13 +41,19 @@ function renderAlerts(alerts) {
     alerts.forEach(alertObj => {
       const alert = document.createElement('div');
       alert.classList.add('alert');
+      alert.style.background = '#222';
+      alert.style.padding = '10px';
+      alert.style.marginBottom = '10px';
+      alert.style.borderRadius = '8px';
+      alert.style.boxShadow = '0 0 5px rgba(0,255,255,0.2)';
 
-      // Title
       const title = document.createElement('div');
       title.classList.add('alert-title');
-      title.textContent = alertObj.title || alertObj; // fallback to string
+      title.style.fontWeight = 'bold';
+      title.style.color = '#00e0ff';
+      title.style.marginBottom = '4px';
+      title.textContent = alertObj.title || alertObj;
 
-      // Summary
       const summary = document.createElement('div');
       summary.classList.add('alert-summary');
       summary.textContent = alertObj.summary || "";
@@ -50,16 +67,18 @@ function renderAlerts(alerts) {
   }
 }
 
-// --- Render dummy alerts immediately ---
+// --- Render dummy alerts immediately on load ---
 renderAlerts(dummyAlerts);
 
-// --- Fetch real alerts from backend ---
+// --- Try fetching backend alerts after 2 seconds ---
+setTimeout(fetchTechAlerts, 2000);
+
+// --- Fetch tech alerts from backend ---
 async function fetchTechAlerts() {
   try {
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
     const data = await res.json();
 
-    // Expecting either array of objects or string of alerts
     if (data.alerts) {
       if (Array.isArray(data.alerts)) {
         renderAlerts(data.alerts);
@@ -74,10 +93,7 @@ async function fetchTechAlerts() {
   }
 }
 
-// --- Fetch alerts once on page load ---
-fetchTechAlerts();
-
-// --- Toggle sidebar on clicking header ---
+// --- Toggle sidebar when header clicked ---
 let sidebarVisible = false;
 header.addEventListener('click', () => {
   sidebarVisible = !sidebarVisible;
@@ -150,4 +166,4 @@ async function sendMessage() {
 
 function scrollToBottom() {
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
-}
+                   }
