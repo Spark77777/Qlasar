@@ -3,7 +3,7 @@ const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
 const header = document.querySelector('header');
 
-// Create sidebar dynamically
+// --- Create sidebar dynamically ---
 const sidebar = document.createElement('div');
 sidebar.id = 'sidebar';
 sidebar.innerHTML = `
@@ -14,7 +14,7 @@ document.body.appendChild(sidebar);
 
 const alertsContainer = document.getElementById('alerts-container');
 
-// 🔄 Fetch real-time tech alerts from backend
+// --- Fetch dummy tech alerts from backend ---
 async function fetchTechAlerts() {
   try {
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
@@ -22,31 +22,38 @@ async function fetchTechAlerts() {
 
     alertsContainer.innerHTML = ""; // Clear old alerts
 
-    if (data.alerts) {
-      // If the backend returns a string of alerts separated by newlines
-      const alertsArray = data.alerts.split("\n").filter(a => a.trim() !== "");
-      if (alertsArray.length > 0) {
-        alertsArray.forEach(alertText => {
-          const alert = document.createElement('div');
-          alert.classList.add('alert');
-          alert.textContent = alertText;
-          alertsContainer.appendChild(alert);
-        });
-        return;
-      }
-    }
+    if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
+      data.alerts.forEach(alertObj => {
+        const alert = document.createElement('div');
+        alert.classList.add('alert');
 
-    alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+        // Title
+        const title = document.createElement('div');
+        title.classList.add('alert-title');
+        title.textContent = alertObj.title;
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.classList.add('alert-summary');
+        summary.textContent = alertObj.summary;
+
+        alert.appendChild(title);
+        alert.appendChild(summary);
+        alertsContainer.appendChild(alert);
+      });
+    } else {
+      alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+    }
   } catch (err) {
     console.error("Error fetching tech alerts:", err);
     alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
   }
 }
 
-// 🔹 Fetch alerts only once on page load
+// --- Fetch alerts once on page load ---
 fetchTechAlerts();
 
-// Toggle sidebar on clicking header
+// --- Toggle sidebar on clicking header ---
 let sidebarVisible = false;
 header.addEventListener('click', () => {
   sidebarVisible = !sidebarVisible;
