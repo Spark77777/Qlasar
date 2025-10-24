@@ -62,10 +62,12 @@ header {
   font-size: 0.95rem;
   line-height: 1.5;
   word-wrap: break-word;
-  max-width: 70%;
+  width: fit-content;
+  max-width: 90%; /* expanded width to reduce empty gap */
   animation: fadeIn 0.3s ease;
   margin-bottom: 0.4rem;
   white-space: pre-wrap;
+  align-self: flex-start;
 }
 
 /* Spacing between consecutive messages */
@@ -80,13 +82,14 @@ header {
   margin-top: 0.6rem;
 }
 
-/* Bot bubble */
+/* AI bubble */
 .message.ai {
   background: linear-gradient(145deg, #222233, #1f1f2e);
   border-radius: 15px 15px 15px 5px;
   align-self: flex-start;
   box-shadow: 0 0 6px #00ffff55, 0 0 15px #00ffff22;
   overflow-wrap: break-word;
+  max-width: 90%;
 }
 
 /* User bubble */
@@ -96,6 +99,7 @@ header {
   color: #000;
   align-self: flex-end;
   box-shadow: 0 0 6px #00ffff55, 0 0 15px #00cccc22;
+  max-width: 90%;
 }
 
 /* Markdown enhancements for AI messages */
@@ -287,4 +291,17 @@ footer {
 .alert:hover {
   transform: translateX(3px);
   box-shadow: 0 0 10px #00ffff55, 0 0 20px #00ffff33;
+}
+
+/* Mobile optimization */
+@media (max-width: 600px) {
+  .message {
+    max-width: 95%;
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+  }
+  .input-container {
+    width: 95%;
+    margin: 0 auto;
+  }
 }
