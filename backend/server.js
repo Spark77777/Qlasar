@@ -14,7 +14,7 @@ app.use(cors());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
-const NEWSAPI_KEY = process.env.NEWSAPI_KEY; // ✅ Added for real news
+const NEWSAPI_KEY = process.env.NEWS_API_KEY;
 const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
 const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT;
 
@@ -82,7 +82,7 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
-// ✅ Generate AI response
+// ✅ Generate AI response (fixed)
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
@@ -92,7 +92,12 @@ app.post("/api/generate", async (req, res) => {
       return res.status(400).json({ error: "Invalid messages array." });
     }
 
-    const systemMessage = { role: "system", content: SYSTEM_PROMPT?.trim() || "" };
+    const systemMessage = {
+      role: "system",
+      content:
+        SYSTEM_PROMPT?.trim() ||
+        "You are Qlasar, a proactive AI that helps users intelligently and creatively.",
+    };
 
     const formattedMessages = messages.map((msg) => ({
       role: msg.sender === "user" ? "user" : "assistant",
@@ -100,7 +105,7 @@ app.post("/api/generate", async (req, res) => {
     }));
 
     const payload = {
-      model: "qwen/qwen3-235b-a22b:free",
+      model: "qwen/qwen2.5-72b-instruct:free", // ✅ more reliable model
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
@@ -117,23 +122,27 @@ app.post("/api/generate", async (req, res) => {
     });
 
     const text = await response.text();
-
-    if (!response.ok) {
-      console.error("❌ OpenRouter Error:", response.status, text);
-      return res.status(500).json({ error: `OpenRouter Error ${response.status}`, details: text });
-    }
-
     let data;
     try {
       data = JSON.parse(text);
     } catch (parseErr) {
-      console.error("⚠️ Failed to parse OpenRouter response:", text);
-      return res.status(500).json({ error: "Invalid JSON response", raw: text });
+      console.error("⚠️ Could not parse response:", text);
+      return res.status(500).json({ error: "Invalid JSON from model", raw: text });
     }
 
-    let reply = data?.choices?.[0]?.message?.content;
-    reply = reply?.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
-    if (!reply) throw new Error("No valid message content");
+    // Handle multiple possible output formats
+    let reply =
+      data?.choices?.[0]?.message?.content ||
+      data?.choices?.[0]?.text ||
+      data?.output_text ||
+      null;
+
+    if (reply) reply = reply.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    if (!reply) {
+      console.error("⚠️ No message content in model response:", data);
+      throw new Error("No valid message content received from model");
+    }
 
     res.json({ reply });
   } catch (err) {
@@ -171,7 +180,7 @@ app.get("/api/alerts", async (req, res) => {
       title: article.title,
       summary: article.description || "No details available.",
       url: article.url,
-      source: article.source.name,
+      source: article.source?.name || "Unknown Source",
       publishedAt: article.publishedAt,
     }));
 
