@@ -105,7 +105,7 @@ app.post("/api/generate", async (req, res) => {
     }));
 
     const payload = {
-      model: "qwen/qwen2.5-72b-instruct:free", // ✅ more reliable model
+      model: "tngtech/deepseek-r1t2-chimera:free", // ✅ more reliable model
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
