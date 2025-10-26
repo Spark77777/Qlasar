@@ -130,13 +130,20 @@ app.post("/api/generate", async (req, res) => {
       return res.status(500).json({ error: "Invalid JSON from model", raw: text });
     }
 
+    // Handle multiple possible output formats
     let reply =
       data?.choices?.[0]?.message?.content ||
       data?.choices?.[0]?.text ||
       data?.output_text ||
       null;
 
-    if (reply) reply = reply.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    if (reply) {
+      // ✅ Remove <think> blocks
+      reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+      // ✅ Remove leading meta-commentary phrases like "Qlasar thinks:" at the start
+      reply = reply.replace(/^(Qlasar\s+thinks[:\-]?\s*|Analyzing[:\-]?\s*)/i, "").trim();
+    }
 
     if (!reply) {
       console.error("⚠️ No message content in model response:", data);
