@@ -62,12 +62,12 @@ heartbeat();
 
 // --- ROUTES ---
 
-// ✅ Health check
+// Health check
 app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
-// ✅ Store session
+// Store session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -82,7 +82,7 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
-// ✅ Generate AI response (fixed)
+// Generate AI response
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
@@ -105,7 +105,7 @@ app.post("/api/generate", async (req, res) => {
     }));
 
     const payload = {
-      model: "tngtech/deepseek-r1t2-chimera:free", // ✅ more reliable model
+      model: "tngtech/deepseek-r1t2-chimera:free", // reliable free model
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
@@ -130,7 +130,6 @@ app.post("/api/generate", async (req, res) => {
       return res.status(500).json({ error: "Invalid JSON from model", raw: text });
     }
 
-    // Handle multiple possible output formats
     let reply =
       data?.choices?.[0]?.message?.content ||
       data?.choices?.[0]?.text ||
@@ -151,7 +150,7 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// ✅ --- REAL-TIME ALERTS FROM NEWSAPI ---
+// Real-time alerts from NewsAPI
 app.get("/api/alerts", async (req, res) => {
   try {
     if (!NEWSAPI_KEY) {
@@ -166,7 +165,6 @@ app.get("/api/alerts", async (req, res) => {
       });
     }
 
-    // Fetch latest AI-related headlines
     const url = `https://newsapi.org/v2/everything?q=artificial%20intelligence%20OR%20AI%20OR%20OpenAI%20OR%20machine%20learning&language=en&sortBy=publishedAt&pageSize=6&apiKey=${NEWSAPI_KEY}`;
     const response = await fetch(url);
     const data = await response.json();
@@ -178,7 +176,7 @@ app.get("/api/alerts", async (req, res) => {
     const alerts = data.articles.map((article, index) => ({
       id: index + 1,
       title: article.title,
-      summary: article.description || "No details available.",
+      summary: article.description || article.content || "No details available.",
       url: article.url,
       source: article.source?.name || "Unknown Source",
       publishedAt: article.publishedAt,
@@ -193,7 +191,7 @@ app.get("/api/alerts", async (req, res) => {
   }
 });
 
-// --- SERVE FRONTEND (STATIC) ---
+// Serve frontend (static)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
@@ -206,6 +204,6 @@ app.get("*", (req, res) => {
   });
 });
 
-// --- START SERVER ---
+// Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
