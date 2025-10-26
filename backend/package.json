@@ -8,6 +8,7 @@
     "build": "echo 'No build step for backend'"
   },
   "dependencies": {
+    "node-fetch": "^3.3.2",
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "axios": "^1.7.2"
