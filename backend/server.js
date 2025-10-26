@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
+import fetch from "node-fetch";
 
 // --- INITIAL SETUP ---
 const app = express();
@@ -13,10 +14,11 @@ app.use(cors());
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
+const NEWSAPI_KEY = process.env.NEWSAPI_KEY; // ✅ Added for real news
 const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
 const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT;
 
-// --- CHECK ENV ---
+// --- ENVIRONMENT CHECKS ---
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error("❌ Missing Supabase credentials in environment variables!");
   process.exit(1);
@@ -60,12 +62,12 @@ heartbeat();
 
 // --- ROUTES ---
 
-// Health check
+// ✅ Health check
 app.get("/api/health", (req, res) => {
   res.send("🚀 Server is running and healthy!");
 });
 
-// Store session
+// ✅ Store session
 app.post("/api/session", async (req, res) => {
   try {
     const { session_name, messages } = req.body;
@@ -80,7 +82,7 @@ app.post("/api/session", async (req, res) => {
   }
 });
 
-// Generate AI response
+// ✅ Generate AI response
 app.post("/api/generate", async (req, res) => {
   try {
     const { messages } = req.body;
@@ -140,20 +142,45 @@ app.post("/api/generate", async (req, res) => {
   }
 });
 
-// 🆕 --- DUMMY PROACTIVE ALERTS ROUTE ---
+// ✅ --- REAL-TIME ALERTS FROM NEWSAPI ---
 app.get("/api/alerts", async (req, res) => {
   try {
-    const dummyAlerts = [
-      { id: 1, title: "AI Chip Breakthrough", summary: "New AI chip reduces power usage by 40%." },
-      { id: 2, title: "Quantum Leap", summary: "Researchers achieve stable quantum coherence for 10 seconds." },
-      { id: 3, title: "OpenAI releases new model", summary: "GPT-5 outperforms benchmarks with multimodal reasoning." },
-      { id: 4, title: "Tesla AI Day", summary: "Elon Musk announces new AI-driven manufacturing process." },
-    ];
+    if (!NEWSAPI_KEY) {
+      console.warn("⚠️ NEWSAPI_KEY missing — using fallback alerts.");
+      return res.json({
+        alerts: [
+          { id: 1, title: "AI Chip Breakthrough", summary: "New AI chip reduces power usage by 40%." },
+          { id: 2, title: "Quantum Leap", summary: "Researchers achieve stable quantum coherence for 10 seconds." },
+          { id: 3, title: "OpenAI releases new model", summary: "GPT-5 outperforms benchmarks with multimodal reasoning." },
+          { id: 4, title: "Tesla AI Day", summary: "Elon Musk announces new AI-driven manufacturing process." },
+        ],
+      });
+    }
 
-    res.json({ alerts: dummyAlerts });
+    // Fetch latest AI-related headlines
+    const url = `https://newsapi.org/v2/everything?q=artificial%20intelligence%20OR%20AI%20OR%20OpenAI%20OR%20machine%20learning&language=en&sortBy=publishedAt&pageSize=6&apiKey=${NEWSAPI_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok || !data.articles) {
+      throw new Error(data.message || "Failed to fetch news from API");
+    }
+
+    const alerts = data.articles.map((article, index) => ({
+      id: index + 1,
+      title: article.title,
+      summary: article.description || "No details available.",
+      url: article.url,
+      source: article.source.name,
+      publishedAt: article.publishedAt,
+    }));
+
+    res.json({ alerts });
   } catch (err) {
-    console.error("❌ Failed to fetch dummy alerts:", err.message);
-    res.status(500).json({ error: `Failed to fetch dummy alerts: ${err.message}` });
+    console.error("❌ Failed to fetch real-time alerts:", err.message);
+    res.status(500).json({
+      error: `Failed to fetch alerts: ${err.message}`,
+    });
   }
 });
 
