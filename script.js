@@ -3,16 +3,16 @@ const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
 const header = document.querySelector('header');
 
-// --- Use the existing sidebar from HTML ---
+// --- Sidebar container for alerts ---
 const alertsContainer = document.getElementById('alerts-container');
 
-// --- Fetch dummy tech alerts from backend ---
+// --- Fetch real tech alerts from backend ---
 async function fetchTechAlerts() {
   try {
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
     const data = await res.json();
 
-    console.log("Alerts API response:", data); // Debug
+    console.log("Alerts API response:", data); // Debug log
 
     alertsContainer.innerHTML = ""; // Clear old alerts
 
@@ -21,7 +21,7 @@ async function fetchTechAlerts() {
         const alertCard = document.createElement('div');
         alertCard.classList.add('alert-card');
 
-        // ✅ Handle both object and string alerts
+        // Handle both object and string alerts
         const title =
           typeof alertObj === "object"
             ? alertObj.title || alertObj.text || "Untitled Alert"
@@ -43,14 +43,45 @@ async function fetchTechAlerts() {
           <h3 class="alert-title">${title}</h3>
           <div class="alert-details">
             <p>${description}</p>
-            ${source}
-            ${link}
           </div>
         `;
 
-        // --- Expand/Collapse on click ---
+        // --- Expand/Collapse with popup ---
         alertCard.addEventListener("click", () => {
-          alertCard.classList.toggle("expanded");
+          // If clicked again, collapse it and remove popup
+          if (alertCard.classList.contains("expanded")) {
+            alertCard.classList.remove("expanded");
+            const existingPopup = document.querySelector(".alert-popup");
+            if (existingPopup) existingPopup.remove();
+            return;
+          }
+
+          // Collapse any other open alert
+          document.querySelectorAll(".alert-card.expanded").forEach(card => {
+            card.classList.remove("expanded");
+          });
+
+          alertCard.classList.add("expanded");
+
+          // Remove any existing popup
+          const existingPopup = document.querySelector(".alert-popup");
+          if (existingPopup) existingPopup.remove();
+
+          // Create popup with full details
+          const popup = document.createElement("div");
+          popup.classList.add("alert-popup");
+          popup.innerHTML = `
+            <h3>${title}</h3>
+            <p>${description}</p>
+            ${source}
+            ${link}
+          `;
+
+          // Append popup after the clicked card
+          alertCard.insertAdjacentElement("afterend", popup);
+
+          // Smooth scroll into view
+          popup.scrollIntoView({ behavior: "smooth", block: "center" });
         });
 
         alertsContainer.appendChild(alertCard);
@@ -64,10 +95,10 @@ async function fetchTechAlerts() {
   }
 }
 
-// --- Fetch alerts once on page load ---
+// --- Fetch alerts on page load ---
 fetchTechAlerts();
 
-// --- Toggle sidebar on clicking header ---
+// --- Toggle sidebar visibility ---
 let sidebarVisible = false;
 header.addEventListener('click', () => {
   sidebarVisible = !sidebarVisible;
@@ -134,7 +165,7 @@ async function sendMessage() {
     const data = await res.json();
     aiMsg.classList.remove('typing');
 
-    // ✅ Use marked to render Markdown
+    // Render Markdown response
     aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to get response";
 
     scrollToBottom();
