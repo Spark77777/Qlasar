@@ -4,6 +4,21 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 import fetch from "node-fetch";
+import fs from "fs";
+
+// ✅ Import internal logic (if available)
+let SYSTEM_PROMPT = "You are Qlasar, a proactive AI that helps users intelligently and creatively.";
+try {
+  const { systemPrompt } = await import("./internalLogic.js");
+  if (systemPrompt && typeof systemPrompt === "string") {
+    SYSTEM_PROMPT = systemPrompt;
+    console.log("🧠 Internal logic loaded successfully.");
+  } else {
+    console.warn("⚠️ internalLogic.js found, but systemPrompt invalid. Using fallback.");
+  }
+} catch (err) {
+  console.warn("⚠️ internalLogic.js not found. Using fallback system prompt.");
+}
 
 // --- INITIAL SETUP ---
 const app = express();
@@ -15,8 +30,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 const NEWSAPI_KEY = process.env.NEWS_API_KEY;
-const SYSTEM_PROMPT = process.env.SYSTEM_PROMPT;
-const PROACTIVE_SYSTEM_PROMPT = process.env.PROACTIVE_SYSTEM_PROMPT;
 
 // --- ENVIRONMENT CHECKS ---
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -94,9 +107,7 @@ app.post("/api/generate", async (req, res) => {
 
     const systemMessage = {
       role: "system",
-      content:
-        SYSTEM_PROMPT?.trim() ||
-        "You are Qlasar, a proactive AI that helps users intelligently and creatively.",
+      content: SYSTEM_PROMPT.trim(),
     };
 
     const formattedMessages = messages.map((msg) => ({
@@ -105,7 +116,7 @@ app.post("/api/generate", async (req, res) => {
     }));
 
     const payload = {
-      model: "tngtech/deepseek-r1t2-chimera:free", // reliable free model
+      model: "tngtech/deepseek-r1t2-chimera:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
@@ -130,7 +141,7 @@ app.post("/api/generate", async (req, res) => {
       return res.status(500).json({ error: "Invalid JSON from model", raw: text });
     }
 
-    // Handle multiple possible output formats
+    // --- Extract message ---
     let reply =
       data?.choices?.[0]?.message?.content ||
       data?.choices?.[0]?.text ||
@@ -138,10 +149,8 @@ app.post("/api/generate", async (req, res) => {
       null;
 
     if (reply) {
-      // ✅ Remove <think> blocks
+      // Remove <think> blocks and reasoning markers
       reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-      // ✅ Remove leading meta-commentary phrases like "Qlasar thinks:" at the start
       reply = reply.replace(/^(Qlasar\s+thinks[:\-]?\s*|Analyzing[:\-]?\s*)/i, "").trim();
     }
 
