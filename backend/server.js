@@ -116,7 +116,7 @@ app.post("/api/generate", async (req, res) => {
     }));
 
     const payload = {
-      model: "tngtech/deepseek-r1t2-chimera:free",
+      model: "mistralai/devstral-2512:free",
       messages: [systemMessage, ...formattedMessages],
       temperature: 0.7,
       max_output_tokens: 600,
