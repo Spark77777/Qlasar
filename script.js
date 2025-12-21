@@ -1,23 +1,58 @@
 const input = document.getElementById('message-input');
 const sendBtn = document.getElementById('send-btn');
 const chatWindow = document.getElementById('chat-window');
-const header = document.querySelector('header');
 
-// --- Sidebar container for proactive alerts ---
+// --- Sidebar elements ---
+const sidebar = document.getElementById('sidebar');
+const qlasarTitle = document.getElementById('qlasar-title');
 const alertsContainer = document.getElementById('alerts-container');
+const newChatBtn = document.getElementById('new-chat-btn');
 
-// --- Fetch real alerts from backend (NewsAPI proxy) ---
+// ===============================
+// SIDEBAR TOGGLE (ONLY QLASAR TEXT)
+// ===============================
+let sidebarVisible = false;
+
+qlasarTitle.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sidebarVisible = !sidebarVisible;
+  sidebar.style.left = sidebarVisible ? '0' : '-300px';
+});
+
+// Close sidebar when clicking outside
+document.addEventListener('click', (e) => {
+  if (sidebarVisible && !sidebar.contains(e.target) && e.target !== qlasarTitle) {
+    sidebar.style.left = '-300px';
+    sidebarVisible = false;
+  }
+});
+
+// ===============================
+// NEW CHAT LOGIC
+// ===============================
+newChatBtn.addEventListener('click', () => {
+  chatWindow.innerHTML = '';
+  sidebar.style.left = '-300px';
+  sidebarVisible = false;
+
+  const welcome = document.createElement('div');
+  welcome.classList.add('message', 'ai');
+  welcome.textContent = "Hello! I am Qlasar. Ask me anything.";
+  chatWindow.appendChild(welcome);
+});
+
+// ===============================
+// PROACTIVE ALERTS FETCH
+// ===============================
 async function fetchTechAlerts() {
   try {
     const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
     const data = await res.json();
 
-    console.log("Alerts API response:", data); // Debug log
+    alertsContainer.innerHTML = "";
 
-    alertsContainer.innerHTML = ""; // Clear old alerts
-
-    if (data.alerts && Array.isArray(data.alerts) && data.alerts.length > 0) {
-      const titles = new Set(); // Prevent duplicates
+    if (Array.isArray(data.alerts) && data.alerts.length > 0) {
+      const titles = new Set();
 
       data.alerts.forEach(alertObj => {
         const title =
@@ -25,26 +60,17 @@ async function fetchTechAlerts() {
             ? alertObj.title || alertObj.text || "Untitled Alert"
             : alertObj;
 
-        // Skip duplicate titles
         if (titles.has(title)) return;
         titles.add(title);
 
-        const description =
-          typeof alertObj === "object" && alertObj.description
-            ? alertObj.description
-            : "";
+        const description = alertObj.description || "";
+        const source = alertObj.source
+          ? `<p class="source"><strong>Source:</strong> ${alertObj.source}</p>`
+          : "";
+        const link = alertObj.link
+          ? `<a href="${alertObj.link}" target="_blank">Read more →</a>`
+          : "";
 
-        const source =
-          typeof alertObj === "object" && alertObj.source
-            ? `<p class="source"><strong>Source:</strong> ${alertObj.source}</p>`
-            : "";
-
-        const link =
-          typeof alertObj === "object" && alertObj.link
-            ? `<a href="${alertObj.link}" target="_blank">Read more →</a>`
-            : "";
-
-        // --- Create the alert card ---
         const alertCard = document.createElement('div');
         alertCard.classList.add('alert-card');
         alertCard.innerHTML = `
@@ -52,20 +78,21 @@ async function fetchTechAlerts() {
             <h3 class="alert-title">${title}</h3>
             <span class="arrow">▼</span>
           </div>
-          <div class="alert-details" style="display: none;">
+          <div class="alert-details">
             ${description ? `<p>${description}</p>` : ""}
             ${source}
             ${link}
           </div>
         `;
 
-        // --- Expand/Collapse Behavior ---
-        alertCard.addEventListener("click", () => {
-          const details = alertCard.querySelector('.alert-details');
-          const arrow = alertCard.querySelector('.arrow');
-          const isExpanded = alertCard.classList.toggle('expanded');
-          details.style.display = isExpanded ? "block" : "none";
-          arrow.style.transform = isExpanded ? "rotate(180deg)" : "rotate(0deg)";
+        const details = alertCard.querySelector('.alert-details');
+        const arrow = alertCard.querySelector('.arrow');
+        details.style.display = "none";
+
+        alertCard.querySelector('.alert-header').addEventListener('click', () => {
+          const expanded = details.style.display === "block";
+          details.style.display = expanded ? "none" : "block";
+          arrow.style.transform = expanded ? "rotate(0deg)" : "rotate(180deg)";
         });
 
         alertsContainer.appendChild(alertCard);
@@ -74,30 +101,23 @@ async function fetchTechAlerts() {
       alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
     }
   } catch (err) {
-    console.error("Error fetching tech alerts:", err);
+    console.error(err);
     alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
   }
 }
 
-// --- Fetch alerts on page load ---
 fetchTechAlerts();
 
-// --- Toggle sidebar visibility ---
-let sidebarVisible = false;
-header.addEventListener('click', () => {
-  sidebarVisible = !sidebarVisible;
-  const sidebar = document.getElementById('sidebar');
-  sidebar.style.left = sidebarVisible ? '0' : '-300px';
-});
-
-// --- Chat logic ---
+// ===============================
+// CHAT LOGIC
+// ===============================
 sendBtn.addEventListener('click', sendMessage);
 
-input.addEventListener('keydown', function (e) {
+input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && e.ctrlKey) {
     e.preventDefault();
     sendMessage();
-  } else if (e.key === 'Enter' && !e.ctrlKey) {
+  } else if (e.key === 'Enter') {
     autoExpand();
   }
 });
@@ -113,7 +133,6 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  // --- User message ---
   const userMsg = document.createElement('div');
   userMsg.classList.add('message', 'user');
   userMsg.textContent = text;
@@ -123,10 +142,8 @@ async function sendMessage() {
   input.style.height = 'auto';
   scrollToBottom();
 
-  // --- AI typing indicator ---
   const aiMsg = document.createElement('div');
   aiMsg.classList.add('message', 'ai', 'typing');
-  aiMsg.textContent = "";
   chatWindow.appendChild(aiMsg);
   scrollToBottom();
 
@@ -135,7 +152,7 @@ async function sendMessage() {
     document.querySelectorAll('.message').forEach(msg => {
       if (msg.classList.contains('user'))
         messages.push({ sender: 'user', text: msg.textContent });
-      else if (msg.classList.contains('ai'))
+      else if (msg.classList.contains('ai') && !msg.classList.contains('typing'))
         messages.push({ sender: 'ai', text: msg.textContent });
     });
 
@@ -147,17 +164,15 @@ async function sendMessage() {
 
     const data = await res.json();
     aiMsg.classList.remove('typing');
-
-    aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to get response";
-
+    aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to respond";
     scrollToBottom();
+
   } catch (err) {
     aiMsg.classList.remove('typing');
-    aiMsg.textContent = "❌ Error connecting to server";
-    console.error(err);
+    aiMsg.textContent = "❌ Server error";
   }
 }
 
 function scrollToBottom() {
   chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
-}
+            }
