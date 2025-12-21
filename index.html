@@ -1,41 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Qlasar</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- ================= HEADER ================= -->
   <header>
-    <h1>Qlasar</h1>
+    <!-- Clickable Qlasar title -->
+    <h1 id="qlasar-title">Qlasar</h1>
   </header>
 
-  <!-- Sidebar for Proactive Alerts -->
-  <div id="sidebar">
-    <h2>Proactive Alerts</h2>
-    <div id="alerts-container">
-      <!-- Alerts will be dynamically added here -->
-    </div>
-  </div>
+  <!-- ================= SIDEBAR ================= -->
+  <aside id="sidebar">
 
-  <!-- Chat Messages -->
+    <!-- Account Panel -->
+    <div id="account-panel" class="sidebar-section">
+      <div class="account-avatar">👤</div>
+      <div class="account-info">
+        <p class="account-name">Guest User</p>
+        <p class="account-status">Not signed in</p>
+      </div>
+    </div>
+
+    <!-- New Chat -->
+    <div class="sidebar-section">
+      <button id="new-chat-btn" class="new-chat-btn">
+        ➕ New Chat
+      </button>
+    </div>
+
+    <!-- Proactive Alerts -->
+    <div class="sidebar-section alerts-section">
+      <h2>Proactive Alerts</h2>
+      <div id="alerts-container">
+        <!-- Alerts injected here -->
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ================= CHAT WINDOW ================= -->
   <main id="chat-window">
-    <div class="message ai">Hello! I am Qlasar. Ask me anything.</div>
+    <div class="message ai">
+      Hello! I am Qlasar. Ask me anything.
+    </div>
   </main>
 
-  <!-- Message Input -->
+  <!-- ================= MESSAGE INPUT ================= -->
   <footer>
     <div class="input-container">
-      <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+      <textarea
+        id="message-input"
+        placeholder="Type your message..."
+        rows="1"
+      ></textarea>
       <button id="send-btn">➤</button>
     </div>
   </footer>
 
-  <!-- Markdown parser -->
+  <!-- ================= SCRIPTS ================= -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="script.js"></script>
+
 </body>
 </html>
