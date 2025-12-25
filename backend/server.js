@@ -38,6 +38,25 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ================= SUPABASE HEARTBEAT =================
+const supabaseHeartbeat = async () => {
+  try {
+    const { error } = await supabase
+      .from("profiles") // any lightweight table
+      .select("id")
+      .limit(1);
+
+    if (error) throw error;
+    console.log("💓 Supabase heartbeat OK");
+  } catch (err) {
+    console.error("⚠️ Supabase heartbeat failed:", err.message);
+  }
+};
+
+// Run immediately + every 4 minutes
+supabaseHeartbeat();
+setInterval(supabaseHeartbeat, 4 * 60 * 1000);
+
 // ================= AUTH ROUTES =================
 
 // SIGNUP
@@ -53,7 +72,6 @@ app.post("/api/auth/signup", async (req, res) => {
 
     if (error) throw error;
 
-    // Store profile
     await supabase.from("profiles").insert({
       id: data.user.id,
       email,
@@ -132,9 +150,7 @@ app.post("/api/generate", async (req, res) => {
 app.get("/api/alerts", async (req, res) => {
   if (!NEWSAPI_KEY) {
     return res.json({
-      alerts: [
-        { title: "AI breakthrough", source: "Qlasar" },
-      ],
+      alerts: [{ title: "AI breakthrough", source: "Qlasar" }],
     });
   }
 
