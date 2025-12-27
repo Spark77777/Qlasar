@@ -5,32 +5,32 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
   color: #fff;
+  overflow: hidden;
 }
 
 /* ================= HEADER ================= */
 header {
-  padding: 0.7rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  padding: 0.7rem 1.2rem;
   border-bottom: 1px solid rgba(0, 255, 255, 0.15);
-  box-shadow: 0 1px 6px rgba(0, 255, 255, 0.08);
-  background: rgba(10, 10, 20, 0.85);
+  background: rgba(10, 10, 20, 0.9);
   backdrop-filter: blur(6px);
+  z-index: 10;
 }
 
 #qlasar-title {
   font-size: 1.4rem;
   font-weight: 600;
   cursor: pointer;
-  display: inline-block;
 }
 
 #qlasar-title:hover {
@@ -40,208 +40,117 @@ header {
 /* ================= CHAT WINDOW ================= */
 #chat-window {
   flex: 1;
-  padding: 1rem 1.5rem;
+  padding: 0.8rem 1rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255,255,255,0.02),
-    rgba(255,255,255,0.02) 1px,
-    transparent 1px,
-    transparent 20px
-  );
-  scrollbar-width: thin;
-  scrollbar-color: #00ffff33 transparent;
+  gap: 0.4rem;
 }
 
-#chat-window::-webkit-scrollbar {
-  width: 8px;
-}
-#chat-window::-webkit-scrollbar-thumb {
-  background-color: #00ffff66;
-  border-radius: 4px;
+/* Welcome message */
+.welcome-message {
+  margin: auto;
+  text-align: center;
+  opacity: 0.85;
+  max-width: 500px;
+  font-size: 1rem;
 }
 
 /* ================= MESSAGES ================= */
 .message {
-  padding: 0.8rem 1.2rem;
+  padding: 0.7rem 1rem;
   font-size: 0.95rem;
   line-height: 1.5;
-  word-wrap: break-word;
   max-width: 90%;
-  animation: fadeIn 0.3s ease;
-  margin-bottom: 0.4rem;
+  border-radius: 14px;
+  animation: fadeIn 0.25s ease;
   white-space: pre-wrap;
 }
 
 .message.ai {
-  background: linear-gradient(145deg, #222233, #1f1f2e);
-  border-radius: 15px 15px 15px 5px;
+  background: #1f1f2e;
   align-self: flex-start;
-  box-shadow: 0 0 6px #00ffff55, 0 0 15px #00ffff22;
 }
 
 .message.user {
   background: linear-gradient(135deg, #00ffff, #00cccc);
-  border-radius: 15px 15px 5px 15px;
   color: #000;
   align-self: flex-end;
-  box-shadow: 0 0 6px #00ffff55, 0 0 15px #00cccc22;
 }
 
 /* ================= FOOTER ================= */
 footer {
-  padding: 0.6rem 1rem;
-  background-color: rgba(10, 10, 10, 0.95);
-  box-shadow: 0 -3px 15px rgba(0, 255, 255, 0.25);
+  padding: 0.6rem;
+  background: rgba(10, 10, 10, 0.95);
 }
 
 .input-container {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
-  max-width: 800px;
-  margin: 0 auto;
-  background: rgba(0, 255, 255, 0.05);
-  border-radius: 50px;
-  box-shadow: inset 0 0 8px rgba(0, 255, 255, 0.2);
-  padding: 0.2rem 0.5rem;
+  max-width: 900px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 30px;
+  padding: 0.4rem 0.6rem;
 }
 
 #message-input {
   flex: 1;
-  padding: 0.7rem 1rem;
   border: none;
-  outline: none;
   background: transparent;
   color: #fff;
   font-size: 1rem;
   resize: none;
-  max-height: 120px;
+  outline: none;
 }
 
 #send-btn {
   padding: 0.6rem 1rem;
   border: none;
-  border-radius: 50px;
-  background: linear-gradient(90deg, #00ffff, #00dddd);
+  border-radius: 20px;
+  background: #00ffff;
   cursor: pointer;
-  box-shadow: 0 0 10px #00ffff55;
 }
 
 /* ================= SIDEBAR ================= */
 #sidebar {
   position: fixed;
   top: 0;
-  left: -300px;
-  width: 300px;
+  left: -100%;
+  width: 280px;
   height: 100%;
-  background: rgba(10, 10, 20, 0.97);
-  box-shadow: 2px 0 20px rgba(0, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 10, 20, 0.98);
   padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  transition: left 0.35s ease;
-  z-index: 20;
+  transition: left 0.3s ease;
+  z-index: 30;
 }
 
-/* Sidebar sections */
-.sidebar-section {
-  margin-bottom: 1.2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+#sidebar.open {
+  left: 0;
 }
 
-/* ================= ACCOUNT PANEL ================= */
-#account-panel {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+/* Sidebar overlay */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 25;
 }
 
-.account-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #00ffff, #00cccc);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  color: #000;
-}
-
-.account-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.account-status {
-  font-size: 0.75rem;
-  color: #aaa;
-}
-
-/* ================= NEW CHAT ================= */
-.new-chat-btn {
-  width: 100%;
-  padding: 0.6rem;
-  border-radius: 10px;
-  border: none;
-  background: linear-gradient(135deg, #00ffff, #00cccc);
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 0 10px #00ffff55;
-  transition: transform 0.2s ease;
-}
-
-.new-chat-btn:hover {
-  transform: scale(1.05);
+#overlay.show {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* ================= ALERTS ================= */
-.alerts-section h2 {
-  font-size: 1.1rem;
-  margin-bottom: 0.6rem;
-  color: #00ffff;
-}
-
-#alerts-container {
-  overflow-y: auto;
-  max-height: calc(100vh - 260px);
-}
-
-/* Alert cards */
 .alert-card {
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.alert-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.alert-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.alert-details {
-  font-size: 0.85rem;
-  color: #ccc;
-  margin-top: 6px;
-  display: none;
-}
-
-/* ================= ANIMATIONS ================= */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 /* ================= MOBILE ================= */
@@ -249,4 +158,20 @@ footer {
   #sidebar {
     width: 85%;
   }
+
+  .message {
+    max-width: 95%;
+  }
 }
+
+/* ================= ANIMATIONS ================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  }
