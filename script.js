@@ -1,108 +1,123 @@
-const input = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
-const chatWindow = document.getElementById('chat-window');
+const input = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
+const chatWindow = document.getElementById("chat-window");
 
-// --- Sidebar elements ---
-const sidebar = document.getElementById('sidebar');
-const qlasarTitle = document.getElementById('qlasar-title');
-const alertsContainer = document.getElementById('alerts-container');
-const newChatBtn = document.getElementById('new-chat-btn');
+// Sidebar elements
+const sidebar = document.getElementById("sidebar");
+const qlasarTitle = document.getElementById("qlasar-title");
+const alertsContainer = document.getElementById("alerts-container");
+const newChatBtn = document.getElementById("new-chat-btn");
 
 // ===============================
-// SIDEBAR TOGGLE (ONLY QLASAR TEXT)
+// INITIAL STATE (IMPORTANT FIX)
 // ===============================
 let sidebarVisible = false;
+sidebar.style.transform = "translateX(-100%)";
 
-qlasarTitle.addEventListener('click', (e) => {
+// ===============================
+// SIDEBAR TOGGLE
+// ===============================
+qlasarTitle.addEventListener("click", (e) => {
   e.stopPropagation();
   sidebarVisible = !sidebarVisible;
-  sidebar.style.left = sidebarVisible ? '0' : '-300px';
+  sidebar.style.transform = sidebarVisible ? "translateX(0)" : "translateX(-100%)";
 });
 
-// Close sidebar when clicking outside
-document.addEventListener('click', (e) => {
-  if (sidebarVisible && !sidebar.contains(e.target) && e.target !== qlasarTitle) {
-    sidebar.style.left = '-300px';
+// Close sidebar on outside click (desktop + mobile)
+document.addEventListener("click", (e) => {
+  if (
+    sidebarVisible &&
+    !sidebar.contains(e.target) &&
+    e.target !== qlasarTitle
+  ) {
+    sidebar.style.transform = "translateX(-100%)";
     sidebarVisible = false;
   }
 });
 
 // ===============================
-// NEW CHAT LOGIC
+// WELCOME MESSAGE
 // ===============================
-newChatBtn.addEventListener('click', () => {
-  chatWindow.innerHTML = '';
-  sidebar.style.left = '-300px';
-  sidebarVisible = false;
-
-  const welcome = document.createElement('div');
-  welcome.classList.add('message', 'ai');
-  welcome.textContent = "Hello! I am Qlasar. Ask me anything.";
+function renderWelcomeMessage() {
+  chatWindow.innerHTML = "";
+  const welcome = document.createElement("div");
+  welcome.className = "message ai welcome";
+  welcome.textContent =
+    "Hello 👋 I’m Qlasar. I proactively scout information so you don’t have to.";
   chatWindow.appendChild(welcome);
+}
+
+renderWelcomeMessage();
+
+// ===============================
+// NEW CHAT
+// ===============================
+newChatBtn.addEventListener("click", () => {
+  renderWelcomeMessage();
+  sidebar.style.transform = "translateX(-100%)";
+  sidebarVisible = false;
 });
 
 // ===============================
-// PROACTIVE ALERTS FETCH
+// PROACTIVE ALERTS
 // ===============================
 async function fetchTechAlerts() {
   try {
-    const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
+    const res = await fetch("/api/alerts");
     const data = await res.json();
 
     alertsContainer.innerHTML = "";
 
-    if (Array.isArray(data.alerts) && data.alerts.length > 0) {
-      const titles = new Set();
-
-      data.alerts.forEach(alertObj => {
-        const title =
-          typeof alertObj === "object"
-            ? alertObj.title || alertObj.text || "Untitled Alert"
-            : alertObj;
-
-        if (titles.has(title)) return;
-        titles.add(title);
-
-        const description = alertObj.description || "";
-        const source = alertObj.source
-          ? `<p class="source"><strong>Source:</strong> ${alertObj.source}</p>`
-          : "";
-        const link = alertObj.link
-          ? `<a href="${alertObj.link}" target="_blank">Read more →</a>`
-          : "";
-
-        const alertCard = document.createElement('div');
-        alertCard.classList.add('alert-card');
-        alertCard.innerHTML = `
-          <div class="alert-header">
-            <h3 class="alert-title">${title}</h3>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="alert-details">
-            ${description ? `<p>${description}</p>` : ""}
-            ${source}
-            ${link}
-          </div>
-        `;
-
-        const details = alertCard.querySelector('.alert-details');
-        const arrow = alertCard.querySelector('.arrow');
-        details.style.display = "none";
-
-        alertCard.querySelector('.alert-header').addEventListener('click', () => {
-          const expanded = details.style.display === "block";
-          details.style.display = expanded ? "none" : "block";
-          arrow.style.transform = expanded ? "rotate(0deg)" : "rotate(180deg)";
-        });
-
-        alertsContainer.appendChild(alertCard);
-      });
-    } else {
-      alertsContainer.innerHTML = `<div class="alert">No new alerts right now.</div>`;
+    if (!Array.isArray(data.alerts) || data.alerts.length === 0) {
+      alertsContainer.innerHTML =
+        "<div class='alert'>No new alerts right now</div>";
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alertsContainer.innerHTML = `<div class="alert">⚠️ Failed to load alerts</div>`;
+
+    const seen = new Set();
+
+    data.alerts.forEach((alert) => {
+      if (seen.has(alert.title)) return;
+      seen.add(alert.title);
+
+      const card = document.createElement("div");
+      card.className = "alert-card";
+
+      card.innerHTML = `
+        <div class="alert-header">
+          <h3>${alert.title}</h3>
+          <span class="arrow">⌄</span>
+        </div>
+        <div class="alert-details">
+          ${alert.summary ? `<p>${alert.summary}</p>` : ""}
+          ${
+            alert.source
+              ? `<p class="source">Source: ${alert.source}</p>`
+              : ""
+          }
+          ${
+            alert.url
+              ? `<a href="${alert.url}" target="_blank">Read more →</a>`
+              : ""
+          }
+        </div>
+      `;
+
+      const details = card.querySelector(".alert-details");
+      const arrow = card.querySelector(".arrow");
+      details.style.display = "none";
+
+      card.querySelector(".alert-header").onclick = () => {
+        const open = details.style.display === "block";
+        details.style.display = open ? "none" : "block";
+        arrow.style.transform = open ? "rotate(0deg)" : "rotate(180deg)";
+      };
+
+      alertsContainer.appendChild(card);
+    });
+  } catch {
+    alertsContainer.innerHTML =
+      "<div class='alert'>⚠️ Failed to load alerts</div>";
   }
 }
 
@@ -111,68 +126,72 @@ fetchTechAlerts();
 // ===============================
 // CHAT LOGIC
 // ===============================
-sendBtn.addEventListener('click', sendMessage);
+sendBtn.addEventListener("click", sendMessage);
 
-input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.ctrlKey) {
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
-  } else if (e.key === 'Enter') {
-    autoExpand();
   }
 });
 
-input.addEventListener('input', autoExpand);
+input.addEventListener("input", autoExpand);
 
 function autoExpand() {
-  input.style.height = 'auto';
-  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 120) + "px";
 }
 
 async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  const userMsg = document.createElement('div');
-  userMsg.classList.add('message', 'user');
+  // Remove welcome message once user speaks
+  const welcome = document.querySelector(".welcome");
+  if (welcome) welcome.remove();
+
+  const userMsg = document.createElement("div");
+  userMsg.className = "message user";
   userMsg.textContent = text;
   chatWindow.appendChild(userMsg);
 
-  input.value = '';
-  input.style.height = 'auto';
+  input.value = "";
+  input.style.height = "auto";
   scrollToBottom();
 
-  const aiMsg = document.createElement('div');
-  aiMsg.classList.add('message', 'ai', 'typing');
+  const aiMsg = document.createElement("div");
+  aiMsg.className = "message ai typing";
+  aiMsg.textContent = "Thinking…";
   chatWindow.appendChild(aiMsg);
   scrollToBottom();
 
   try {
     const messages = [];
-    document.querySelectorAll('.message').forEach(msg => {
-      if (msg.classList.contains('user'))
-        messages.push({ sender: 'user', text: msg.textContent });
-      else if (msg.classList.contains('ai') && !msg.classList.contains('typing'))
-        messages.push({ sender: 'ai', text: msg.textContent });
+    document.querySelectorAll(".message").forEach((msg) => {
+      if (msg.classList.contains("user"))
+        messages.push({ sender: "user", text: msg.textContent });
+      else if (msg.classList.contains("ai") && !msg.classList.contains("typing"))
+        messages.push({ sender: "ai", text: msg.textContent });
     });
 
-    const res = await fetch("https://qlasar-qx6y.onrender.com/api/generate", {
+    const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages })
+      body: JSON.stringify({ messages }),
     });
 
     const data = await res.json();
-    aiMsg.classList.remove('typing');
-    aiMsg.innerHTML = data.reply ? marked.parse(data.reply) : "❌ Failed to respond";
+    aiMsg.classList.remove("typing");
+    aiMsg.innerHTML = data.reply || "❌ Failed to respond";
     scrollToBottom();
-
-  } catch (err) {
-    aiMsg.classList.remove('typing');
+  } catch {
     aiMsg.textContent = "❌ Server error";
   }
 }
 
 function scrollToBottom() {
-  chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
-            }
+  chatWindow.scrollTo({
+    top: chatWindow.scrollHeight,
+    behavior: "smooth",
+  });
+}
