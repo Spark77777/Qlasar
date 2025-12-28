@@ -9,26 +9,28 @@ const alertsContainer = document.getElementById("alerts-container");
 const newChatBtn = document.getElementById("new-chat-btn");
 
 // ===============================
-// INITIAL STATE (IMPORTANT FIX)
+// INITIAL STATE
 // ===============================
 let sidebarVisible = false;
 sidebar.style.transform = "translateX(-100%)";
 
 // ===============================
-// SIDEBAR TOGGLE
+// SIDEBAR TOGGLE (QLASAR LOGO ONLY)
 // ===============================
 qlasarTitle.addEventListener("click", (e) => {
   e.stopPropagation();
   sidebarVisible = !sidebarVisible;
-  sidebar.style.transform = sidebarVisible ? "translateX(0)" : "translateX(-100%)";
+  sidebar.style.transform = sidebarVisible
+    ? "translateX(0)"
+    : "translateX(-100%)";
 });
 
-// Close sidebar on outside click (desktop + mobile)
+// Close sidebar when clicking outside
 document.addEventListener("click", (e) => {
   if (
     sidebarVisible &&
     !sidebar.contains(e.target) &&
-    e.target !== qlasarTitle
+    !qlasarTitle.contains(e.target)
   ) {
     sidebar.style.transform = "translateX(-100%)";
     sidebarVisible = false;
@@ -90,16 +92,8 @@ async function fetchTechAlerts() {
         </div>
         <div class="alert-details">
           ${alert.summary ? `<p>${alert.summary}</p>` : ""}
-          ${
-            alert.source
-              ? `<p class="source">Source: ${alert.source}</p>`
-              : ""
-          }
-          ${
-            alert.url
-              ? `<a href="${alert.url}" target="_blank">Read more →</a>`
-              : ""
-          }
+          ${alert.source ? `<p class="source">Source: ${alert.source}</p>` : ""}
+          ${alert.url ? `<a href="${alert.url}" target="_blank">Read more →</a>` : ""}
         </div>
       `;
 
@@ -146,7 +140,6 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  // Remove welcome message once user speaks
   const welcome = document.querySelector(".welcome");
   if (welcome) welcome.remove();
 
@@ -194,4 +187,4 @@ function scrollToBottom() {
     top: chatWindow.scrollHeight,
     behavior: "smooth",
   });
-}
+      }
