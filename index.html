@@ -3,68 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Qlasar</title>
+  <title>Qlasar Beta</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <!-- ================= HEADER ================= -->
-  <header>
-    <!-- Clickable Qlasar title -->
-    <h1 id="qlasar-title">Qlasar</h1>
-  </header>
+<header>
+  <div id="qlasar-title">Qlasar</div>
+</header>
 
-  <!-- ================= SIDEBAR ================= -->
-  <aside id="sidebar">
+<div id="overlay"></div>
 
-    <!-- Account Panel -->
-    <div id="account-panel" class="sidebar-section">
-      <div class="account-avatar">👤</div>
-      <div class="account-info">
-        <p class="account-name">Guest User</p>
-        <p class="account-status">Not signed in</p>
-      </div>
-    </div>
+<aside id="sidebar">
+  <button id="new-chat-btn">＋ New Chat</button>
 
-    <!-- New Chat -->
-    <div class="sidebar-section">
-      <button id="new-chat-btn" class="new-chat-btn">
-        ➕ New Chat
-      </button>
-    </div>
+  <h3>Proactive Alerts</h3>
+  <div id="alerts-container">
+    <p class="muted">Loading alerts…</p>
+  </div>
 
-    <!-- Proactive Alerts -->
-    <div class="sidebar-section alerts-section">
-      <h2>Proactive Alerts</h2>
-      <div id="alerts-container">
-        <!-- Alerts injected here -->
-      </div>
-    </div>
+  <p class="beta-note">Beta Version</p>
+</aside>
 
-  </aside>
+<main id="chat-window">
+  <div class="welcome-message">
+    <h2>Hello 👋</h2>
+    <p>I’m Qlasar. I proactively scout information so you don’t have to.</p>
+  </div>
+</main>
 
-  <!-- ================= CHAT WINDOW ================= -->
-  <main id="chat-window">
-    <div class="message ai">
-      Hello! I am Qlasar. Ask me anything.
-    </div>
-  </main>
+<footer>
+  <div class="input-container">
+    <textarea id="message-input" placeholder="Ask Qlasar…"></textarea>
+    <button id="send-btn">Send</button>
+  </div>
+</footer>
 
-  <!-- ================= MESSAGE INPUT ================= -->
-  <footer>
-    <div class="input-container">
-      <textarea
-        id="message-input"
-        placeholder="Type your message..."
-        rows="1"
-      ></textarea>
-      <button id="send-btn">➤</button>
-    </div>
-  </footer>
-
-  <!-- ================= SCRIPTS ================= -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="script.js"></script>
-
+<script src="script.js"></script>
 </body>
 </html>
