@@ -4,38 +4,30 @@ const chatWindow = document.getElementById("chat-window");
 
 // Sidebar elements
 const sidebar = document.getElementById("sidebar");
+const overlay = document.getElementById("overlay");
 const qlasarTitle = document.getElementById("qlasar-title");
 const alertsContainer = document.getElementById("alerts-container");
 const newChatBtn = document.getElementById("new-chat-btn");
 
 // ===============================
-// INITIAL STATE
+// SIDEBAR TOGGLE
 // ===============================
-let sidebarVisible = false;
-sidebar.style.transform = "translateX(-100%)";
+function openSidebar() {
+  sidebar.classList.add("open");
+  overlay.classList.add("show");
+}
 
-// ===============================
-// SIDEBAR TOGGLE (QLASAR LOGO ONLY)
-// ===============================
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  overlay.classList.remove("show");
+}
+
 qlasarTitle.addEventListener("click", (e) => {
   e.stopPropagation();
-  sidebarVisible = !sidebarVisible;
-  sidebar.style.transform = sidebarVisible
-    ? "translateX(0)"
-    : "translateX(-100%)";
+  sidebar.classList.contains("open") ? closeSidebar() : openSidebar();
 });
 
-// Close sidebar when clicking outside
-document.addEventListener("click", (e) => {
-  if (
-    sidebarVisible &&
-    !sidebar.contains(e.target) &&
-    !qlasarTitle.contains(e.target)
-  ) {
-    sidebar.style.transform = "translateX(-100%)";
-    sidebarVisible = false;
-  }
-});
+overlay.addEventListener("click", closeSidebar);
 
 // ===============================
 // WELCOME MESSAGE
@@ -43,7 +35,7 @@ document.addEventListener("click", (e) => {
 function renderWelcomeMessage() {
   chatWindow.innerHTML = "";
   const welcome = document.createElement("div");
-  welcome.className = "message ai welcome";
+  welcome.className = "message ai welcome-message";
   welcome.textContent =
     "Hello 👋 I’m Qlasar. I proactively scout information so you don’t have to.";
   chatWindow.appendChild(welcome);
@@ -56,66 +48,8 @@ renderWelcomeMessage();
 // ===============================
 newChatBtn.addEventListener("click", () => {
   renderWelcomeMessage();
-  sidebar.style.transform = "translateX(-100%)";
-  sidebarVisible = false;
+  closeSidebar();
 });
-
-// ===============================
-// PROACTIVE ALERTS
-// ===============================
-async function fetchTechAlerts() {
-  try {
-    const res = await fetch("/api/alerts");
-    const data = await res.json();
-
-    alertsContainer.innerHTML = "";
-
-    if (!Array.isArray(data.alerts) || data.alerts.length === 0) {
-      alertsContainer.innerHTML =
-        "<div class='alert'>No new alerts right now</div>";
-      return;
-    }
-
-    const seen = new Set();
-
-    data.alerts.forEach((alert) => {
-      if (seen.has(alert.title)) return;
-      seen.add(alert.title);
-
-      const card = document.createElement("div");
-      card.className = "alert-card";
-
-      card.innerHTML = `
-        <div class="alert-header">
-          <h3>${alert.title}</h3>
-          <span class="arrow">⌄</span>
-        </div>
-        <div class="alert-details">
-          ${alert.summary ? `<p>${alert.summary}</p>` : ""}
-          ${alert.source ? `<p class="source">Source: ${alert.source}</p>` : ""}
-          ${alert.url ? `<a href="${alert.url}" target="_blank">Read more →</a>` : ""}
-        </div>
-      `;
-
-      const details = card.querySelector(".alert-details");
-      const arrow = card.querySelector(".arrow");
-      details.style.display = "none";
-
-      card.querySelector(".alert-header").onclick = () => {
-        const open = details.style.display === "block";
-        details.style.display = open ? "none" : "block";
-        arrow.style.transform = open ? "rotate(0deg)" : "rotate(180deg)";
-      };
-
-      alertsContainer.appendChild(card);
-    });
-  } catch {
-    alertsContainer.innerHTML =
-      "<div class='alert'>⚠️ Failed to load alerts</div>";
-  }
-}
-
-fetchTechAlerts();
 
 // ===============================
 // CHAT LOGIC
@@ -140,7 +74,7 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  const welcome = document.querySelector(".welcome");
+  const welcome = document.querySelector(".welcome-message");
   if (welcome) welcome.remove();
 
   const userMsg = document.createElement("div");
@@ -153,7 +87,7 @@ async function sendMessage() {
   scrollToBottom();
 
   const aiMsg = document.createElement("div");
-  aiMsg.className = "message ai typing";
+  aiMsg.className = "message ai";
   aiMsg.textContent = "Thinking…";
   chatWindow.appendChild(aiMsg);
   scrollToBottom();
@@ -163,7 +97,7 @@ async function sendMessage() {
     document.querySelectorAll(".message").forEach((msg) => {
       if (msg.classList.contains("user"))
         messages.push({ sender: "user", text: msg.textContent });
-      else if (msg.classList.contains("ai") && !msg.classList.contains("typing"))
+      else if (msg.classList.contains("ai") && msg !== aiMsg)
         messages.push({ sender: "ai", text: msg.textContent });
     });
 
@@ -174,8 +108,7 @@ async function sendMessage() {
     });
 
     const data = await res.json();
-    aiMsg.classList.remove("typing");
-    aiMsg.innerHTML = data.reply || "❌ Failed to respond";
+    aiMsg.textContent = data.reply || "❌ Failed to respond";
     scrollToBottom();
   } catch {
     aiMsg.textContent = "❌ Server error";
@@ -187,4 +120,4 @@ function scrollToBottom() {
     top: chatWindow.scrollHeight,
     behavior: "smooth",
   });
-      }
+    }
