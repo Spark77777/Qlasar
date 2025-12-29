@@ -4,7 +4,10 @@ body{
   font-family:Segoe UI,Arial;
   background:#0b0f19;
   color:white;
-  height:100vh;
+
+  /* mobile-safe full height */
+  min-height:100dvh;
+
   display:flex;
   flex-direction:column;
 }
@@ -26,14 +29,20 @@ main{
   flex:1;
   display:flex;
   position:relative;
+
+  /* IMPORTANT for mobile */
+  min-height:0;
 }
 
-/* CHAT SECTION MUST BE FLEX COLUMN */
+/* CHAT SECTION */
 #chat-section{
   display:flex;
   flex-direction:column;
   height:100%;
   width:100%;
+
+  /* IMPORTANT for mobile */
+  min-height:0;
 }
 
 /* CHAT WINDOW TAKES REMAINING SPACE */
@@ -61,10 +70,14 @@ main{
   background:#1c2233;
 }
 
-/* FOOTER INPUT BAR */
+/* FOOTER INPUT BAR — ALWAYS AT BOTTOM */
 footer{
   padding:10px;
   border-top:1px solid #00ffff33;
+
+  position:sticky;
+  bottom:0;
+  background:#0b0f19;
 }
 
 .input-container{
@@ -80,7 +93,6 @@ footer{
   padding:10px;
   border-radius:8px;
 
-  /* fixes text area issue */
   min-height:44px;
   max-height:140px;
   resize:none;
