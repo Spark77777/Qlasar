@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Qlasar Beta</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -13,32 +12,37 @@
   <div id="qlasar-title">Qlasar</div>
 </header>
 
+<!-- Sidebar -->
+<div id="sidebar">
+  <button id="new-chat">➕ New Chat</button>
+  <button id="show-alerts">🛰️ Scouted Alerts</button>
+  <button id="show-sessions">💾 Saved Sessions</button>
+  <button id="account-btn">👤 Account</button>
+</div>
+
 <div id="overlay"></div>
 
-<aside id="sidebar">
-  <button id="new-chat-btn">＋ New Chat</button>
+<!-- Main container -->
+<main id="main-area">
 
-  <h3>Proactive Alerts</h3>
-  <div id="alerts-container">
-    <p class="muted">Loading alerts…</p>
-  </div>
+  <!-- Chat Window -->
+  <section id="chat-section" class="visible">
+    <div id="chat-window"></div>
+    <footer>
+      <div class="input-container">
+        <textarea id="message-input" placeholder="Message Qlasar..."></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+    </footer>
+  </section>
 
-  <p class="beta-note">Beta Version</p>
-</aside>
+  <!-- Alerts Window -->
+  <section id="alerts-section" class="hidden">
+    <h2>Scouted Alerts</h2>
+    <div id="alerts-list"></div>
+  </section>
 
-<main id="chat-window">
-  <div class="welcome-message">
-    <h2>Hello 👋</h2>
-    <p>I’m Qlasar. I proactively scout information so you don’t have to.</p>
-  </div>
 </main>
-
-<footer>
-  <div class="input-container">
-    <textarea id="message-input" placeholder="Ask Qlasar…"></textarea>
-    <button id="send-btn">Send</button>
-  </div>
-</footer>
 
 <script src="script.js"></script>
 </body>
