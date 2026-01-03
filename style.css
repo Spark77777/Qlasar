@@ -24,7 +24,6 @@ header {
 }
 
 #qlasar-title {
-  /* Reduced from 100px so you can actually see the chat bubbles on mobile */
   font-size: 100px; 
   font-weight: 700;
   cursor: pointer;
@@ -58,28 +57,28 @@ main {
 
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Space between the large bubbles */
+  gap: 20px; /* Increased gap to accommodate larger bubbles */
 
   overflow-y: auto;
   padding: 20px 16px 100px 16px; 
 }
 
-/* MESSAGE BUBBLES - UPDATED FOR MAXIMUM SIZE */
+/* MESSAGE BUBBLES - UPDATED TO BE MUCH LARGER */
 .message {
-  padding: 18px 24px;      /* Much more internal breathing room */
-  max-width: 100%;          /* Uses more of the screen width */
-  border-radius: 22px;     /* Rounder, modern aesthetic */
-  line-height: 1.6;        /* Prevents text from looking crowded */
-  font-size: 1.25rem;      /* Makes text significantly larger */
+  padding: 25px 35px;      /* Significantly increased padding for a "larger" look */
+  max-width: 95%;          /* Uses nearly full width */
+  border-radius: 30px;     /* Rounder corners to match the larger scale */
+  line-height: 1.6;        
+  font-size: 1.6rem;       /* Increased font size substantially */
   word-wrap: break-word;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); /* Adds depth */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4); /* Heavier shadow for the larger bubble */
 }
 
 .user {
   background: #00ffff;
   color: black;
   margin-left: auto;
-  border-bottom-right-radius: 4px; /* Message tail */
+  border-bottom-right-radius: 8px; 
   font-weight: 500;
 }
 
@@ -87,8 +86,8 @@ main {
   background: #1c2233;
   color: #ffffff;
   margin-right: auto;
-  border-bottom-left-radius: 4px; /* Message tail */
-  border: 1px solid #00ffff22;   /* Subtle glow effect */
+  border-bottom-left-radius: 8px; 
+  border: 1px solid #00ffff22;   
 }
 
 /* FOOTER INPUT BAR */
@@ -122,7 +121,7 @@ footer {
   padding: 14px;
   border-radius: 12px;
 
-  font-size: 1.1rem; /* Slightly larger input text */
+  font-size: 1.1rem; 
   min-height: 50px;
   max-height: 140px;
   resize: none;
@@ -182,3 +181,4 @@ footer {
 /* VISIBILITY HELPERS */
 .hidden { display: none; }
 .visible { display: block; }
+
