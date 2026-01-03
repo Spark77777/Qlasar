@@ -65,7 +65,7 @@ main {
 
 /* MESSAGE BUBBLES - UPDATED TO BE MUCH LARGER */
 .message {
-  padding: 25px 35px;      /* Significantly increased padding for a "larger" look */
+  padding: 50px 70px;      /* Significantly increased padding for a "larger" look */
   max-width: 95%;          /* Uses nearly full width */
   border-radius: 30px;     /* Rounder corners to match the larger scale */
   line-height: 1.6;        
