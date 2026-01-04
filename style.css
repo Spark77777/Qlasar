@@ -69,7 +69,7 @@ main {
   max-width: 95%;          /* Uses nearly full width */
   border-radius: 30px;     /* Rounder corners to match the larger scale */
   line-height: 1.6;        
-  font-size: 1.6rem;       /* Increased font size substantially */
+  font-size: 1.9rem;       /* Increased font size substantially */
   word-wrap: break-word;
   box-shadow: 0 6px 15px rgba(0,0,0,0.4); /* Heavier shadow for the larger bubble */
 }
