@@ -156,13 +156,16 @@ footer {
 #sidebar {
   position: fixed;
   top: 0;
-  left: -260px;
-  width: 240px;
+  left: -280px;
+  width: 280px;
   height: 100%;
-  background: #0f1524;
-  padding: 14px;
+  background: #0f172a;
+  padding: 24px 16px;
   transition: 0.25s;
   z-index: 20;
+  display: flex; 
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* OVERLAY */
