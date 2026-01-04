@@ -171,7 +171,7 @@ footer {
 /* SIDEBAR BUTTONS - THE READABILITY FIX */
 #sidebar button {
   width: 100%;         /* Forces buttons to span the full sidebar width */
-  padding: 18px;       /* Creates a large, easy-to-tap area */
+  padding: 38px;       /* Creates a large, easy-to-tap area */
   background: #1e293b; /* Distinct background to stand out from the sidebar */
   color: white;
   border: 1px solid #334155;
