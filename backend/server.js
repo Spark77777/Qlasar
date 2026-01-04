@@ -39,23 +39,28 @@ const supabase = createClient(
 );
 
 // ================= SUPABASE HEARTBEAT =================
-const supabaseHeartbeat = async () => {
+const supabaseRestHeartbeat = async () => {
   try {
-    const { error } = await supabase
-      .from("profiles") // any lightweight table
-      .select("id")
-      .limit(1);
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1`;
 
-    if (error) throw error;
-    console.log("💓 Supabase heartbeat OK");
+    const response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+    });
+
+    if (!response.ok) throw new Error(`Status ${response.status}`);
+
+    console.log("💓 Supabase REST heartbeat OK");
   } catch (err) {
-    console.error("⚠️ Supabase heartbeat failed:", err.message);
+    console.error("⚠️ Supabase REST heartbeat failed:", err.message);
   }
 };
 
-// Run immediately + every 4 minutes
-supabaseHeartbeat();
-setInterval(supabaseHeartbeat, 4 * 60 * 1000);
+// run immediately + every 4 min
+supabaseRestHeartbeat();
+setInterval(supabaseRestHeartbeat, 4 * 60 * 1000);
 
 // ================= AUTH ROUTES =================
 
