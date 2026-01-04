@@ -177,6 +177,23 @@ footer {
   border: 1px solid #334155;
   border-radius: 12px; /* Modern rounded look */
 
+    /* TEXT SCALING */
+  font-size: 2.2rem;   /* Makes text significantly larger */
+  font-weight: 600;
+  text-align: left;    /* Aligns text like standard chatbot menus */
+  
+  cursor: pointer;
+  display: flex;       /* Helps icons and text stay centered together */
+  align-items: center;
+  gap: 12px;
+}
+
+/* Adds a highlight when you press them */
+#sidebar button:active {
+  background: #00ffff;
+  color: black;
+}
+
 /* OVERLAY */
 #overlay {
   position: fixed;
