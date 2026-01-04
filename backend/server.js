@@ -115,7 +115,7 @@ app.post("/api/generate", async (req, res) => {
     const { messages } = req.body;
 
     const payload = {
-      model: "mistralai/devstral-2512:free",
+      model: "xiaomi/mimo-v2-flash:free",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         ...messages.map(m => ({
