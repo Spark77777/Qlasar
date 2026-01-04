@@ -1,3 +1,5 @@
+const API_BASE = "https://qlasar-qx6y.onrender.com";
+
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
 const title = document.getElementById("qlasar-title");
@@ -60,6 +62,7 @@ document.getElementById("account-btn").onclick = () =>
 
 // ================= CHAT SEND =================
 sendBtn.onclick = send;
+
 input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -92,7 +95,7 @@ async function send() {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
   try {
-    const res = await fetch("/api/generate", {
+    const res = await fetch(`${API_BASE}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -132,7 +135,7 @@ async function loadAlerts() {
   alertsList.innerHTML = "Loading...";
 
   try {
-    const res = await fetch("/api/alerts");
+    const res = await fetch(`${API_BASE}/api/alerts`);
 
     if (!res.ok) {
       alertsList.innerHTML = "⚠️ Failed to load alerts";
