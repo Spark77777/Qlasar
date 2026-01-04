@@ -98,7 +98,7 @@ footer {
   border-top: 1px solid #00ffff33;
 
   width: 100%;
-  padding: 15px 10px;
+  padding: 25px 15px;
 }
 
 /* input container centered with page width */
@@ -118,12 +118,12 @@ footer {
   background: #11182a;
   color: white;
   border: 1px solid #1c2233;
-  padding: 14px;
-  border-radius: 12px;
+  padding: 20px 25px;
+  border-radius: 16px;
 
-  font-size: 1.1rem; 
-  min-height: 50px;
-  max-height: 140px;
+  font-size: 1.5rem; 
+  min-height: 80px;
+  max-height: 200px;
   resize: none;
 }
 
@@ -137,12 +137,13 @@ footer {
   color: black;
   border: none;
 
-  height: 50px;
-  padding: 0 22px;
+  height: 80px;
+  padding: 0 30px;
 
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
   font-weight: 700;
+  font-size: 1.2rem;
   transition: transform 0.1s;
 }
 
