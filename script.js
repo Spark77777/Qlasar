@@ -19,9 +19,7 @@ title.onclick = () => {
   overlay.classList.add("show");
 };
 
-overlay.onclick = () => {
-  closeSidebar();
-};
+overlay.onclick = () => closeSidebar();
 
 function closeSidebar() {
   sidebar.style.left = "-260px";
@@ -57,8 +55,90 @@ document.getElementById("show-alerts").onclick = () => {
 document.getElementById("show-sessions").onclick = () =>
   alert("Session storage coming soon");
 
-document.getElementById("account-btn").onclick = () =>
-  alert("Auth coming soon");
+// ================= AUTH UI =================
+const authModal = document.getElementById("auth-modal");
+const authTitle = document.getElementById("auth-title");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authSubmit = document.getElementById("auth-submit");
+const authToggle = document.getElementById("auth-toggle");
+const authClose = document.getElementById("auth-close");
+const authStatus = document.getElementById("auth-status");
+
+let authMode = "login"; // login | signup
+
+// open auth
+document.getElementById("account-btn").onclick = () => {
+  authModal.classList.remove("auth-hidden");
+  closeSidebar();
+};
+
+// close auth
+authClose.onclick = () => authModal.classList.add("auth-hidden");
+
+// toggle mode
+authToggle.onclick = () => {
+  if (authMode === "login") {
+    authMode = "signup";
+    authTitle.innerText = "Create account";
+    authToggle.innerHTML = `Already have an account? <span>Login</span>`;
+  } else {
+    authMode = "login";
+    authTitle.innerText = "Login";
+    authToggle.innerHTML = `No account? <span>Sign up</span>`;
+  }
+};
+
+// submit auth
+authSubmit.onclick = async () => {
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    authStatus.innerText = "Enter email and password.";
+    return;
+  }
+
+  try {
+    authStatus.innerText = "Processing...";
+
+    const endpoint =
+      authMode === "login"
+        ? `${API_BASE}/api/auth/login`
+        : `${API_BASE}/api/auth/signup`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      authStatus.innerText = data.error || "Failed";
+      return;
+    }
+
+    if (authMode === "signup") {
+      authStatus.innerText = "Account created ✔ You may now log in.";
+      return;
+    }
+
+    // login success
+    if (data.access_token) {
+      localStorage.setItem("qlasar_token", data.access_token);
+      authStatus.innerText = "Logged in ✔";
+
+      setTimeout(() => {
+        authModal.classList.add("auth-hidden");
+      }, 800);
+    }
+
+  } catch (err) {
+    authStatus.innerText = "Network error.";
+  }
+};
 
 // ================= CHAT SEND =================
 sendBtn.onclick = send;
@@ -74,11 +154,9 @@ async function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  // always switch back to chat view
   chatSection.classList.remove("hidden");
   alertsSection.classList.add("hidden");
 
-  // user bubble
   const u = document.createElement("div");
   u.className = "message user";
   u.innerText = text;
@@ -86,7 +164,6 @@ async function send() {
 
   input.value = "";
 
-  // AI bubble (thinking)
   const a = document.createElement("div");
   a.className = "message ai";
   a.innerText = "Thinking…";
@@ -103,46 +180,25 @@ async function send() {
       })
     });
 
-    if (!res.ok) {
-      const raw = await res.text();
-      console.error("Server error:", raw);
-      a.innerText = "❌ Server error. Please try again.";
-      return;
-    }
-
     const data = await res.json();
-
     let reply = data?.reply || "";
-
-    // remove <think> blocks if any model sends them
     reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-    if (!reply) {
-      a.innerText = "⚠️ No reply received.";
-    } else {
-      a.innerText = reply;
-    }
-  } catch (err) {
-    console.error("Network error:", err);
-    a.innerText = "🌐 Network error. Please try again.";
+    a.innerText = reply || "⚠️ No reply received.";
+  } catch {
+    a.innerText = "🌐 Network error.";
   }
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-// ================= ALERTS LOADER =================
+// ================= ALERTS =================
 async function loadAlerts() {
   alertsList.innerHTML = "Loading...";
 
   try {
     const res = await fetch(`${API_BASE}/api/alerts`);
-
-    if (!res.ok) {
-      alertsList.innerHTML = "⚠️ Failed to load alerts";
-      return;
-    }
-
     const data = await res.json();
+
     alertsList.innerHTML = "";
 
     (data.alerts || []).forEach(a => {
@@ -156,11 +212,9 @@ async function loadAlerts() {
       alertsList.appendChild(card);
     });
 
-    if (!data.alerts || data.alerts.length === 0) {
+    if (!data.alerts || data.alerts.length === 0)
       alertsList.innerHTML = "No alerts available.";
-    }
-  } catch (err) {
-    console.error(err);
+  } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
