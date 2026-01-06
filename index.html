@@ -25,7 +25,7 @@
 <!-- Main container -->
 <main id="main-area">
 
-  <!-- Chat Window -->
+  <!-- ================= CHAT WINDOW ================= -->
   <section id="chat-section" class="visible">
     <div id="chat-window"></div>
 
@@ -37,10 +37,27 @@
     </footer>
   </section>
 
-  <!-- Alerts Window -->
+  <!-- ================= ALERTS ================= -->
   <section id="alerts-section" class="hidden">
     <h2>Scouted Alerts</h2>
     <div id="alerts-list"></div>
+  </section>
+
+  <!-- ================= SAVED SESSIONS PANEL ================= -->
+  <section id="sessions-section" class="hidden">
+
+    <div class="sessions-card">
+
+      <h2 class="sessions-title">💾 Saved Sessions</h2>
+
+      <div class="sessions-divider"></div>
+
+      <div id="sessions-list" class="sessions-list">
+        <!-- JS will populate session items here -->
+      </div>
+
+    </div>
+
   </section>
 
 </main>
