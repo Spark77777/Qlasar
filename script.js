@@ -13,8 +13,57 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
+// ================= SESSION STORAGE =================
+
+let currentSessionId = null;
+
+function loadSessions() {
+  return JSON.parse(localStorage.getItem("qlasar_sessions") || "{}");
+}
+
+function saveSessions(data) {
+  localStorage.setItem("qlasar_sessions", JSON.stringify(data));
+}
+
+function createSession() {
+  const id = crypto.randomUUID();
+  const sessions = loadSessions();
+
+  sessions[id] = {
+    title: "New chat",
+    messages: []
+  };
+
+  saveSessions(sessions);
+  currentSessionId = id;
+}
+
+function saveMessage(sender, text) {
+  const sessions = loadSessions();
+  sessions[currentSessionId].messages.push({ sender, text });
+  saveSessions(sessions);
+}
+
+function loadSessionToUI(id) {
+  currentSessionId = id;
+
+  const sessions = loadSessions();
+  const data = sessions[id];
+
+  chatWindow.innerHTML = "";
+
+  data.messages.forEach(m => {
+    const div = document.createElement("div");
+    div.className = `message ${m.sender === "user" ? "user" : "ai"}`;
+    div.innerText = m.text;
+    chatWindow.appendChild(div);
+  });
+
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
 
 // ================= SIDEBAR =================
+
 title.onclick = () => {
   sidebar.style.left = "0";
   overlay.classList.add("show");
@@ -27,23 +76,27 @@ function closeSidebar() {
   overlay.classList.remove("show");
 }
 
-
 // ================= WELCOME =================
+
 function welcome() {
   chatSection.classList.remove("hidden");
   alertsSection.classList.add("hidden");
 
   chatWindow.innerHTML = "";
+
   const w = document.createElement("div");
   w.className = "message ai";
   w.innerText = "Hello! I’m Qlasar — ask me anything.";
   chatWindow.appendChild(w);
 }
+
+createSession();
 welcome();
 
+// ================= MENU =================
 
-// ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
+  createSession();
   welcome();
   closeSidebar();
 };
@@ -55,11 +108,32 @@ document.getElementById("show-alerts").onclick = () => {
   loadAlerts();
 };
 
-document.getElementById("show-sessions").onclick = () =>
-  alert("Session storage coming soon");
+// ========= SHOW SAVED SESSIONS (simple popup for now) =========
 
+document.getElementById("show-sessions").onclick = () => {
+  const sessions = loadSessions();
+  const keys = Object.keys(sessions);
+
+  if (keys.length === 0) {
+    alert("No saved chats yet.");
+    return;
+  }
+
+  const choice = prompt(
+    "Enter session number to open:\n\n" +
+      keys
+        .map((id, i) => `${i + 1}) ${sessions[id].title}`)
+        .join("\n")
+  );
+
+  const index = parseInt(choice) - 1;
+  if (index >= 0 && index < keys.length) {
+    loadSessionToUI(keys[index]);
+  }
+};
 
 // ================= AUTH UI =================
+
 const authModal = document.getElementById("auth-modal");
 const authTitle = document.getElementById("auth-title");
 const authEmail = document.getElementById("auth-email");
@@ -69,32 +143,25 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
-// 🚀 DEFAULT MODE = SIGNUP (Create Account)
 let authMode = "signup";
 
 authTitle.innerText = "Create account";
 authSubmit.innerText = "Create account";
 authToggle.innerHTML = `Already have an account? <span>Login</span>`;
 
-// open auth
 document.getElementById("account-btn").onclick = () => {
   authModal.classList.remove("auth-hidden");
   closeSidebar();
 };
 
-// close auth
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
-
-// toggle login/signup
 authToggle.onclick = () => {
-
   if (authMode === "signup") {
     authMode = "login";
     authTitle.innerText = "Login";
     authSubmit.innerText = "Login";
     authToggle.innerHTML = `No account? <span>Create one</span>`;
-
   } else {
     authMode = "signup";
     authTitle.innerText = "Create account";
@@ -105,10 +172,7 @@ authToggle.onclick = () => {
   authStatus.innerText = "";
 };
 
-
-// ================= AUTH SUBMIT =================
 authSubmit.onclick = async () => {
-
   const email = authEmail.value.trim();
   const password = authPassword.value.trim();
 
@@ -133,18 +197,10 @@ authSubmit.onclick = async () => {
 
     const data = await res.json();
 
-    // ------------- ERROR HANDLING -------------
     if (!res.ok) {
-
-      const msg = (data.error || "").toLowerCase();
-
-      if (
-        msg.includes("already") ||
-        msg.includes("exists") ||
-        msg.includes("duplicate")
-      ) {
+      if ((data.error || "").toLowerCase().includes("exists")) {
         authStatus.innerText =
-          "⚠️ An account with this email already exists. Please login instead.";
+          "⚠️ Account already exists. Please login instead.";
         return;
       }
 
@@ -152,33 +208,27 @@ authSubmit.onclick = async () => {
       return;
     }
 
-    // ------------- SIGNUP SUCCESS -------------
     if (authMode === "signup") {
-      authStatus.innerText = "🎉 Account created successfully. Please login now.";
+      authStatus.innerText = "🎉 Account created. Please log in now.";
       authMode = "login";
-      authTitle.innerText = "Login";
-      authSubmit.innerText = "Login";
-      authToggle.innerHTML = `No account? <span>Create one</span>`;
       return;
     }
 
-    // ------------- LOGIN SUCCESS -------------
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
-      authStatus.innerText = "✔️ Logged in successfully.";
+      authStatus.innerText = "✔️ Logged in.";
 
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
       }, 900);
     }
-
-  } catch (err) {
-    authStatus.innerText = "🌐 Network error. Try again.";
+  } catch {
+    authStatus.innerText = "Network error.";
   }
 };
 
-
 // ================= CHAT SEND =================
+
 sendBtn.onclick = send;
 
 input.addEventListener("keydown", e => {
@@ -192,8 +242,7 @@ async function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  chatSection.classList.remove("hidden");
-  alertsSection.classList.add("hidden");
+  saveMessage("user", text);
 
   const u = document.createElement("div");
   u.className = "message user";
@@ -207,8 +256,6 @@ async function send() {
   a.innerText = "Thinking…";
   chatWindow.appendChild(a);
 
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-
   try {
     const res = await fetch(`${API_BASE}/api/generate`, {
       method: "POST",
@@ -219,18 +266,22 @@ async function send() {
     });
 
     const data = await res.json();
-    let reply = data?.reply || "";
+    let reply = data?.reply || "No reply.";
+
     reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-    a.innerText = reply || "⚠️ No reply received.";
+
+    a.innerText = reply;
+    saveMessage("ai", reply);
+
   } catch {
-    a.innerText = "🌐 Network error.";
+    a.innerText = "Network error.";
   }
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-
 // ================= ALERTS =================
+
 async function loadAlerts() {
   alertsList.innerHTML = "Loading...";
 
@@ -250,10 +301,7 @@ async function loadAlerts() {
       `;
       alertsList.appendChild(card);
     });
-
-    if (!data.alerts || data.alerts.length === 0)
-      alertsList.innerHTML = "No alerts available.";
   } catch {
-    alertsList.innerHTML = "⚠️ Network error loading alerts.";
+    alertsList.innerHTML = "Error loading alerts.";
   }
 }
