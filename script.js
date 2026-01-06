@@ -13,6 +13,7 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
+
 // ================= SIDEBAR =================
 title.onclick = () => {
   sidebar.style.left = "0";
@@ -26,6 +27,7 @@ function closeSidebar() {
   overlay.classList.remove("show");
 }
 
+
 // ================= WELCOME =================
 function welcome() {
   chatSection.classList.remove("hidden");
@@ -38,6 +40,7 @@ function welcome() {
   chatWindow.appendChild(w);
 }
 welcome();
+
 
 // ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
@@ -55,6 +58,7 @@ document.getElementById("show-alerts").onclick = () => {
 document.getElementById("show-sessions").onclick = () =>
   alert("Session storage coming soon");
 
+
 // ================= AUTH UI =================
 const authModal = document.getElementById("auth-modal");
 const authTitle = document.getElementById("auth-title");
@@ -65,7 +69,12 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
-let authMode = "login"; // login | signup
+// 🚀 DEFAULT MODE = SIGNUP (Create Account)
+let authMode = "signup";
+
+authTitle.innerText = "Create account";
+authSubmit.innerText = "Create account";
+authToggle.innerHTML = `Already have an account? <span>Login</span>`;
 
 // open auth
 document.getElementById("account-btn").onclick = () => {
@@ -76,21 +85,30 @@ document.getElementById("account-btn").onclick = () => {
 // close auth
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
-// toggle mode
+
+// toggle login/signup
 authToggle.onclick = () => {
-  if (authMode === "login") {
-    authMode = "signup";
-    authTitle.innerText = "Create account";
-    authToggle.innerHTML = `Already have an account? <span>Login</span>`;
-  } else {
+
+  if (authMode === "signup") {
     authMode = "login";
     authTitle.innerText = "Login";
-    authToggle.innerHTML = `No account? <span>Sign up</span>`;
+    authSubmit.innerText = "Login";
+    authToggle.innerHTML = `No account? <span>Create one</span>`;
+
+  } else {
+    authMode = "signup";
+    authTitle.innerText = "Create account";
+    authSubmit.innerText = "Create account";
+    authToggle.innerHTML = `Already have an account? <span>Login</span>`;
   }
+
+  authStatus.innerText = "";
 };
 
-// submit auth
+
+// ================= AUTH SUBMIT =================
 authSubmit.onclick = async () => {
+
   const email = authEmail.value.trim();
   const password = authPassword.value.trim();
 
@@ -99,13 +117,13 @@ authSubmit.onclick = async () => {
     return;
   }
 
-  try {
-    authStatus.innerText = "Processing...";
+  authStatus.innerText = "Processing...";
 
+  try {
     const endpoint =
-      authMode === "login"
-        ? `${API_BASE}/api/auth/login`
-        : `${API_BASE}/api/auth/signup`;
+      authMode === "signup"
+        ? `${API_BASE}/api/auth/signup`
+        : `${API_BASE}/api/auth/login`;
 
     const res = await fetch(endpoint, {
       method: "POST",
@@ -115,30 +133,50 @@ authSubmit.onclick = async () => {
 
     const data = await res.json();
 
+    // ------------- ERROR HANDLING -------------
     if (!res.ok) {
-      authStatus.innerText = data.error || "Failed";
+
+      const msg = (data.error || "").toLowerCase();
+
+      if (
+        msg.includes("already") ||
+        msg.includes("exists") ||
+        msg.includes("duplicate")
+      ) {
+        authStatus.innerText =
+          "⚠️ An account with this email already exists. Please login instead.";
+        return;
+      }
+
+      authStatus.innerText = data.error || "Authentication failed.";
       return;
     }
 
+    // ------------- SIGNUP SUCCESS -------------
     if (authMode === "signup") {
-      authStatus.innerText = "Account created ✔ You may now log in.";
+      authStatus.innerText = "🎉 Account created successfully. Please login now.";
+      authMode = "login";
+      authTitle.innerText = "Login";
+      authSubmit.innerText = "Login";
+      authToggle.innerHTML = `No account? <span>Create one</span>`;
       return;
     }
 
-    // login success
+    // ------------- LOGIN SUCCESS -------------
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
-      authStatus.innerText = "Logged in ✔";
+      authStatus.innerText = "✔️ Logged in successfully.";
 
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
-      }, 800);
+      }, 900);
     }
 
   } catch (err) {
-    authStatus.innerText = "Network error.";
+    authStatus.innerText = "🌐 Network error. Try again.";
   }
 };
+
 
 // ================= CHAT SEND =================
 sendBtn.onclick = send;
@@ -190,6 +228,7 @@ async function send() {
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
+
 
 // ================= ALERTS =================
 async function loadAlerts() {
