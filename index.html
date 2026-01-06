@@ -28,6 +28,7 @@
   <!-- Chat Window -->
   <section id="chat-section" class="visible">
     <div id="chat-window"></div>
+
     <footer>
       <div class="input-container">
         <textarea id="message-input" placeholder="Let's Explore..."></textarea>
@@ -43,6 +44,26 @@
   </section>
 
 </main>
+
+<!-- ================= AUTH MODAL (NEW) ================= -->
+<div id="auth-modal" class="auth-hidden">
+  <div class="auth-box">
+    <h2 id="auth-title">Create Account</h2>
+
+    <input id="auth-email" type="email" placeholder="Email" />
+    <input id="auth-password" type="password" placeholder="Password" />
+
+    <button id="auth-submit">Continue</button>
+    <button id="auth-close">Close</button>
+
+    <p class="auth-status" id="auth-status"></p>
+
+    <p id="auth-toggle">
+      Already have an account?
+      <span>Login</span>
+    </p>
+  </div>
+</div>
 
 <script src="script.js"></script>
 </body>
