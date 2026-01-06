@@ -14,6 +14,59 @@ const input = document.getElementById("message-input");
 const alertsList = document.getElementById("alerts-list");
 
 
+// ================= SESSIONS (LOCAL STORAGE) =================
+let currentSessionId = null;
+
+function getAllSessions() {
+  return JSON.parse(localStorage.getItem("qlasar_sessions") || "{}");
+}
+
+function saveAllSessions(sessions) {
+  localStorage.setItem("qlasar_sessions", JSON.stringify(sessions));
+}
+
+function createNewSession() {
+  const id = Date.now().toString();
+
+  const sessions = getAllSessions();
+  sessions[id] = {
+    title: "New chat",
+    messages: []
+  };
+
+  saveAllSessions(sessions);
+  currentSessionId = id;
+
+  welcome();
+}
+
+
+// ================= LOAD A SESSION =================
+function loadSession(id) {
+  currentSessionId = id;
+
+  const sessions = getAllSessions();
+  const session = sessions[id];
+
+  chatSection.classList.remove("hidden");
+  alertsSection.classList.add("hidden");
+
+  chatWindow.innerHTML = "";
+
+  if (!session || !session.messages.length) {
+    welcome();
+    return;
+  }
+
+  session.messages.forEach(msg => {
+    const div = document.createElement("div");
+    div.className = `message ${msg.sender}`;
+    div.innerText = msg.text;
+    chatWindow.appendChild(div);
+  });
+}
+
+
 // ================= SIDEBAR =================
 title.onclick = () => {
   sidebar.style.left = "0";
@@ -39,12 +92,13 @@ function welcome() {
   w.innerText = "Hello! I’m Qlasar — ask me anything.";
   chatWindow.appendChild(w);
 }
+
 welcome();
 
 
 // ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
-  welcome();
+  createNewSession();
   closeSidebar();
 };
 
@@ -55,8 +109,37 @@ document.getElementById("show-alerts").onclick = () => {
   loadAlerts();
 };
 
-document.getElementById("show-sessions").onclick = () =>
-  alert("Session storage coming soon");
+
+// <<<<<<<<<<<<<<<<<<<<<< INTEGRATED HERE >>>>>>>>>>>>>>>>>>>>>>
+document.getElementById("show-sessions").onclick = () => {
+  showSessionsList();
+  closeSidebar();
+};
+
+// session list function
+function showSessionsList() {
+  const sessions = getAllSessions();
+  const list = document.getElementById("alerts-list");
+
+  alertsSection.classList.remove("hidden");
+  chatSection.classList.add("hidden");
+
+  list.innerHTML = "<h3>Saved sessions</h3>";
+
+  Object.entries(sessions).forEach(([id, session]) => {
+    const btn = document.createElement("div");
+    btn.className = "alert-card";
+    btn.innerText = session.title || "Untitled chat";
+
+    btn.onclick = () => loadSession(id);
+
+    list.appendChild(btn);
+  });
+
+  if (Object.keys(sessions).length === 0)
+    list.innerHTML = "No saved chats yet.";
+}
+// <<<<<<<<<<<<<<<<<<<<<< END INTEGRATION >>>>>>>>>>>>>>>>>>>>>>
 
 
 // ================= AUTH UI =================
@@ -69,24 +152,19 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
-// 🚀 DEFAULT MODE = SIGNUP (Create Account)
 let authMode = "signup";
 
 authTitle.innerText = "Create account";
 authSubmit.innerText = "Create account";
 authToggle.innerHTML = `Already have an account? <span>Login</span>`;
 
-// open auth
 document.getElementById("account-btn").onclick = () => {
   authModal.classList.remove("auth-hidden");
   closeSidebar();
 };
 
-// close auth
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
-
-// toggle login/signup
 authToggle.onclick = () => {
 
   if (authMode === "signup") {
@@ -94,7 +172,6 @@ authToggle.onclick = () => {
     authTitle.innerText = "Login";
     authSubmit.innerText = "Login";
     authToggle.innerHTML = `No account? <span>Create one</span>`;
-
   } else {
     authMode = "signup";
     authTitle.innerText = "Create account";
@@ -133,18 +210,11 @@ authSubmit.onclick = async () => {
 
     const data = await res.json();
 
-    // ------------- ERROR HANDLING -------------
     if (!res.ok) {
-
       const msg = (data.error || "").toLowerCase();
 
-      if (
-        msg.includes("already") ||
-        msg.includes("exists") ||
-        msg.includes("duplicate")
-      ) {
-        authStatus.innerText =
-          "⚠️ An account with this email already exists. Please login instead.";
+      if (msg.includes("already") || msg.includes("exists") || msg.includes("duplicate")) {
+        authStatus.innerText = "⚠️ Account already exists — please login.";
         return;
       }
 
@@ -152,27 +222,22 @@ authSubmit.onclick = async () => {
       return;
     }
 
-    // ------------- SIGNUP SUCCESS -------------
     if (authMode === "signup") {
-      authStatus.innerText = "🎉 Account created successfully. Please login now.";
+      authStatus.innerText = "🎉 Account created. Please login.";
       authMode = "login";
-      authTitle.innerText = "Login";
-      authSubmit.innerText = "Login";
-      authToggle.innerHTML = `No account? <span>Create one</span>`;
       return;
     }
 
-    // ------------- LOGIN SUCCESS -------------
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
-      authStatus.innerText = "✔️ Logged in successfully.";
+      authStatus.innerText = "✔️ Logged in.";
 
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
       }, 900);
     }
 
-  } catch (err) {
+  } catch {
     authStatus.innerText = "🌐 Network error. Try again.";
   }
 };
@@ -191,6 +256,12 @@ input.addEventListener("keydown", e => {
 async function send() {
   const text = input.value.trim();
   if (!text) return;
+
+  if (!currentSessionId) createNewSession();
+
+  let sessions = getAllSessions();
+  sessions[currentSessionId].messages.push({ sender: "user", text });
+  saveAllSessions(sessions);
 
   chatSection.classList.remove("hidden");
   alertsSection.classList.add("hidden");
@@ -219,9 +290,18 @@ async function send() {
     });
 
     const data = await res.json();
+
     let reply = data?.reply || "";
     reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-    a.innerText = reply || "⚠️ No reply received.";
+
+    if (!reply) reply = "⚠️ No reply received.";
+
+    a.innerText = reply;
+
+    let s2 = getAllSessions();
+    s2[currentSessionId].messages.push({ sender: "ai", text: reply });
+    saveAllSessions(s2);
+
   } catch {
     a.innerText = "🌐 Network error.";
   }
@@ -256,4 +336,4 @@ async function loadAlerts() {
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
-                 }
+      }
