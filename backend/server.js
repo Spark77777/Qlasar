@@ -38,6 +38,24 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ================= AUTH MIDDLEWARE =================
+async function getUserFromToken(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: "Missing auth token" });
+
+  const token = auth.replace("Bearer ", "");
+
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser(token);
+
+  if (error || !user) return res.status(401).json({ error: "Invalid token" });
+
+  req.user = user;
+  next();
+}
+
 // ================= SUPABASE HEARTBEAT =================
 const supabaseRestHeartbeat = async () => {
   try {
@@ -58,7 +76,6 @@ const supabaseRestHeartbeat = async () => {
   }
 };
 
-// run immediately + every 4 min
 supabaseRestHeartbeat();
 setInterval(supabaseRestHeartbeat, 4 * 60 * 1000);
 
@@ -109,6 +126,94 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+// ================= USER SESSION ROUTES =================
+
+// CREATE SESSION
+app.post("/api/sessions", getUserFromToken, async (req, res) => {
+  const { title } = req.body;
+
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .insert({
+      user_id: req.user.id,
+      title: title || "New chat",
+      messages: []
+    })
+    .select()
+    .single();
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json(data);
+});
+
+// LIST SESSIONS
+app.get("/api/sessions", getUserFromToken, async (req, res) => {
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .select("id, title, created_at")
+    .eq("user_id", req.user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json(data);
+});
+
+// LOAD SESSION BY ID
+app.get("/api/sessions/:id", getUserFromToken, async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("user_sessions")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json(data);
+});
+
+// ADD MESSAGE TO SESSION
+app.post("/api/sessions/:id/messages", getUserFromToken, async (req, res) => {
+  const { id } = req.params;
+  const { sender, text } = req.body;
+
+  const { data: session, error: e1 } = await supabase
+    .from("user_sessions")
+    .select("messages")
+    .eq("id", id)
+    .single();
+
+  if (e1) return res.status(400).json({ error: e1.message });
+
+  const updated = [...session.messages, { sender, text }];
+
+  const { error: e2 } = await supabase
+    .from("user_sessions")
+    .update({ messages: updated })
+    .eq("id", id);
+
+  if (e2) return res.status(400).json({ error: e2.message });
+
+  res.json({ success: true });
+});
+
+// DELETE SESSION
+app.delete("/api/sessions/:id", getUserFromToken, async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("user_sessions")
+    .delete()
+    .eq("id", id);
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json({ success: true });
+});
+
 // ================= AI CHAT =================
 app.post("/api/generate", async (req, res) => {
   try {
@@ -142,7 +247,6 @@ app.post("/api/generate", async (req, res) => {
     const data = await response.json();
     let reply = data?.choices?.[0]?.message?.content || "";
 
-    // Strip internal thoughts
     reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
     res.json({ reply });
