@@ -13,11 +13,11 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
-// ⭐ NEW — sessions panel elements
+// ⭐ sessions panel elements
 const sessionsPanel = document.getElementById("sessions-panel");
 const sessionsPanelList = document.getElementById("sessions-panel-list");
 
-// ================= SESSIONS (LOCAL STORAGE) =================
+// ====================== SESSIONS (LOCAL) ======================
 let currentSessionId = null;
 
 function getAllSessions() {
@@ -28,28 +28,61 @@ function saveAllSessions(sessions) {
   localStorage.setItem("qlasar_sessions", JSON.stringify(sessions));
 }
 
-// ✅ INTEGRATED — with highlight refresh
-function createNewSession() {
-  const id = Date.now().toString();
 
-  const sessions = getAllSessions();
-  sessions[id] = {
-    title: "New chat",
-    messages: []
-  };
 
-  saveAllSessions(sessions);
-  currentSessionId = id;
+// ================= CREATE NEW SESSION (HYBRID) =================
+async function createNewSession() {
 
-  welcome();
+  const token = localStorage.getItem("qlasar_token");
 
-  // 🔹 update highlight
+  // -------- NOT LOGGED IN → local storage --------
+  if (!token) {
+    const id = Date.now().toString();
+
+    const sessions = getAllSessions();
+    sessions[id] = { title: "New chat", messages: [] };
+
+    saveAllSessions(sessions);
+    currentSessionId = id;
+
+    welcome();
+    renderSessionsList();
+    return;
+  }
+
+  // -------- LOGGED IN → backend storage --------
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ title: "New chat" })
+    });
+
+    const data = await res.json();
+
+    currentSessionId = data.id;
+    welcome();
+
+  } catch (err) {
+    console.error("Cloud session failed, fallback to local:", err);
+
+    const id = Date.now().toString();
+    const sessions = getAllSessions();
+    sessions[id] = { title: "New chat", messages: [] };
+    saveAllSessions(sessions);
+    currentSessionId = id;
+    welcome();
+  }
+
   renderSessionsList();
 }
 
 
-// ================= LOAD A SESSION =================
-// ✅ INTEGRATED — with highlight refresh and panel close
+
+// ================= LOAD SESSION FROM LOCAL =================
 function loadSession(id) {
   currentSessionId = id;
 
@@ -61,25 +94,53 @@ function loadSession(id) {
 
   chatWindow.innerHTML = "";
 
-  // close session panel when opened
-  sessionsPanel.classList.remove("show");
-
   if (!session || !session.messages.length) {
     welcome();
   } else {
-    session.messages.forEach(msg => {
+    session.messages.forEach(m => {
       const div = document.createElement("div");
-      div.className = `message ${msg.sender}`;
-      div.innerText = msg.text;
+      div.className = `message ${m.sender}`;
+      div.innerText = m.text;
       chatWindow.appendChild(div);
     });
   }
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
-
-  // 🔹 refresh highlight
-  renderSessionsList();
 }
+
+
+
+// ================= LOAD SESSION FROM SERVER =================
+async function loadSessionFromServer(id) {
+
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
+
+  const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const data = await res.json();
+
+  currentSessionId = id;
+
+  chatWindow.innerHTML = "";
+
+  (data.messages || []).forEach(m => {
+    const div = document.createElement("div");
+    div.className = `message ${m.sender}`;
+    div.innerText = m.text;
+    chatWindow.appendChild(div);
+  });
+
+  chatSection.classList.remove("hidden");
+  alertsSection.classList.add("hidden");
+
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
 
 
 // ================= SIDEBAR =================
@@ -94,6 +155,7 @@ function closeSidebar() {
   sidebar.style.left = "-260px";
   overlay.classList.remove("show");
 }
+
 
 
 // ================= WELCOME =================
@@ -111,6 +173,7 @@ function welcome() {
 welcome();
 
 
+
 // ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
   createNewSession();
@@ -125,109 +188,65 @@ document.getElementById("show-alerts").onclick = () => {
 };
 
 
-// ================= SAVED SESSIONS PANEL =================
-
-// open / close panel button
+// ⭐ REPLACED: now shows cloud or local sessions list
 document.getElementById("show-sessions").onclick = () => {
-  sessionsPanel.classList.toggle("show");
-  renderSessionsList();
+  showSessionsList();
   closeSidebar();
 };
 
-// build list in right panel
-function renderSessionsList() {
 
-  const sessions = getAllSessions();
-  sessionsPanelList.innerHTML = "";
 
-  if (Object.keys(sessions).length === 0) {
-    sessionsPanelList.innerHTML = "<small>No saved chats yet.</small>";
+// ================= SHOW SESSIONS LIST (HYBRID) =================
+async function showSessionsList() {
+
+  const token = localStorage.getItem("qlasar_token");
+
+  alertsSection.classList.remove("hidden");
+  chatSection.classList.add("hidden");
+
+  alertsList.innerHTML = "Loading sessions...";
+
+  // LOGGED IN → fetch from Supabase
+  if (token) {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const sessions = await res.json();
+
+    alertsList.innerHTML = "<h3>Saved sessions</h3>";
+
+    sessions.forEach(s => {
+      const btn = document.createElement("div");
+      btn.className = "alert-card";
+      btn.innerText = s.title || "Untitled chat";
+
+      btn.onclick = () => loadSessionFromServer(s.id);
+
+      alertsList.appendChild(btn);
+    });
+
     return;
   }
 
-  Object.entries(sessions).forEach(([id, session]) => {
+  // NOT LOGGED IN → local sessions
+  const sessions = getAllSessions();
 
-    const row = document.createElement("div");
-    row.className = "session-row";
+  alertsList.innerHTML = "<h3>Saved sessions</h3>";
 
-    // clickable title pill WITH ACTIVE HIGHLIGHT
-    const pill = document.createElement("div");
-    pill.className = "session-pill";
-    pill.textContent = "💬 " + (session.title || "Untitled chat");
+  Object.entries(sessions).forEach(([id, s]) => {
+    const btn = document.createElement("div");
+    btn.className = "alert-card";
+    btn.innerText = s.title || "Untitled chat";
 
-    // 🔹 highlight currently active session
-    if (id === currentSessionId) {
-      pill.classList.add("active-session");
-    }
+    btn.onclick = () => loadSession(id);
 
-    pill.onclick = () => loadSession(id);
-
-    // rename + delete button container
-    const actions = document.createElement("div");
-    actions.className = "session-actions";
-
-    // ✍ rename button
-    const renameBtn = document.createElement("button");
-    renameBtn.className = "session-action-btn";
-    renameBtn.textContent = "✎";
-    renameBtn.title = "Rename session";
-    renameBtn.onclick = () => renameSession(id);
-
-    // 🗑 delete button
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "session-action-btn";
-    deleteBtn.textContent = "🗑";
-    deleteBtn.title = "Delete session";
-    deleteBtn.onclick = () => deleteSession(id);
-
-    actions.appendChild(renameBtn);
-    actions.appendChild(deleteBtn);
-
-    row.appendChild(pill);
-    row.appendChild(actions);
-
-    sessionsPanelList.appendChild(row);
+    alertsList.appendChild(btn);
   });
 }
 
-
-// ================= RENAME SESSION =================
-function renameSession(id) {
-  const sessions = getAllSessions();
-
-  const current = sessions[id];
-  if (!current) return;
-
-  const newTitle = prompt("Rename chat:", current.title || "Untitled chat");
-
-  if (!newTitle) return;
-
-  current.title = newTitle;
-  saveAllSessions(sessions);
-
-  renderSessionsList();
-}
-
-
-// ================= DELETE SESSION =================
-function deleteSession(id) {
-
-  if (!confirm("Delete this chat permanently?")) return;
-
-  const sessions = getAllSessions();
-
-  delete sessions[id];
-  saveAllSessions(sessions);
-
-  // reset if we deleted open session
-  if (currentSessionId === id) {
-    currentSessionId = null;
-    chatWindow.innerHTML = "";
-    welcome();
-  }
-
-  renderSessionsList();
-}
 
 
 // ================= AUTH UI =================
@@ -254,7 +273,6 @@ document.getElementById("account-btn").onclick = () => {
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
 authToggle.onclick = () => {
-
   if (authMode === "signup") {
     authMode = "login";
     authTitle.innerText = "Login";
@@ -269,6 +287,7 @@ authToggle.onclick = () => {
 
   authStatus.innerText = "";
 };
+
 
 
 // ================= AUTH SUBMIT =================
@@ -299,13 +318,6 @@ authSubmit.onclick = async () => {
     const data = await res.json();
 
     if (!res.ok) {
-      const msg = (data.error || "").toLowerCase();
-
-      if (msg.includes("already") || msg.includes("exists") || msg.includes("duplicate")) {
-        authStatus.innerText = "⚠️ Account already exists — please login.";
-        return;
-      }
-
       authStatus.innerText = data.error || "Authentication failed.";
       return;
     }
@@ -328,6 +340,7 @@ authSubmit.onclick = async () => {
 };
 
 
+
 // ================= CHAT SEND =================
 sendBtn.onclick = send;
 
@@ -342,14 +355,7 @@ async function send() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (!currentSessionId) createNewSession();
-
-  let sessions = getAllSessions();
-  sessions[currentSessionId].messages.push({ sender: "user", text });
-  saveAllSessions(sessions);
-
-  chatSection.classList.remove("hidden");
-  alertsSection.classList.add("hidden");
+  if (!currentSessionId) await createNewSession();
 
   const u = document.createElement("div");
   u.className = "message user";
@@ -365,6 +371,8 @@ async function send() {
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
+  let reply = "";
+
   try {
     const res = await fetch(`${API_BASE}/api/generate`, {
       method: "POST",
@@ -376,23 +384,54 @@ async function send() {
 
     const data = await res.json();
 
-    let reply = data?.reply || "";
+    reply = data?.reply || "";
     reply = reply.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
     if (!reply) reply = "⚠️ No reply received.";
 
     a.innerText = reply;
 
-    let s2 = getAllSessions();
-    s2[currentSessionId].messages.push({ sender: "ai", text: reply });
-    saveAllSessions(s2);
-
   } catch {
-    a.innerText = "🌐 Network error.";
+    reply = "🌐 Network error.";
+    a.innerText = reply;
+  }
+
+  // ================== SAVE MESSAGES (HYBRID) ==================
+  const token = localStorage.getItem("qlasar_token");
+
+  // -------- LOGGED IN → save to Supabase --------
+  if (token && currentSessionId) {
+
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "user", text })
+    });
+
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "ai", text: reply })
+    });
+
+  }
+
+  // -------- NOT LOGGED IN → fallback local --------
+  else {
+    let sessions = getAllSessions();
+    sessions[currentSessionId].messages.push({ sender: "user", text });
+    sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
+    saveAllSessions(sessions);
   }
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
+
 
 
 // ================= ALERTS =================
@@ -418,7 +457,8 @@ async function loadAlerts() {
 
     if (!data.alerts || data.alerts.length === 0)
       alertsList.innerHTML = "No alerts available.";
+
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
-}
+                                }
