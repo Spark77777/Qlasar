@@ -13,6 +13,9 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
+// ⭐ NEW — sessions panel elements
+const sessionsPanel = document.getElementById("sessions-panel");
+const sessionsPanelList = document.getElementById("sessions-panel-list");
 
 // ================= SESSIONS (LOCAL STORAGE) =================
 let currentSessionId = null;
@@ -53,6 +56,9 @@ function loadSession(id) {
 
   chatWindow.innerHTML = "";
 
+  // close session panel when opened
+  sessionsPanel.classList.remove("show");
+
   if (!session || !session.messages.length) {
     welcome();
     return;
@@ -64,6 +70,8 @@ function loadSession(id) {
     div.innerText = msg.text;
     chatWindow.appendChild(div);
   });
+
+  chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
 
@@ -110,36 +118,36 @@ document.getElementById("show-alerts").onclick = () => {
 };
 
 
-// <<<<<<<<<<<<<<<<<<<<<< INTEGRATED HERE >>>>>>>>>>>>>>>>>>>>>>
+// ================= SAVED SESSIONS PANEL =================
+
+// open / close panel button
 document.getElementById("show-sessions").onclick = () => {
-  showSessionsList();
+  sessionsPanel.classList.toggle("show");
+  renderSessionsList();
   closeSidebar();
 };
 
-// session list function
-function showSessionsList() {
+// build list in right panel
+function renderSessionsList() {
+
   const sessions = getAllSessions();
-  const list = document.getElementById("alerts-list");
+  sessionsPanelList.innerHTML = "";
 
-  alertsSection.classList.remove("hidden");
-  chatSection.classList.add("hidden");
-
-  list.innerHTML = "<h3>Saved sessions</h3>";
+  if (Object.keys(sessions).length === 0) {
+    sessionsPanelList.innerHTML = "<small>No saved chats yet.</small>";
+    return;
+  }
 
   Object.entries(sessions).forEach(([id, session]) => {
-    const btn = document.createElement("div");
-    btn.className = "alert-card";
-    btn.innerText = session.title || "Untitled chat";
+    const pill = document.createElement("div");
+    pill.className = "session-pill";
+    pill.textContent = "💬 " + (session.title || "Untitled chat");
 
-    btn.onclick = () => loadSession(id);
+    pill.onclick = () => loadSession(id);
 
-    list.appendChild(btn);
+    sessionsPanelList.appendChild(pill);
   });
-
-  if (Object.keys(sessions).length === 0)
-    list.innerHTML = "No saved chats yet.";
 }
-// <<<<<<<<<<<<<<<<<<<<<< END INTEGRATION >>>>>>>>>>>>>>>>>>>>>>
 
 
 // ================= AUTH UI =================
@@ -231,10 +239,7 @@ authSubmit.onclick = async () => {
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
       authStatus.innerText = "✔️ Logged in.";
-
-      setTimeout(() => {
-        authModal.classList.add("auth-hidden");
-      }, 900);
+      setTimeout(() => authModal.classList.add("auth-hidden"), 900);
     }
 
   } catch {
@@ -336,4 +341,4 @@ async function loadAlerts() {
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
-      }
+}
