@@ -398,6 +398,14 @@ footer {
   box-shadow: 0 0 18px rgba(0, 255, 255, 0.45);
 }
 
+/* ⭐ ACTIVE SESSION HIGHLIGHT */
+.session-pill.active-session {
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.55);
+  background: rgba(0, 255, 255, 0.15);
+  font-weight: 600;
+}
+
 .session-row {
   display: flex;
   align-items: center;
