@@ -139,16 +139,80 @@ function renderSessionsList() {
   }
 
   Object.entries(sessions).forEach(([id, session]) => {
+
+    const row = document.createElement("div");
+    row.className = "session-row";
+
+    // clickable title pill
     const pill = document.createElement("div");
     pill.className = "session-pill";
     pill.textContent = "💬 " + (session.title || "Untitled chat");
-
     pill.onclick = () => loadSession(id);
 
-    sessionsPanelList.appendChild(pill);
+    // rename + delete button container
+    const actions = document.createElement("div");
+    actions.className = "session-actions";
+
+    // ✍ rename button
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "session-action-btn";
+    renameBtn.textContent = "✎";
+    renameBtn.title = "Rename session";
+
+    renameBtn.onclick = () => renameSession(id);
+
+    // 🗑 delete button
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "session-action-btn";
+    deleteBtn.textContent = "🗑";
+    deleteBtn.title = "Delete session";
+
+    deleteBtn.onclick = () => deleteSession(id);
+
+    actions.appendChild(renameBtn);
+    actions.appendChild(deleteBtn);
+
+    row.appendChild(pill);
+    row.appendChild(actions);
+
+    sessionsPanelList.appendChild(row);
   });
 }
 
+function renameSession(id) {
+  const sessions = getAllSessions();
+
+  const current = sessions[id];
+  if (!current) return;
+
+  const newTitle = prompt("Rename chat:", current.title || "Untitled chat");
+
+  if (!newTitle) return;
+
+  current.title = newTitle;
+  saveAllSessions(sessions);
+
+  renderSessionsList();
+}
+
+function deleteSession(id) {
+
+  if (!confirm("Delete this chat permanently?")) return;
+
+  const sessions = getAllSessions();
+
+  delete sessions[id];
+  saveAllSessions(sessions);
+
+  // reset if we deleted open session
+  if (currentSessionId === id) {
+    currentSessionId = null;
+    chatWindow.innerHTML = "";
+    welcome();
+  }
+
+  renderSessionsList();
+}
 
 // ================= AUTH UI =================
 const authModal = document.getElementById("auth-modal");
