@@ -329,92 +329,78 @@ footer {
   opacity: 0.8;
 }
 
-/* ================= SAVED SESSIONS PANEL ================= */
+/* ================= RIGHT SLIDE SAVED SESSIONS PANEL ================= */
 
-#sessions-section {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 25px 15px;
+#sessions-panel {
+  position: fixed;
+  top: 90px;
+  right: -340px; /* hidden default */
 
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
+  width: 300px;
+  height: 80%;
 
-/* Card container */
-.sessions-card {
-  width: 100%;
+  padding: 16px;
+
   background: rgba(8, 14, 32, 0.75);
+  border: 1px solid rgba(0, 255, 255, 0.35);
 
-  border-radius: 22px;
-  border: 1px solid rgba(0, 255, 255, 0.25);
-
-  padding: 22px 20px;
-
-  box-shadow: 0 0 26px rgba(0, 255, 255, 0.15);
+  border-radius: 18px;
   backdrop-filter: blur(10px);
 
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+  box-shadow: 0 0 26px rgba(0, 255, 255, 0.25);
 
-/* Title */
-.sessions-title {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
+  transition: 0.25s ease-in-out;
+  z-index: 50;
 
-/* Divider line */
-.sessions-divider {
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(0, 255, 255, 0.6),
-    transparent
-  );
-}
-
-/* List container */
-.sessions-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 65vh;
-  overflow-y: auto;
 }
 
-/* Individual saved session item */
-.session-item {
-  padding: 14px 16px;
+/* slide-in state */
+#sessions-panel.show {
+  right: 10px;
+}
+
+/* title */
+#sessions-panel h3 {
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+}
+
+/* scroll list container */
+#sessions-panel-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* pill/card session item */
+.session-pill {
+  padding: 10px 12px;
 
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(0, 255, 255, 0.18);
+  border: 1px solid rgba(0, 255, 255, 0.25);
 
-  border-radius: 14px;
-
-  font-size: 1.05rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  border-radius: 12px;
 
   cursor: pointer;
+  font-size: 0.95rem;
+
   transition: 0.15s ease;
 }
 
-/* Hover animation */
-.session-item:hover {
-  background: rgba(0, 255, 255, 0.18);
+/* hover animation */
+.session-pill:hover {
+  background: rgba(0, 255, 255, 0.25);
   transform: translateX(4px);
-  box-shadow: 0 0 14px rgba(0, 255, 255, 0.35);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.45);
 }
 
 /* MOBILE */
 @media (max-width: 600px) {
+
   .auth-box {
     width: 90%;
   }
@@ -428,12 +414,12 @@ footer {
     padding: 24px 28px;
   }
 
-  .sessions-card {
-    border-radius: 18px;
+  #sessions-panel {
+    width: 92%;
+    right: -100%;
   }
 
-  .session-item {
-    font-size: 0.95rem;
-    padding: 12px 14px;
+  #sessions-panel.show {
+    right: 4%;
   }
 }
