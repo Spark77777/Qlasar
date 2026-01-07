@@ -28,6 +28,7 @@ function saveAllSessions(sessions) {
   localStorage.setItem("qlasar_sessions", JSON.stringify(sessions));
 }
 
+// ✅ INTEGRATED — with highlight refresh
 function createNewSession() {
   const id = Date.now().toString();
 
@@ -41,10 +42,14 @@ function createNewSession() {
   currentSessionId = id;
 
   welcome();
+
+  // 🔹 update highlight
+  renderSessionsList();
 }
 
 
 // ================= LOAD A SESSION =================
+// ✅ INTEGRATED — with highlight refresh and panel close
 function loadSession(id) {
   currentSessionId = id;
 
@@ -61,17 +66,19 @@ function loadSession(id) {
 
   if (!session || !session.messages.length) {
     welcome();
-    return;
+  } else {
+    session.messages.forEach(msg => {
+      const div = document.createElement("div");
+      div.className = `message ${msg.sender}`;
+      div.innerText = msg.text;
+      chatWindow.appendChild(div);
+    });
   }
 
-  session.messages.forEach(msg => {
-    const div = document.createElement("div");
-    div.className = `message ${msg.sender}`;
-    div.innerText = msg.text;
-    chatWindow.appendChild(div);
-  });
-
   chatWindow.scrollTop = chatWindow.scrollHeight;
+
+  // 🔹 refresh highlight
+  renderSessionsList();
 }
 
 
@@ -143,10 +150,16 @@ function renderSessionsList() {
     const row = document.createElement("div");
     row.className = "session-row";
 
-    // clickable title pill
+    // clickable title pill WITH ACTIVE HIGHLIGHT
     const pill = document.createElement("div");
     pill.className = "session-pill";
     pill.textContent = "💬 " + (session.title || "Untitled chat");
+
+    // 🔹 highlight currently active session
+    if (id === currentSessionId) {
+      pill.classList.add("active-session");
+    }
+
     pill.onclick = () => loadSession(id);
 
     // rename + delete button container
@@ -158,7 +171,6 @@ function renderSessionsList() {
     renameBtn.className = "session-action-btn";
     renameBtn.textContent = "✎";
     renameBtn.title = "Rename session";
-
     renameBtn.onclick = () => renameSession(id);
 
     // 🗑 delete button
@@ -166,7 +178,6 @@ function renderSessionsList() {
     deleteBtn.className = "session-action-btn";
     deleteBtn.textContent = "🗑";
     deleteBtn.title = "Delete session";
-
     deleteBtn.onclick = () => deleteSession(id);
 
     actions.appendChild(renameBtn);
@@ -179,6 +190,8 @@ function renderSessionsList() {
   });
 }
 
+
+// ================= RENAME SESSION =================
 function renameSession(id) {
   const sessions = getAllSessions();
 
@@ -195,6 +208,8 @@ function renameSession(id) {
   renderSessionsList();
 }
 
+
+// ================= DELETE SESSION =================
 function deleteSession(id) {
 
   if (!confirm("Delete this chat permanently?")) return;
@@ -213,6 +228,7 @@ function deleteSession(id) {
 
   renderSessionsList();
 }
+
 
 // ================= AUTH UI =================
 const authModal = document.getElementById("auth-modal");
