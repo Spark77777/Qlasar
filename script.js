@@ -461,4 +461,4 @@ async function loadAlerts() {
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
-                                }
+}
