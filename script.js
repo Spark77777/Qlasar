@@ -130,6 +130,98 @@ async function loadSessionFromServer(id) {
   renderSessionsListHybrid();
 }
 
+// ================= AUTH UI =================
+const authModal = document.getElementById("auth-modal");
+const authTitle = document.getElementById("auth-title");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authSubmit = document.getElementById("auth-submit");
+const authToggle = document.getElementById("auth-toggle");
+const authClose = document.getElementById("auth-close");
+const authStatus = document.getElementById("auth-status");
+
+let authMode = "signup";
+
+// open auth modal
+document.getElementById("account-btn").onclick = () => {
+  authModal.classList.remove("auth-hidden");
+
+  // close other UI layers
+  sessionsPanel.classList.remove("show");
+  closeSidebar();
+};
+
+// close auth modal
+authClose.onclick = () => authModal.classList.add("auth-hidden");
+
+// toggle login/signup
+authToggle.onclick = () => {
+  if (authMode === "signup") {
+    authMode = "login";
+    authTitle.innerText = "Login";
+    authSubmit.innerText = "Login";
+    authToggle.innerHTML = `No account? <span>Create one</span>`;
+  } else {
+    authMode = "signup";
+    authTitle.innerText = "Create account";
+    authSubmit.innerText = "Create account";
+    authToggle.innerHTML = `Already have an account? <span>Login</span>`;
+  }
+  authStatus.innerText = "";
+};
+
+// submit auth
+authSubmit.onclick = async () => {
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+
+  if (!email || !password) {
+    authStatus.innerText = "Enter email and password.";
+    return;
+  }
+
+  authStatus.innerText = "Processing...";
+
+  try {
+    const endpoint =
+      authMode === "signup"
+        ? `${API_BASE}/api/auth/signup`
+        : `${API_BASE}/api/auth/login`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      authStatus.innerText = data.error || "Authentication failed.";
+      return;
+    }
+
+    if (authMode === "signup") {
+      authStatus.innerText = "🎉 Account created. Please login.";
+      authMode = "login";
+      return;
+    }
+
+    if (data.access_token) {
+      localStorage.setItem("qlasar_token", data.access_token);
+      authStatus.innerText = "✔️ Logged in.";
+
+      setTimeout(() => {
+        authModal.classList.add("auth-hidden");
+        renderSessionsListHybrid(); // refresh cloud sessions
+      }, 900);
+    }
+
+  } catch {
+    authStatus.innerText = "🌐 Network error. Try again.";
+  }
+};
+
 // ================= SIDEBAR =================
 title.onclick = () => {
   sidebar.style.left = "0";
