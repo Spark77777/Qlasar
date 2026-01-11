@@ -13,13 +13,15 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
-// ⭐ sessions panel elements (single source of truth)
+// ⭐ sessions panel (single source of truth)
 const sessionsPanel = document.getElementById("sessions-panel");
 const sessionsPanelList = document.getElementById("sessions-panel-list");
 
-// ====================== SESSIONS (LOCAL) ======================
+// ====================== SESSION STATE ======================
 let currentSessionId = null;
+let currentSessionSource = "local"; // "local" | "cloud"
 
+// ====================== LOCAL STORAGE ======================
 function getAllSessions() {
   return JSON.parse(localStorage.getItem("qlasar_sessions") || "{}");
 }
@@ -32,20 +34,20 @@ function saveAllSessions(sessions) {
 async function createNewSession() {
   const token = localStorage.getItem("qlasar_token");
 
-  // -------- NOT LOGGED IN → local --------
   if (!token) {
     const id = Date.now().toString();
     const sessions = getAllSessions();
     sessions[id] = { title: "New chat", messages: [] };
     saveAllSessions(sessions);
+
     currentSessionId = id;
+    currentSessionSource = "local";
 
     welcome();
     renderSessionsListHybrid();
     return;
   }
 
-  // -------- LOGGED IN → backend --------
   try {
     const res = await fetch(`${API_BASE}/api/sessions`, {
       method: "POST",
@@ -58,15 +60,19 @@ async function createNewSession() {
 
     const data = await res.json();
     currentSessionId = data.id;
+    currentSessionSource = "cloud";
+
     welcome();
 
   } catch {
-    // fallback local
     const id = Date.now().toString();
     const sessions = getAllSessions();
     sessions[id] = { title: "New chat", messages: [] };
     saveAllSessions(sessions);
+
     currentSessionId = id;
+    currentSessionSource = "local";
+
     welcome();
   }
 
@@ -76,14 +82,13 @@ async function createNewSession() {
 // ================= LOAD SESSION (LOCAL) =================
 function loadSession(id) {
   currentSessionId = id;
+  currentSessionSource = "local";
 
-  const sessions = getAllSessions();
-  const session = sessions[id];
+  const session = getAllSessions()[id];
 
   chatSection.classList.remove("hidden");
   alertsSection.classList.add("hidden");
   chatWindow.innerHTML = "";
-
   sessionsPanel.classList.remove("show");
 
   if (!session || !session.messages.length) {
@@ -101,10 +106,13 @@ function loadSession(id) {
   renderSessionsListHybrid();
 }
 
-// ================= LOAD SESSION (SERVER) =================
+// ================= LOAD SESSION (CLOUD) =================
 async function loadSessionFromServer(id) {
   const token = localStorage.getItem("qlasar_token");
   if (!token) return;
+
+  currentSessionId = id;
+  currentSessionSource = "cloud";
 
   const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
@@ -112,7 +120,6 @@ async function loadSessionFromServer(id) {
 
   const data = await res.json();
 
-  currentSessionId = id;
   chatWindow.innerHTML = "";
   sessionsPanel.classList.remove("show");
 
@@ -130,105 +137,13 @@ async function loadSessionFromServer(id) {
   renderSessionsListHybrid();
 }
 
-// ================= AUTH UI =================
-const authModal = document.getElementById("auth-modal");
-const authTitle = document.getElementById("auth-title");
-const authEmail = document.getElementById("auth-email");
-const authPassword = document.getElementById("auth-password");
-const authSubmit = document.getElementById("auth-submit");
-const authToggle = document.getElementById("auth-toggle");
-const authClose = document.getElementById("auth-close");
-const authStatus = document.getElementById("auth-status");
-
-let authMode = "signup";
-
-// open auth modal
-document.getElementById("account-btn").onclick = () => {
-  authModal.classList.remove("auth-hidden");
-
-  // close other UI layers
-  sessionsPanel.classList.remove("show");
-  closeSidebar();
-};
-
-// close auth modal
-authClose.onclick = () => authModal.classList.add("auth-hidden");
-
-// toggle login/signup
-authToggle.onclick = () => {
-  if (authMode === "signup") {
-    authMode = "login";
-    authTitle.innerText = "Login";
-    authSubmit.innerText = "Login";
-    authToggle.innerHTML = `No account? <span>Create one</span>`;
-  } else {
-    authMode = "signup";
-    authTitle.innerText = "Create account";
-    authSubmit.innerText = "Create account";
-    authToggle.innerHTML = `Already have an account? <span>Login</span>`;
-  }
-  authStatus.innerText = "";
-};
-
-// submit auth
-authSubmit.onclick = async () => {
-  const email = authEmail.value.trim();
-  const password = authPassword.value.trim();
-
-  if (!email || !password) {
-    authStatus.innerText = "Enter email and password.";
-    return;
-  }
-
-  authStatus.innerText = "Processing...";
-
-  try {
-    const endpoint =
-      authMode === "signup"
-        ? `${API_BASE}/api/auth/signup`
-        : `${API_BASE}/api/auth/login`;
-
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      authStatus.innerText = data.error || "Authentication failed.";
-      return;
-    }
-
-    if (authMode === "signup") {
-      authStatus.innerText = "🎉 Account created. Please login.";
-      authMode = "login";
-      return;
-    }
-
-    if (data.access_token) {
-      localStorage.setItem("qlasar_token", data.access_token);
-      authStatus.innerText = "✔️ Logged in.";
-
-      setTimeout(() => {
-        authModal.classList.add("auth-hidden");
-        renderSessionsListHybrid(); // refresh cloud sessions
-      }, 900);
-    }
-
-  } catch {
-    authStatus.innerText = "🌐 Network error. Try again.";
-  }
-};
-
 // ================= SIDEBAR =================
 title.onclick = () => {
   sidebar.style.left = "0";
   overlay.classList.add("show");
 };
 
-overlay.onclick = () => closeSidebar();
+overlay.onclick = closeSidebar;
 
 function closeSidebar() {
   sidebar.style.left = "-260px";
@@ -262,24 +177,88 @@ document.getElementById("show-alerts").onclick = () => {
   loadAlerts();
 };
 
-// ✅ Sessions now ONLY open right panel
 document.getElementById("show-sessions").onclick = async () => {
   sessionsPanel.classList.toggle("show");
   await renderSessionsListHybrid();
   closeSidebar();
 };
 
-// ================= SESSIONS PANEL RENDER (HYBRID) =================
+// ================= AUTH UI =================
+const authModal = document.getElementById("auth-modal");
+const authTitle = document.getElementById("auth-title");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authSubmit = document.getElementById("auth-submit");
+const authToggle = document.getElementById("auth-toggle");
+const authClose = document.getElementById("auth-close");
+const authStatus = document.getElementById("auth-status");
+
+let authMode = "signup";
+
+document.getElementById("account-btn").onclick = () => {
+  authModal.classList.remove("auth-hidden");
+  sessionsPanel.classList.remove("show");
+  closeSidebar();
+};
+
+authClose.onclick = () => authModal.classList.add("auth-hidden");
+
+authToggle.onclick = () => {
+  authMode = authMode === "signup" ? "login" : "signup";
+  authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
+  authSubmit.innerText = authTitle.innerText;
+  authToggle.innerHTML =
+    authMode === "signup"
+      ? `Already have an account? <span>Login</span>`
+      : `No account? <span>Create one</span>`;
+  authStatus.innerText = "";
+};
+
+authSubmit.onclick = async () => {
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
+  if (!email || !password) return authStatus.innerText = "Enter email and password.";
+
+  authStatus.innerText = "Processing...";
+
+  try {
+    const endpoint =
+      authMode === "signup"
+        ? `${API_BASE}/api/auth/signup`
+        : `${API_BASE}/api/auth/login`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok) return authStatus.innerText = data.error || "Authentication failed.";
+
+    if (data.access_token) {
+      localStorage.setItem("qlasar_token", data.access_token);
+      authStatus.innerText = "✔️ Logged in.";
+      setTimeout(() => {
+        authModal.classList.add("auth-hidden");
+        renderSessionsListHybrid();
+      }, 800);
+    }
+
+  } catch {
+    authStatus.innerText = "🌐 Network error.";
+  }
+};
+
+// ================= SESSIONS PANEL RENDER =================
 async function renderSessionsListHybrid() {
   sessionsPanelList.innerHTML = "Loading...";
   const token = localStorage.getItem("qlasar_token");
 
-  // ---------- LOGGED IN ----------
   if (token) {
     const res = await fetch(`${API_BASE}/api/sessions`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-
     const sessions = await res.json();
     sessionsPanelList.innerHTML = "";
 
@@ -288,18 +267,16 @@ async function renderSessionsListHybrid() {
       pill.className = "session-pill";
       pill.textContent = "💬 " + (s.title || "Untitled chat");
 
-      if (s.id === currentSessionId) {
+      if (s.id === currentSessionId && currentSessionSource === "cloud") {
         pill.classList.add("active-session");
       }
 
       pill.onclick = () => loadSessionFromServer(s.id);
       sessionsPanelList.appendChild(pill);
     });
-
     return;
   }
 
-  // ---------- NOT LOGGED IN ----------
   const sessions = getAllSessions();
   sessionsPanelList.innerHTML = "";
 
@@ -308,7 +285,7 @@ async function renderSessionsListHybrid() {
     pill.className = "session-pill";
     pill.textContent = "💬 " + (s.title || "Untitled chat");
 
-    if (id === currentSessionId) {
+    if (id === currentSessionId && currentSessionSource === "local") {
       pill.classList.add("active-session");
     }
 
@@ -319,7 +296,6 @@ async function renderSessionsListHybrid() {
 
 // ================= CHAT SEND =================
 sendBtn.onclick = send;
-
 input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
@@ -330,7 +306,6 @@ input.addEventListener("keydown", e => {
 async function send() {
   const text = input.value.trim();
   if (!text) return;
-
   if (!currentSessionId) await createNewSession();
 
   const u = document.createElement("div");
@@ -345,7 +320,7 @@ async function send() {
   chatWindow.appendChild(a);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  let reply = "";
+  let reply = "🌐 Network error.";
 
   try {
     const res = await fetch(`${API_BASE}/api/generate`, {
@@ -355,18 +330,15 @@ async function send() {
     });
 
     const data = await res.json();
-    reply = (data?.reply || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-    if (!reply) reply = "⚠️ No reply received.";
+    reply = (data?.reply || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || reply;
     a.innerText = reply;
-
   } catch {
-    reply = "🌐 Network error.";
     a.innerText = reply;
   }
 
   const token = localStorage.getItem("qlasar_token");
 
-  if (token) {
+  if (token && currentSessionSource === "cloud") {
     await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
       method: "POST",
       headers: {
@@ -414,10 +386,7 @@ async function loadAlerts() {
       alertsList.appendChild(card);
     });
 
-    if (!data.alerts?.length) {
-      alertsList.innerHTML = "No alerts available.";
-    }
-
+    if (!data.alerts?.length) alertsList.innerHTML = "No alerts available.";
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
