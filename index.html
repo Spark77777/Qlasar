@@ -64,22 +64,34 @@
     <!-- close button -->
     <button id="auth-close" class="auth-close-btn">✖</button>
 
-    <h2 id="auth-title">Create Account</h2>
+    <!-- ================= ACCOUNT INFO (LOGGED IN) ================= -->
+    <div id="account-info" class="hidden">
 
-    <input id="auth-email" type="email" placeholder="Email" />
-    <input id="auth-password" type="password" placeholder="Password" />
+      <p class="account-label">Logged in as</p>
+      <p id="account-email" class="account-email"></p>
 
-    <button id="auth-submit">Continue</button>
+      <button id="logout-btn" class="auth-logout-btn">Logout</button>
 
-    <p class="auth-status" id="auth-status"></p>
+    </div>
 
-    <!-- ✅ LOGOUT BUTTON (hidden by default) -->
-    <button id="logout-btn" class="auth-logout-btn hidden">Logout</button>
+    <!-- ================= AUTH FORM (LOGGED OUT) ================= -->
+    <div id="auth-form">
 
-    <p id="auth-toggle">
-      Already have an account?
-      <span>Login</span>
-    </p>
+      <h2 id="auth-title">Create Account</h2>
+
+      <input id="auth-email" type="email" placeholder="Email" />
+      <input id="auth-password" type="password" placeholder="Password" />
+
+      <button id="auth-submit">Continue</button>
+
+      <p class="auth-status" id="auth-status"></p>
+
+      <p id="auth-toggle">
+        Already have an account?
+        <span>Login</span>
+      </p>
+
+    </div>
 
   </div>
 </div>
