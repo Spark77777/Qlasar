@@ -193,7 +193,7 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
-// 🔹 NEWLY INTEGRATED ACCOUNT UI ELEMENTS
+// 🔹 ACCOUNT UI ELEMENTS
 const accountInfo = document.getElementById("account-info");
 const accountEmail = document.getElementById("account-email");
 const authForm = document.getElementById("auth-form");
@@ -201,7 +201,7 @@ const logoutBtn = document.getElementById("logout-btn");
 
 let authMode = "signup";
 
-// 🔹 UPDATED ACCOUNT BUTTON LOGIC
+// 🔹 ACCOUNT BUTTON LOGIC
 document.getElementById("account-btn").onclick = () => {
   const token = localStorage.getItem("qlasar_token");
   const email = localStorage.getItem("qlasar_email");
@@ -252,7 +252,6 @@ authSubmit.onclick = async () => {
     if (!res.ok) return authStatus.innerText = data.error || "Authentication failed.";
 
     if (data.access_token) {
-      // 🔹 STORE TOKEN + EMAIL
       localStorage.setItem("qlasar_token", data.access_token);
       localStorage.setItem("qlasar_email", email);
 
@@ -269,7 +268,7 @@ authSubmit.onclick = async () => {
   }
 };
 
-// 🔹 LOGOUT FUNCTIONALITY
+// 🔹 LOGOUT FUNCTIONALITY (UPDATED WITH FULL RESET)
 logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
@@ -279,6 +278,12 @@ logoutBtn.onclick = () => {
 
   accountInfo.classList.add("hidden");
   authForm.classList.remove("hidden");
+
+  authMode = "signup";
+  authTitle.innerText = "Create Account";
+  authSubmit.innerText = "Continue";
+  authToggle.innerHTML = `Already have an account? <span>Login</span>`;
+  authStatus.innerText = "";
 
   authModal.classList.add("auth-hidden");
 
