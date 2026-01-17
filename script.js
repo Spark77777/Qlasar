@@ -193,12 +193,31 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
+// 🔹 NEWLY INTEGRATED ACCOUNT UI ELEMENTS
+const accountInfo = document.getElementById("account-info");
+const accountEmail = document.getElementById("account-email");
+const authForm = document.getElementById("auth-form");
+const logoutBtn = document.getElementById("logout-btn");
+
 let authMode = "signup";
 
+// 🔹 UPDATED ACCOUNT BUTTON LOGIC
 document.getElementById("account-btn").onclick = () => {
+  const token = localStorage.getItem("qlasar_token");
+  const email = localStorage.getItem("qlasar_email");
+
   authModal.classList.remove("auth-hidden");
   sessionsPanel.classList.remove("show");
   closeSidebar();
+
+  if (token && email) {
+    accountInfo.classList.remove("hidden");
+    authForm.classList.add("hidden");
+    accountEmail.innerText = email;
+  } else {
+    accountInfo.classList.add("hidden");
+    authForm.classList.remove("hidden");
+  }
 };
 
 authClose.onclick = () => authModal.classList.add("auth-hidden");
@@ -207,10 +226,6 @@ authToggle.onclick = () => {
   authMode = authMode === "signup" ? "login" : "signup";
   authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
   authSubmit.innerText = authTitle.innerText;
-  authToggle.innerHTML =
-    authMode === "signup"
-      ? `Already have an account? <span>Login</span>`
-      : `No account? <span>Create one</span>`;
   authStatus.innerText = "";
 };
 
@@ -237,8 +252,12 @@ authSubmit.onclick = async () => {
     if (!res.ok) return authStatus.innerText = data.error || "Authentication failed.";
 
     if (data.access_token) {
+      // 🔹 STORE TOKEN + EMAIL
       localStorage.setItem("qlasar_token", data.access_token);
+      localStorage.setItem("qlasar_email", email);
+
       authStatus.innerText = "✔️ Logged in.";
+
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
         renderSessionsListHybrid();
@@ -250,121 +269,23 @@ authSubmit.onclick = async () => {
   }
 };
 
-// ================= SESSIONS PANEL RENDER =================
-async function renderSessionsListHybrid() {
-  sessionsPanelList.innerHTML = "Loading...";
-  const token = localStorage.getItem("qlasar_token");
+// 🔹 LOGOUT FUNCTIONALITY
+logoutBtn.onclick = () => {
+  localStorage.removeItem("qlasar_token");
+  localStorage.removeItem("qlasar_email");
 
-  if (token) {
-    const res = await fetch(`${API_BASE}/api/sessions`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const sessions = await res.json();
-    sessionsPanelList.innerHTML = "";
+  currentSessionId = null;
+  currentSessionSource = "local";
 
-    sessions.forEach(s => {
-      const pill = document.createElement("div");
-      pill.className = "session-pill";
-      pill.textContent = "💬 " + (s.title || "Untitled chat");
+  accountInfo.classList.add("hidden");
+  authForm.classList.remove("hidden");
 
-      if (s.id === currentSessionId && currentSessionSource === "cloud") {
-        pill.classList.add("active-session");
-      }
+  authModal.classList.add("auth-hidden");
 
-      pill.onclick = () => loadSessionFromServer(s.id);
-      sessionsPanelList.appendChild(pill);
-    });
-    return;
-  }
-
-  const sessions = getAllSessions();
-  sessionsPanelList.innerHTML = "";
-
-  Object.entries(sessions).forEach(([id, s]) => {
-    const pill = document.createElement("div");
-    pill.className = "session-pill";
-    pill.textContent = "💬 " + (s.title || "Untitled chat");
-
-    if (id === currentSessionId && currentSessionSource === "local") {
-      pill.classList.add("active-session");
-    }
-
-    pill.onclick = () => loadSession(id);
-    sessionsPanelList.appendChild(pill);
-  });
-}
-
-// ================= CHAT SEND =================
-sendBtn.onclick = send;
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    send();
-  }
-});
-
-async function send() {
-  const text = input.value.trim();
-  if (!text) return;
-  if (!currentSessionId) await createNewSession();
-
-  const u = document.createElement("div");
-  u.className = "message user";
-  u.innerText = text;
-  chatWindow.appendChild(u);
-  input.value = "";
-
-  const a = document.createElement("div");
-  a.className = "message ai";
-  a.innerText = "Thinking…";
-  chatWindow.appendChild(a);
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-
-  let reply = "🌐 Network error.";
-
-  try {
-    const res = await fetch(`${API_BASE}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ sender: "user", text }] })
-    });
-
-    const data = await res.json();
-    reply = (data?.reply || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || reply;
-    a.innerText = reply;
-  } catch {
-    a.innerText = reply;
-  }
-
-  const token = localStorage.getItem("qlasar_token");
-
-  if (token && currentSessionSource === "cloud") {
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "user", text })
-    });
-
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "ai", text: reply })
-    });
-  } else {
-    const sessions = getAllSessions();
-    sessions[currentSessionId].messages.push({ sender: "user", text });
-    sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
-    saveAllSessions(sessions);
-  }
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-}
+  chatWindow.innerHTML = "";
+  welcome();
+  renderSessionsListHybrid();
+};
 
 // ================= ALERTS =================
 async function loadAlerts() {
@@ -375,6 +296,7 @@ async function loadAlerts() {
     const data = await res.json();
 
     alertsList.innerHTML = "";
+
     (data.alerts || []).forEach(a => {
       const card = document.createElement("div");
       card.className = "alert-card";
