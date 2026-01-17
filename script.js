@@ -320,87 +320,23 @@ async function loadAlerts() {
 }
 
 // ================= CHAT SEND =================
-sendBtn.onclick = send;
 
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    send();
-  }
-});
-
-async function send() {
-  const text = input.value.trim();
-  if (!text) return;
-
-  if (!currentSessionId) await createNewSession();
-
-  const u = document.createElement("div");
-  u.className = "message user";
-  u.innerText = text;
-  chatWindow.appendChild(u);
-  input.value = "";
-
-  const a = document.createElement("div");
-  a.className = "message ai";
-  a.innerText = "Thinking…";
-  chatWindow.appendChild(a);
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-
-  let reply = "🌐 Network error.";
-
-  try {
-    const res = await fetch(`${API_BASE}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [{ sender: "user", text }]
-      })
-    });
-
-    const data = await res.json();
-
-    reply =
-      (data?.reply || "")
-        .replace(/<think>[\s\S]*?<\/think>/gi, "")
-        .trim() || reply;
-
-    a.innerText = reply;
-
-  } catch {
-    a.innerText = reply;
+function bindSendEvents() {
+  if (!sendBtn || !input) {
+    console.log("Send elements not ready yet");
+    return;
   }
 
-  const token = localStorage.getItem("qlasar_token");
+  sendBtn.onclick = send;
 
-  if (token && currentSessionSource === "cloud") {
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "user", text })
-    });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
 
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "ai", text: reply })
-    });
-
-  } else {
-    const sessions = getAllSessions();
-
-    sessions[currentSessionId].messages.push({ sender: "user", text });
-    sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
-
-    saveAllSessions(sessions);
-  }
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  console.log("Send events bound successfully");
 }
+
+document.addEventListener("DOMContentLoaded", bindSendEvents);
