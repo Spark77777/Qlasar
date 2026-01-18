@@ -16,38 +16,19 @@ const alertsList = document.getElementById("alerts-list");
 console.log("SEND BUTTON ELEMENT:", sendBtn);
 console.log("INPUT ELEMENT:", input);
 
-// ⭐ sessions panel (single source of truth)
+// ⭐ sessions panel
 const sessionsPanel = document.getElementById("sessions-panel");
 const sessionsPanelList = document.getElementById("sessions-panel-list");
 
 // ====================== SESSION STATE ======================
 let currentSessionId = null;
-let currentSessionSource = "local"; // "local" | "cloud"
 
-// ====================== LOCAL STORAGE ======================
-function getAllSessions() {
-  return JSON.parse(localStorage.getItem("qlasar_sessions") || "{}");
-}
-
-function saveAllSessions(sessions) {
-  localStorage.setItem("qlasar_sessions", JSON.stringify(sessions));
-}
-
-// ================= CREATE NEW SESSION (HYBRID) =================
+// ================= CREATE NEW SESSION (CLOUD ONLY) =================
 async function createNewSession() {
   const token = localStorage.getItem("qlasar_token");
 
   if (!token) {
-    const id = Date.now().toString();
-    const sessions = getAllSessions();
-    sessions[id] = { title: "New chat", messages: [] };
-    saveAllSessions(sessions);
-
-    currentSessionId = id;
-    currentSessionSource = "local";
-
-    welcome();
-    renderSessionsListHybrid();
+    alert("Please login to start using Qlasar.");
     return;
   }
 
@@ -62,60 +43,23 @@ async function createNewSession() {
     });
 
     const data = await res.json();
+
     currentSessionId = data.id;
-    currentSessionSource = "cloud";
 
     welcome();
+    renderSessionsList();
 
   } catch {
-    const id = Date.now().toString();
-    const sessions = getAllSessions();
-    sessions[id] = { title: "New chat", messages: [] };
-    saveAllSessions(sessions);
-
-    currentSessionId = id;
-    currentSessionSource = "local";
-
-    welcome();
+    alert("Failed to create session. Please try again.");
   }
-
-  renderSessionsListHybrid();
-}
-
-// ================= LOAD SESSION (LOCAL) =================
-function loadSession(id) {
-  currentSessionId = id;
-  currentSessionSource = "local";
-
-  const session = getAllSessions()[id];
-
-  chatSection.classList.remove("hidden");
-  alertsSection.classList.add("hidden");
-  chatWindow.innerHTML = "";
-  sessionsPanel.classList.remove("show");
-
-  if (!session || !session.messages.length) {
-    welcome();
-  } else {
-    session.messages.forEach(m => {
-      const div = document.createElement("div");
-      div.className = `message ${m.sender}`;
-      div.innerText = m.text;
-      chatWindow.appendChild(div);
-    });
-  }
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-  renderSessionsListHybrid();
 }
 
 // ================= LOAD SESSION (CLOUD) =================
-async function loadSessionFromServer(id) {
+async function loadSession(id) {
   const token = localStorage.getItem("qlasar_token");
   if (!token) return;
 
   currentSessionId = id;
-  currentSessionSource = "cloud";
 
   const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
     headers: { Authorization: `Bearer ${token}` }
@@ -137,7 +81,7 @@ async function loadSessionFromServer(id) {
   alertsSection.classList.add("hidden");
 
   chatWindow.scrollTop = chatWindow.scrollHeight;
-  renderSessionsListHybrid();
+  renderSessionsList();
 }
 
 // ================= SIDEBAR =================
@@ -182,7 +126,7 @@ document.getElementById("show-alerts").onclick = () => {
 
 document.getElementById("show-sessions").onclick = async () => {
   sessionsPanel.classList.toggle("show");
-  await renderSessionsListHybrid();
+  await renderSessionsList();
   closeSidebar();
 };
 
@@ -196,7 +140,6 @@ const authToggle = document.getElementById("auth-toggle");
 const authClose = document.getElementById("auth-close");
 const authStatus = document.getElementById("auth-status");
 
-// 🔹 ACCOUNT UI ELEMENTS
 const accountInfo = document.getElementById("account-info");
 const accountEmail = document.getElementById("account-email");
 const authForm = document.getElementById("auth-form");
@@ -204,7 +147,6 @@ const logoutBtn = document.getElementById("logout-btn");
 
 let authMode = "signup";
 
-// 🔹 ACCOUNT BUTTON LOGIC
 document.getElementById("account-btn").onclick = () => {
   const token = localStorage.getItem("qlasar_token");
   const email = localStorage.getItem("qlasar_email");
@@ -235,7 +177,10 @@ authToggle.onclick = () => {
 authSubmit.onclick = async () => {
   const email = authEmail.value.trim();
   const password = authPassword.value.trim();
-  if (!email || !password) return authStatus.innerText = "Enter email and password.";
+
+  if (!email || !password) {
+    return authStatus.innerText = "Enter email and password.";
+  }
 
   authStatus.innerText = "Processing...";
 
@@ -252,7 +197,10 @@ authSubmit.onclick = async () => {
     });
 
     const data = await res.json();
-    if (!res.ok) return authStatus.innerText = data.error || "Authentication failed.";
+
+    if (!res.ok) {
+      return authStatus.innerText = data.error || "Authentication failed.";
+    }
 
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
@@ -262,7 +210,7 @@ authSubmit.onclick = async () => {
 
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
-        renderSessionsListHybrid();
+        renderSessionsList();
       }, 800);
     }
 
@@ -271,29 +219,61 @@ authSubmit.onclick = async () => {
   }
 };
 
-// 🔹 LOGOUT FUNCTIONALITY (UPDATED WITH FULL RESET)
+// ================= LOGOUT =================
 logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
 
   currentSessionId = null;
-  currentSessionSource = "local";
 
   accountInfo.classList.add("hidden");
   authForm.classList.remove("hidden");
-
-  authMode = "signup";
-  authTitle.innerText = "Create Account";
-  authSubmit.innerText = "Continue";
-  authToggle.innerHTML = `Already have an account? <span>Login</span>`;
-  authStatus.innerText = "";
 
   authModal.classList.add("auth-hidden");
 
   chatWindow.innerHTML = "";
   welcome();
-  renderSessionsListHybrid();
+
+  renderSessionsList();
 };
+
+// ================= SESSIONS LIST (CLOUD ONLY) =================
+async function renderSessionsList() {
+  sessionsPanelList.innerHTML = "Loading...";
+
+  const token = localStorage.getItem("qlasar_token");
+
+  if (!token) {
+    sessionsPanelList.innerHTML = "Login to view saved sessions.";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const sessions = await res.json();
+
+    sessionsPanelList.innerHTML = "";
+
+    sessions.forEach(s => {
+      const pill = document.createElement("div");
+      pill.className = "session-pill";
+      pill.textContent = "💬 " + (s.title || "Untitled chat");
+
+      if (s.id === currentSessionId) {
+        pill.classList.add("active-session");
+      }
+
+      pill.onclick = () => loadSession(s.id);
+      sessionsPanelList.appendChild(pill);
+    });
+
+  } catch {
+    sessionsPanelList.innerHTML = "Error loading sessions.";
+  }
+}
 
 // ================= ALERTS =================
 async function loadAlerts() {
@@ -316,14 +296,16 @@ async function loadAlerts() {
       alertsList.appendChild(card);
     });
 
-    if (!data.alerts?.length) alertsList.innerHTML = "No alerts available.";
+    if (!data.alerts?.length) {
+      alertsList.innerHTML = "No alerts available.";
+    }
+
   } catch {
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
 
-// ================= CHAT SEND =================
-
+// ================= CHAT SEND (CLOUD ONLY) =================
 function bindSendEvents() {
   if (!sendBtn || !input) {
     console.log("Send elements not ready yet");
@@ -338,7 +320,17 @@ function bindSendEvents() {
     const text = input.value.trim();
     if (!text) return;
 
-    if (!currentSessionId) await createNewSession();
+    const token = localStorage.getItem("qlasar_token");
+
+    if (!token) {
+      alert("Please login to send messages.");
+      return;
+    }
+
+    if (!currentSessionId) {
+      await createNewSession();
+      if (!currentSessionId) return;
+    }
 
     const u = document.createElement("div");
     u.className = "message user";
@@ -364,6 +356,7 @@ function bindSendEvents() {
       });
 
       const data = await res.json();
+
       reply = (data?.reply || "")
         .replace(/<think>[\s\S]*?<\/think>/gi, "")
         .trim() || reply;
@@ -374,38 +367,27 @@ function bindSendEvents() {
       a.innerText = reply;
     }
 
-    const token = localStorage.getItem("qlasar_token");
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "user", text })
+    });
 
-    if (token && currentSessionSource === "cloud") {
-      await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ sender: "user", text })
-      });
-
-      await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ sender: "ai", text: reply })
-      });
-
-    } else {
-      const sessions = getAllSessions();
-      sessions[currentSessionId].messages.push({ sender: "user", text });
-      sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
-      saveAllSessions(sessions);
-    }
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "ai", text: reply })
+    });
 
     chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  // DIRECTLY ATTACH EVENTS (NO EXTRA DOMContentLoaded)
   sendBtn.onclick = send;
 
   input.addEventListener("keydown", e => {
@@ -418,5 +400,4 @@ function bindSendEvents() {
   console.log("Send events bound successfully");
 }
 
-// Only ONE DOMContentLoaded listener – the outer one
 document.addEventListener("DOMContentLoaded", bindSendEvents);
