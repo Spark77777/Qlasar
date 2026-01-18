@@ -86,14 +86,12 @@ async function loadSession(id) {
 
 // ================= SIDEBAR =================
 title.onclick = () => {
-  sidebar.style.left = "0";
+  sidebar.classList.add("show");
   overlay.classList.add("show");
 };
 
-overlay.onclick = closeSidebar;
-
 function closeSidebar() {
-  sidebar.style.left = "-260px";
+  sidebar.classList.remove("show");
   overlay.classList.remove("show");
 }
 
