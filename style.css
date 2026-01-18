@@ -150,30 +150,42 @@ footer {
   position: fixed;
   top: 0;
   left: 0;
-  width: 260px;
+  width: 280px;
   height: 100%;
-  background: #111;
+
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  border-right: 1px solid rgba(0, 255, 255, 0.18);
+
+  padding: 20px 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
   transition: transform 0.3s ease;
   transform: translateX(-100%);
+
   z-index: 1000;
+
+  box-shadow: 8px 0 22px rgba(0, 0, 0, 0.4);
 }
 
 #sidebar.show {
   transform: translateX(0);
 }
   
-/* SIDEBAR BUTTONS */
+/* SIDEBAR BUTTONS - REFINED */
 #sidebar button {
   width: 100%;
-  padding: 38px;
+  padding: 18px 16px;
 
-  background: #1e293b;
+  background: rgba(255, 255, 255, 0.04);
   color: white;
 
-  border: 1px solid #334155;
-  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.18);
+  border-radius: 14px;
 
-  font-size: 2.2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   text-align: left;
 
@@ -182,11 +194,22 @@ footer {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  transition: all 0.18s ease-in-out;
 }
 
+/* Hover state */
+#sidebar button:hover {
+  background: rgba(0, 255, 255, 0.12);
+  transform: translateX(6px);
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.35);
+}
+
+/* Active click */
 #sidebar button:active {
   background: #00ffff;
   color: black;
+  transform: scale(0.98);
 }
 
 /* OVERLAY */
