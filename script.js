@@ -330,80 +330,82 @@ function bindSendEvents() {
     return;
   }
 
-  // ================= CHAT SEND =================
+  console.log("Binding send events...");
 
-// Define send function FIRST
-async function send() {
-  console.log("SEND FUNCTION TRIGGERED");
+  async function send() {
+    console.log("SEND FUNCTION TRIGGERED");
 
-  const text = input.value.trim();
-  if (!text) return;
+    const text = input.value.trim();
+    if (!text) return;
 
-  if (!currentSessionId) await createNewSession();
+    if (!currentSessionId) await createNewSession();
 
-  const u = document.createElement("div");
-  u.className = "message user";
-  u.innerText = text;
-  chatWindow.appendChild(u);
+    const u = document.createElement("div");
+    u.className = "message user";
+    u.innerText = text;
+    chatWindow.appendChild(u);
 
-  input.value = "";
+    input.value = "";
 
-  const a = document.createElement("div");
-  a.className = "message ai";
-  a.innerText = "Thinking…";
-  chatWindow.appendChild(a);
+    const a = document.createElement("div");
+    a.className = "message ai";
+    a.innerText = "Thinking…";
+    chatWindow.appendChild(a);
 
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  let reply = "🌐 Network error.";
+    let reply = "🌐 Network error.";
 
-  try {
-    const res = await fetch(`${API_BASE}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: [{ sender: "user", text }] })
-    });
+    try {
+      const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ sender: "user", text }] })
+      });
 
-    const data = await res.json();
-    reply = (data?.reply || "").replace(/<think>[\s\S]*?<\/think>/gi, "").trim() || reply;
+      const data = await res.json();
+      reply = (data?.reply || "")
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .trim() || reply;
 
-    a.innerText = reply;
-  } catch {
-    a.innerText = reply;
+      a.innerText = reply;
+
+    } catch {
+      a.innerText = reply;
+    }
+
+    const token = localStorage.getItem("qlasar_token");
+
+    if (token && currentSessionSource === "cloud") {
+      await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ sender: "user", text })
+      });
+
+      await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ sender: "ai", text: reply })
+      });
+
+    } else {
+      const sessions = getAllSessions();
+      sessions[currentSessionId].messages.push({ sender: "user", text });
+      sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
+      saveAllSessions(sessions);
+    }
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  const token = localStorage.getItem("qlasar_token");
-
-  if (token && currentSessionSource === "cloud") {
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "user", text })
-    });
-
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "ai", text: reply })
-    });
-  } else {
-    const sessions = getAllSessions();
-    sessions[currentSessionId].messages.push({ sender: "user", text });
-    sessions[currentSessionId].messages.push({ sender: "ai", text: reply });
-    saveAllSessions(sessions);
-  }
-
-  chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-// Attach events AFTER function exists
-document.addEventListener("DOMContentLoaded", () => {
+  // DIRECTLY ATTACH EVENTS (NO EXTRA DOMContentLoaded)
   sendBtn.onclick = send;
 
   input.addEventListener("keydown", e => {
@@ -412,9 +414,9 @@ document.addEventListener("DOMContentLoaded", () => {
       send();
     }
   });
-});
-  
+
   console.log("Send events bound successfully");
 }
 
+// Only ONE DOMContentLoaded listener – the outer one
 document.addEventListener("DOMContentLoaded", bindSendEvents);
