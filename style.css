@@ -146,23 +146,22 @@ footer {
   transform: scale(0.95);
 }
 
-/* SIDEBAR */
 #sidebar {
   position: fixed;
   top: 0;
-  left: -360px;
-  width: 280px;
+  left: 0;
+  width: 260px;
   height: 100%;
-  background: #0f172a;
-  padding: 24px 16px;
-  transition: 0.25s;
-  z-index: 20;
-
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  background: #111;
+  transition: transform 0.3s ease;
+  transform: translateX(-100%);
+  z-index: 1000;
 }
 
+#sidebar.show {
+  transform: translateX(0);
+}
+  
 /* SIDEBAR BUTTONS */
 #sidebar button {
   width: 100%;
