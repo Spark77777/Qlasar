@@ -13,6 +13,9 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
+console.log("SEND BUTTON ELEMENT:", sendBtn);
+console.log("INPUT ELEMENT:", input);
+
 // ⭐ sessions panel (single source of truth)
 const sessionsPanel = document.getElementById("sessions-panel");
 const sessionsPanelList = document.getElementById("sessions-panel-list");
