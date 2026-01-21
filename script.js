@@ -86,9 +86,11 @@ async function loadSession(id) {
 
 // ================= SIDEBAR =================
 title.onclick = () => {
-  sidebar.classList.add("show");
-  overlay.classList.add("show");
+  sidebar.classList.toggle("show");
+  overlay.classList.toggle("show");
 };
+
+overlay.onclick = closeSidebar;
 
 function closeSidebar() {
   sidebar.classList.remove("show");
