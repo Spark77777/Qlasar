@@ -32,6 +32,46 @@ header {
   letter-spacing: -1px;
 }
 
+#credits-bar {
+  display: flex;
+  gap: 14px;
+
+  padding: 10px 16px;
+
+  background: rgba(8, 14, 32, 0.65);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+  border-radius: 16px;
+
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 22px rgba(0, 255, 255, 0.15);
+
+  align-items: center;
+}
+
+.credit-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 12px;
+
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(0, 255, 255, 0.35);
+  border-radius: 12px;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+
+  color: #e6ffff;
+}
+
+#qc-count,
+#sa-count {
+  font-weight: 700;
+  color: #00ffff;
+}
+
 /* MAIN LAYOUT */
 main {
   flex: 1;
