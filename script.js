@@ -13,6 +13,20 @@ const input = document.getElementById("message-input");
 
 const alertsList = document.getElementById("alerts-list");
 
+// ✅ NEW — credits bar element
+const creditsBar = document.getElementById("credits-bar");
+
+// ✅ NEW — update credits visibility helper
+function updateCreditsVisibility() {
+  const token = localStorage.getItem("qlasar_token");
+
+  if (token) {
+    creditsBar.classList.remove("hidden");
+  } else {
+    creditsBar.classList.add("hidden");
+  }
+}
+
 console.log("SEND BUTTON ELEMENT:", sendBtn);
 console.log("INPUT ELEMENT:", input);
 
@@ -206,6 +220,9 @@ authSubmit.onclick = async () => {
       localStorage.setItem("qlasar_token", data.access_token);
       localStorage.setItem("qlasar_email", email);
 
+      // ✅ NEW — show credits after login
+      updateCreditsVisibility();
+
       authStatus.innerText = "✔️ Logged in.";
 
       setTimeout(() => {
@@ -223,6 +240,9 @@ authSubmit.onclick = async () => {
 logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
+
+  // ✅ NEW — hide credits after logout
+  updateCreditsVisibility();
 
   currentSessionId = null;
 
@@ -400,4 +420,9 @@ function bindSendEvents() {
   console.log("Send events bound successfully");
 }
 
-document.addEventListener("DOMContentLoaded", bindSendEvents);
+document.addEventListener("DOMContentLoaded", () => {
+  bindSendEvents();
+
+  // ✅ NEW — set correct credits visibility on first load
+  updateCreditsVisibility();
+});
