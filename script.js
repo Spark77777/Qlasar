@@ -216,18 +216,18 @@ authSubmit.onclick = async () => {
       return authStatus.innerText = data.error || "Authentication failed.";
     }
 
+    // ✅ INTEGRATED (1)
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
       localStorage.setItem("qlasar_email", email);
 
-      // ✅ NEW — show credits after login
-      updateCreditsVisibility();
-
       authStatus.innerText = "✔️ Logged in.";
+
+      updateCreditsVisibility();
 
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
-        renderSessionsList();
+        renderSessionsListHybrid();
       }, 800);
     }
 
@@ -236,25 +236,30 @@ authSubmit.onclick = async () => {
   }
 };
 
-// ================= LOGOUT =================
+// ✅ INTEGRATED (2)
 logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
 
-  // ✅ NEW — hide credits after logout
-  updateCreditsVisibility();
-
   currentSessionId = null;
+  currentSessionSource = "local";
 
   accountInfo.classList.add("hidden");
   authForm.classList.remove("hidden");
+
+  authMode = "signup";
+  authTitle.innerText = "Create Account";
+  authSubmit.innerText = "Continue";
+  authToggle.innerHTML = `Already have an account? <span>Login</span>`;
+  authStatus.innerText = "";
 
   authModal.classList.add("auth-hidden");
 
   chatWindow.innerHTML = "";
   welcome();
+  renderSessionsListHybrid();
 
-  renderSessionsList();
+  updateCreditsVisibility();
 };
 
 // ================= SESSIONS LIST (CLOUD ONLY) =================
@@ -293,6 +298,12 @@ async function renderSessionsList() {
   } catch {
     sessionsPanelList.innerHTML = "Error loading sessions.";
   }
+}
+
+// ✅ SUPPORT FUNCTION (needed because your integration calls it)
+function renderSessionsListHybrid() {
+  // In cloud-only mode, hybrid is the same as renderSessionsList()
+  return renderSessionsList();
 }
 
 // ================= ALERTS =================
