@@ -27,6 +27,47 @@ function updateCreditsVisibility() {
   }
 }
 
+// ✅ INTEGRATED (1) — Credits DOM + logic
+const qcCountEl = document.getElementById("qc-count");
+const saCountEl = document.getElementById("sa-count");
+
+function getCredits() {
+  return {
+    qc: parseInt(localStorage.getItem("qc") || "200"),
+    sa: parseInt(localStorage.getItem("sa") || "5")
+  };
+}
+
+function saveCredits(qc, sa) {
+  localStorage.setItem("qc", qc);
+  localStorage.setItem("sa", sa);
+  renderCredits();
+}
+
+function renderCredits() {
+  const { qc, sa } = getCredits();
+  qcCountEl.innerText = qc;
+  saCountEl.innerText = sa;
+}
+
+function consumeQC(amount = 1) {
+  let { qc, sa } = getCredits();
+  if (qc < amount) return false;
+
+  qc -= amount;
+  saveCredits(qc, sa);
+  return true;
+}
+
+function consumeSA(amount = 1) {
+  let { qc, sa } = getCredits();
+  if (sa < amount) return false;
+
+  sa -= amount;
+  saveCredits(qc, sa);
+  return true;
+}
+
 console.log("SEND BUTTON ELEMENT:", sendBtn);
 console.log("INPUT ELEMENT:", input);
 
@@ -131,7 +172,20 @@ document.getElementById("new-chat").onclick = () => {
   closeSidebar();
 };
 
+// ✅ INTEGRATED (4) — SA consumption on alerts
 document.getElementById("show-alerts").onclick = () => {
+
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) {
+    alert("Please login to use Scouted Alerts.");
+    return;
+  }
+
+  if (!consumeSA(1)) {
+    alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
+    return;
+  }
+
   chatSection.classList.add("hidden");
   alertsSection.classList.remove("hidden");
   closeSidebar();
@@ -216,7 +270,7 @@ authSubmit.onclick = async () => {
       return authStatus.innerText = data.error || "Authentication failed.";
     }
 
-    // ✅ INTEGRATED (1)
+    // ✅ INTEGRATED (login credits visibility)
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
       localStorage.setItem("qlasar_email", email);
@@ -236,7 +290,7 @@ authSubmit.onclick = async () => {
   }
 };
 
-// ✅ INTEGRATED (2)
+// ✅ INTEGRATED (logout credits visibility)
 logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
@@ -358,6 +412,12 @@ function bindSendEvents() {
       return;
     }
 
+    // ✅ INTEGRATED (3) — consume QC BEFORE sending
+    if (!consumeQC(1)) {
+      alert("⚠️ You have 0 QC left. Please buy more credits to continue.");
+      return;
+    }
+
     if (!currentSessionId) {
       await createNewSession();
       if (!currentSessionId) return;
@@ -431,9 +491,9 @@ function bindSendEvents() {
   console.log("Send events bound successfully");
 }
 
+// ✅ INTEGRATED (2) — renderCredits() on load
 document.addEventListener("DOMContentLoaded", () => {
   bindSendEvents();
-
-  // ✅ NEW — set correct credits visibility on first load
   updateCreditsVisibility();
+  renderCredits(); // ✅ ADD THIS
 });
