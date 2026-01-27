@@ -80,6 +80,10 @@ main {
   min-height: 0;
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* CHAT SECTION */
 #chat-section {
   display: flex;
