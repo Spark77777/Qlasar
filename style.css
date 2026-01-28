@@ -297,55 +297,75 @@ footer {
   align-items: center;
 }
 
-/* AUTH BOX */
+/* AUTH BOX (UPDATED) */
 .auth-box {
   position: relative;
+  width: min(92vw, 420px);
 
-  background: #0f172a;
-  padding: 26px;
-  width: 360px;
+  padding: 28px 22px;
+  border-radius: 22px;
 
-  border-radius: 18px;
-  border: 1px solid #00ffff33;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(0, 255, 255, 0.25);
+
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.65),
+    0 0 22px rgba(0, 255, 255, 0.18);
+
+  backdrop-filter: blur(14px);
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
-
-  box-shadow: 0 0 18px #00ffff33;
+  gap: 14px;
 }
 
-/* TITLE */
+/* TITLE (UPDATED) */
 .auth-box h2 {
   text-align: center;
   font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
 }
 
-/* INPUTS */
+/* INPUTS (UPDATED) */
 .auth-box input {
   padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid #1e293b;
-  background: #020617;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(2, 6, 23, 0.75);
+
   color: white;
   font-size: 1rem;
+
+  transition: 0.15s ease-in-out;
 }
 
 .auth-box input:focus {
-  outline: 1px solid #00ffff;
+  outline: none;
+  border: 1px solid rgba(0, 255, 255, 0.65);
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
 }
 
-/* SUBMIT BUTTON */
+/* SUBMIT BUTTON (UPDATED) */
 #auth-submit {
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: none;
 
-  background: #00ffff;
-  color: black;
+  background: linear-gradient(135deg, #00ffff, #00d0ff);
+  color: #000;
 
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  font-size: 1rem;
+
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+#auth-submit:active {
+  transform: scale(0.98);
 }
 
 /* FLOATING CLOSE BUTTON */
@@ -380,10 +400,12 @@ footer {
   box-shadow: 0 0 12px #00ffff66;
 }
 
-/* TOGGLE LOGIN/SIGNUP TEXT */
+/* TOGGLE LOGIN/SIGNUP TEXT (UPDATED) */
 #auth-toggle {
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin-top: 4px;
 }
 
 #auth-toggle span {
