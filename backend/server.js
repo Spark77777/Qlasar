@@ -38,6 +38,9 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
+// ✅ NEW — MAX USERS LIMIT
+const MAX_USERS = 100;
+
 // ================= AUTH MIDDLEWARE =================
 async function getUserFromToken(req, res, next) {
   const auth = req.headers.authorization;
@@ -85,6 +88,19 @@ setInterval(supabaseRestHeartbeat, 4 * 60 * 1000);
 app.post("/api/auth/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // ✅ LIMIT CHECK (MAX 100 USERS)
+    const { count, error: countError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+
+    if (countError) throw countError;
+
+    if (count >= MAX_USERS) {
+      return res.status(403).json({
+        error: "🚫 Beta is full. Only 100 users allowed for now."
+      });
+    }
 
     const { data, error } = await supabase.auth.admin.createUser({
       email,
