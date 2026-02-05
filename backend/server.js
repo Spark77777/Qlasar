@@ -38,7 +38,7 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
-// ✅ NEW — MAX USERS LIMIT
+// ✅ MAX USERS LIMIT
 const MAX_USERS = 100;
 
 // ================= AUTH MIDDLEWARE =================
@@ -89,7 +89,6 @@ app.post("/api/auth/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // ✅ LIMIT CHECK (MAX 100 USERS)
     const { count, error: countError } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true });
@@ -184,6 +183,7 @@ app.get("/api/sessions/:id", getUserFromToken, async (req, res) => {
     .from("user_sessions")
     .select("*")
     .eq("id", id)
+    .eq("user_id", req.user.id)
     .single();
 
   if (error) return res.status(400).json({ error: error.message });
@@ -200,6 +200,7 @@ app.post("/api/sessions/:id/messages", getUserFromToken, async (req, res) => {
     .from("user_sessions")
     .select("messages")
     .eq("id", id)
+    .eq("user_id", req.user.id)
     .single();
 
   if (e1) return res.status(400).json({ error: e1.message });
@@ -216,6 +217,26 @@ app.post("/api/sessions/:id/messages", getUserFromToken, async (req, res) => {
   res.json({ success: true });
 });
 
+// ✅ RENAME SESSION
+app.patch("/api/sessions/:id", getUserFromToken, async (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: "Title cannot be empty." });
+  }
+
+  const { error } = await supabase
+    .from("user_sessions")
+    .update({ title: title.trim() })
+    .eq("id", id)
+    .eq("user_id", req.user.id);
+
+  if (error) return res.status(400).json({ error: error.message });
+
+  res.json({ success: true });
+});
+
 // DELETE SESSION
 app.delete("/api/sessions/:id", getUserFromToken, async (req, res) => {
   const { id } = req.params;
@@ -223,7 +244,8 @@ app.delete("/api/sessions/:id", getUserFromToken, async (req, res) => {
   const { error } = await supabase
     .from("user_sessions")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("user_id", req.user.id);
 
   if (error) return res.status(400).json({ error: error.message });
 
