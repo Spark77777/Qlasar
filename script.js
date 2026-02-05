@@ -18,13 +18,13 @@ const creditsBar = document.getElementById("credits-bar");
 
 // ✅ NEW — update credits visibility helper
 function updateCreditsVisibility() {
-const token = localStorage.getItem("qlasar_token");
+  const token = localStorage.getItem("qlasar_token");
 
-if (token) {
-creditsBar.classList.remove("hidden");
-} else {
-creditsBar.classList.add("hidden");
-}
+  if (token) {
+    creditsBar.classList.remove("hidden");
+  } else {
+    creditsBar.classList.add("hidden");
+  }
 }
 
 // ✅ INTEGRATED (1) — Credits DOM + logic
@@ -32,40 +32,40 @@ const qcCountEl = document.getElementById("qc-count");
 const saCountEl = document.getElementById("sa-count");
 
 function getCredits() {
-return {
-qc: parseInt(localStorage.getItem("qc") || "200"),
-sa: parseInt(localStorage.getItem("sa") || "5")
-};
+  return {
+    qc: parseInt(localStorage.getItem("qc") || "200"),
+    sa: parseInt(localStorage.getItem("sa") || "5")
+  };
 }
 
 function saveCredits(qc, sa) {
-localStorage.setItem("qc", qc);
-localStorage.setItem("sa", sa);
-renderCredits();
+  localStorage.setItem("qc", qc);
+  localStorage.setItem("sa", sa);
+  renderCredits();
 }
 
 function renderCredits() {
-const { qc, sa } = getCredits();
-qcCountEl.innerText = qc;
-saCountEl.innerText = sa;
+  const { qc, sa } = getCredits();
+  qcCountEl.innerText = qc;
+  saCountEl.innerText = sa;
 }
 
 function consumeQC(amount = 1) {
-let { qc, sa } = getCredits();
-if (qc < amount) return false;
+  let { qc, sa } = getCredits();
+  if (qc < amount) return false;
 
-qc -= amount;
-saveCredits(qc, sa);
-return true;
+  qc -= amount;
+  saveCredits(qc, sa);
+  return true;
 }
 
 function consumeSA(amount = 1) {
-let { qc, sa } = getCredits();
-if (sa < amount) return false;
+  let { qc, sa } = getCredits();
+  if (sa < amount) return false;
 
-sa -= amount;
-saveCredits(qc, sa);
-return true;
+  sa -= amount;
+  saveCredits(qc, sa);
+  return true;
 }
 
 console.log("SEND BUTTON ELEMENT:", sendBtn);
@@ -80,122 +80,122 @@ let currentSessionId = null;
 
 // ================= CREATE NEW SESSION (CLOUD ONLY) =================
 async function createNewSession() {
-const token = localStorage.getItem("qlasar_token");
+  const token = localStorage.getItem("qlasar_token");
 
-if (!token) {
-alert("Please login to start using Qlasar.");
-return;
-}
+  if (!token) {
+    alert("Please login to start using Qlasar.");
+    return;
+  }
 
-try {
-const res = await fetch(${API_BASE}/api/sessions, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-Authorization: Bearer ${token}
-},
-body: JSON.stringify({ title: "New chat" })
-});
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ title: "New chat" })
+    });
 
-const data = await res.json();  
+    const data = await res.json();
 
-currentSessionId = data.id;  
+    currentSessionId = data.id;
 
-welcome();  
-renderSessionsList();
+    welcome();
+    renderSessionsList();
 
-} catch {
-alert("Failed to create session. Please try again.");
-}
+  } catch {
+    alert("Failed to create session. Please try again.");
+  }
 }
 
 // ================= LOAD SESSION (CLOUD) =================
 async function loadSession(id) {
-const token = localStorage.getItem("qlasar_token");
-if (!token) return;
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
 
-currentSessionId = id;
+  currentSessionId = id;
 
-const res = await fetch(${API_BASE}/api/sessions/${id}, {
-headers: { Authorization: Bearer ${token} }
-});
+  const res = await fetch(`${API_BASE}/api/sessions/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-const data = await res.json();
+  const data = await res.json();
 
-chatWindow.innerHTML = "";
-sessionsPanel.classList.remove("show");
+  chatWindow.innerHTML = "";
+  sessionsPanel.classList.remove("show");
 
-(data.messages || []).forEach(m => {
-const div = document.createElement("div");
-div.className = message ${m.sender};
-div.innerText = m.text;
-chatWindow.appendChild(div);
-});
+  (data.messages || []).forEach(m => {
+    const div = document.createElement("div");
+    div.className = `message ${m.sender}`;
+    div.innerText = m.text;
+    chatWindow.appendChild(div);
+  });
 
-chatSection.classList.remove("hidden");
-alertsSection.classList.add("hidden");
+  chatSection.classList.remove("hidden");
+  alertsSection.classList.add("hidden");
 
-chatWindow.scrollTop = chatWindow.scrollHeight;
-renderSessionsList();
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+  renderSessionsList();
 }
 
 // ================= SIDEBAR =================
 title.onclick = () => {
-sidebar.classList.toggle("show");
-overlay.classList.toggle("show");
+  sidebar.classList.toggle("show");
+  overlay.classList.toggle("show");
 };
 
 overlay.onclick = closeSidebar;
 
 function closeSidebar() {
-sidebar.classList.remove("show");
-overlay.classList.remove("show");
+  sidebar.classList.remove("show");
+  overlay.classList.remove("show");
 }
 
 // ================= WELCOME =================
 function welcome() {
-chatSection.classList.remove("hidden");
-alertsSection.classList.add("hidden");
-chatWindow.innerHTML = "";
+  chatSection.classList.remove("hidden");
+  alertsSection.classList.add("hidden");
+  chatWindow.innerHTML = "";
 
-const w = document.createElement("div");
-w.className = "message ai";
-w.innerText = "Hello! I’m Qlasar — ask me anything.";
-chatWindow.appendChild(w);
+  const w = document.createElement("div");
+  w.className = "message ai";
+  w.innerText = "Hello! I’m Qlasar — ask me anything.";
+  chatWindow.appendChild(w);
 }
 
 welcome();
 
 // ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
-createNewSession();
-closeSidebar();
+  createNewSession();
+  closeSidebar();
 };
 
 // ✅ INTEGRATED (4) — SA consumption on alerts
 document.getElementById("show-alerts").onclick = () => {
 
-const token = localStorage.getItem("qlasar_token");
-if (!token) {
-alert("Please login to use Scouted Alerts.");
-return;
-}
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) {
+    alert("Please login to use Scouted Alerts.");
+    return;
+  }
 
-if (!consumeSA(1)) {
-alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
-return;
-}
+  if (!consumeSA(1)) {
+    alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
+    return;
+  }
 
-chatSection.classList.add("hidden");
-alertsSection.classList.remove("hidden");
-closeSidebar();
-loadAlerts();
+  chatSection.classList.add("hidden");
+  alertsSection.classList.remove("hidden");
+  closeSidebar();
+  loadAlerts();
 };
 
 document.getElementById("show-sessions").onclick = async () => {
-sessionsPanel.classList.toggle("show");
-await renderSessionsList();
-closeSidebar();
+  sessionsPanel.classList.toggle("show");
+  await renderSessionsList();
+  closeSidebar();
 };
 
 // ================= AUTH UI =================
@@ -216,285 +216,284 @@ const logoutBtn = document.getElementById("logout-btn");
 let authMode = "signup";
 
 document.getElementById("account-btn").onclick = () => {
-const token = localStorage.getItem("qlasar_token");
-const email = localStorage.getItem("qlasar_email");
+  const token = localStorage.getItem("qlasar_token");
+  const email = localStorage.getItem("qlasar_email");
 
-authModal.classList.remove("auth-hidden");
-sessionsPanel.classList.remove("show");
-closeSidebar();
+  authModal.classList.remove("auth-hidden");
+  sessionsPanel.classList.remove("show");
+  closeSidebar();
 
-if (token && email) {
-accountInfo.classList.remove("hidden");
-authForm.classList.add("hidden");
-accountEmail.innerText = email;
-} else {
-accountInfo.classList.add("hidden");
-authForm.classList.remove("hidden");
-}
+  if (token && email) {
+    accountInfo.classList.remove("hidden");
+    authForm.classList.add("hidden");
+    accountEmail.innerText = email;
+  } else {
+    accountInfo.classList.add("hidden");
+    authForm.classList.remove("hidden");
+  }
 };
 
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
 authToggle.onclick = () => {
-authMode = authMode === "signup" ? "login" : "signup";
-authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
-authSubmit.innerText = authTitle.innerText;
-authStatus.innerText = "";
+  authMode = authMode === "signup" ? "login" : "signup";
+  authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
+  authSubmit.innerText = authTitle.innerText;
+  authStatus.innerText = "";
 };
 
 authSubmit.onclick = async () => {
-const email = authEmail.value.trim();
-const password = authPassword.value.trim();
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
 
-if (!email || !password) {
-return authStatus.innerText = "Enter email and password.";
-}
+  if (!email || !password) {
+    return authStatus.innerText = "Enter email and password.";
+  }
 
-authStatus.innerText = "Processing...";
+  authStatus.innerText = "Processing...";
 
-try {
-const endpoint =
-authMode === "signup"
-? ${API_BASE}/api/auth/signup
-: ${API_BASE}/api/auth/login;
+  try {
+    const endpoint =
+      authMode === "signup"
+        ? `${API_BASE}/api/auth/signup`
+        : `${API_BASE}/api/auth/login`;
 
-const res = await fetch(endpoint, {  
-  method: "POST",  
-  headers: { "Content-Type": "application/json" },  
-  body: JSON.stringify({ email, password })  
-});  
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
 
-const data = await res.json();  
+    const data = await res.json();
 
-if (!res.ok) {  
-  return authStatus.innerText = data.error || "Authentication failed.";  
-}  
+    if (!res.ok) {
+      return authStatus.innerText = data.error || "Authentication failed.";
+    }
 
-// ✅ INTEGRATED (login credits visibility)  
-if (data.access_token) {  
-  localStorage.setItem("qlasar_token", data.access_token);  
-  localStorage.setItem("qlasar_email", email);  
+    // ✅ INTEGRATED (login credits visibility)
+    if (data.access_token) {
+      localStorage.setItem("qlasar_token", data.access_token);
+      localStorage.setItem("qlasar_email", email);
 
-  authStatus.innerText = "✔️ Logged in.";  
+      authStatus.innerText = "✔️ Logged in.";
 
-  updateCreditsVisibility();  
+      updateCreditsVisibility();
 
-  setTimeout(() => {  
-    authModal.classList.add("auth-hidden");  
-    renderSessionsListHybrid();  
-  }, 800);  
-}
+      setTimeout(() => {
+        authModal.classList.add("auth-hidden");
+        renderSessionsListHybrid();
+      }, 800);
+    }
 
-} catch {
-authStatus.innerText = "🌐 Network error.";
-}
+  } catch {
+    authStatus.innerText = "🌐 Network error.";
+  }
 };
 
 // ✅ INTEGRATED (logout credits visibility)
 logoutBtn.onclick = () => {
-localStorage.removeItem("qlasar_token");
-localStorage.removeItem("qlasar_email");
+  localStorage.removeItem("qlasar_token");
+  localStorage.removeItem("qlasar_email");
 
-currentSessionId = null;
-currentSessionSource = "local";
+  currentSessionId = null;
+  currentSessionSource = "local";
 
-accountInfo.classList.add("hidden");
-authForm.classList.remove("hidden");
+  accountInfo.classList.add("hidden");
+  authForm.classList.remove("hidden");
 
-authMode = "signup";
-authTitle.innerText = "Create Account";
-authSubmit.innerText = "Continue";
-authToggle.innerHTML = Already have an account? <span>Login</span>;
-authStatus.innerText = "";
+  authMode = "signup";
+  authTitle.innerText = "Create Account";
+  authSubmit.innerText = "Continue";
+  authToggle.innerHTML = `Already have an account? <span>Login</span>`;
+  authStatus.innerText = "";
 
-authModal.classList.add("auth-hidden");
+  authModal.classList.add("auth-hidden");
 
-chatWindow.innerHTML = "";
-welcome();
-renderSessionsListHybrid();
+  chatWindow.innerHTML = "";
+  welcome();
+  renderSessionsListHybrid();
 
-updateCreditsVisibility();
+  updateCreditsVisibility();
 };
 
 // ================= SESSIONS LIST (CLOUD ONLY) =================
 async function renderSessionsList() {
-sessionsPanelList.innerHTML = "Loading...";
+  sessionsPanelList.innerHTML = "Loading...";
 
-const token = localStorage.getItem("qlasar_token");
+  const token = localStorage.getItem("qlasar_token");
 
-if (!token) {
-sessionsPanelList.innerHTML = "Login to view saved sessions.";
-return;
-}
+  if (!token) {
+    sessionsPanelList.innerHTML = "Login to view saved sessions.";
+    return;
+  }
 
-try {
-const res = await fetch(${API_BASE}/api/sessions, {
-headers: { Authorization: Bearer ${token} }
-});
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-const sessions = await res.json();  
+    const sessions = await res.json();
 
-sessionsPanelList.innerHTML = "";  
+    sessionsPanelList.innerHTML = "";
 
-sessions.forEach(s => {  
-  const pill = document.createElement("div");  
-  pill.className = "session-pill";  
-  pill.textContent = "💬 " + (s.title || "Untitled chat");  
+    sessions.forEach(s => {
+      const pill = document.createElement("div");
+      pill.className = "session-pill";
+      pill.textContent = "💬 " + (s.title || "Untitled chat");
 
-  if (s.id === currentSessionId) {  
-    pill.classList.add("active-session");  
-  }  
+      if (s.id === currentSessionId) {
+        pill.classList.add("active-session");
+      }
 
-  pill.onclick = () => loadSession(s.id);  
-  sessionsPanelList.appendChild(pill);  
-});
+      pill.onclick = () => loadSession(s.id);
+      sessionsPanelList.appendChild(pill);
+    });
 
-} catch {
-sessionsPanelList.innerHTML = "Error loading sessions.";
-}
+  } catch {
+    sessionsPanelList.innerHTML = "Error loading sessions.";
+  }
 }
 
 // ✅ SUPPORT FUNCTION (needed because your integration calls it)
 function renderSessionsListHybrid() {
-// In cloud-only mode, hybrid is the same as renderSessionsList()
-return renderSessionsList();
+  // In cloud-only mode, hybrid is the same as renderSessionsList()
+  return renderSessionsList();
 }
 
 // ================= ALERTS =================
 async function loadAlerts() {
-alertsList.innerHTML = "Loading...";
+  alertsList.innerHTML = "Loading...";
 
-try {
-const res = await fetch(${API_BASE}/api/alerts);
-const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/alerts`);
+    const data = await res.json();
 
-alertsList.innerHTML = "";  
+    alertsList.innerHTML = "";
 
-(data.alerts || []).forEach(a => {  
-  const card = document.createElement("div");  
-  card.className = "alert-card";  
-  card.innerHTML = `  
-    <strong>${a.title}</strong><br>  
-    <small>${a.source || ""}</small><br>  
-    <a href="${a.url}" target="_blank">Open</a>  
-  `;  
-  alertsList.appendChild(card);  
-});  
+    (data.alerts || []).forEach(a => {
+      const card = document.createElement("div");
+      card.className = "alert-card";
+      card.innerHTML = `
+        <strong>${a.title}</strong><br>
+        <small>${a.source || ""}</small><br>
+        <a href="${a.url}" target="_blank">Open</a>
+      `;
+      alertsList.appendChild(card);
+    });
 
-if (!data.alerts?.length) {  
-  alertsList.innerHTML = "No alerts available.";  
-}
+    if (!data.alerts?.length) {
+      alertsList.innerHTML = "No alerts available.";
+    }
 
-} catch {
-alertsList.innerHTML = "⚠️ Network error loading alerts.";
-}
+  } catch {
+    alertsList.innerHTML = "⚠️ Network error loading alerts.";
+  }
 }
 
 // ================= CHAT SEND (CLOUD ONLY) =================
 function bindSendEvents() {
-if (!sendBtn || !input) {
-console.log("Send elements not ready yet");
-return;
-}
+  if (!sendBtn || !input) {
+    console.log("Send elements not ready yet");
+    return;
+  }
 
-console.log("Binding send events...");
+  console.log("Binding send events...");
 
-async function send() {
-console.log("SEND FUNCTION TRIGGERED");
+  async function send() {
+    console.log("SEND FUNCTION TRIGGERED");
 
-const text = input.value.trim();  
-if (!text) return;  
+    const text = input.value.trim();
+    if (!text) return;
 
-const token = localStorage.getItem("qlasar_token");  
+    const token = localStorage.getItem("qlasar_token");
 
-if (!token) {  
-  alert("Please login to send messages.");  
-  return;  
-}  
+    if (!token) {
+      alert("Please login to send messages.");
+      return;
+    }
 
-// ✅ INTEGRATED (3) — consume QC BEFORE sending  
-if (!consumeQC(1)) {  
-  alert("⚠️ You have 0 QC left. Please buy more credits to continue.");  
-  return;  
-}  
+    // ✅ INTEGRATED (3) — consume QC BEFORE sending
+    if (!consumeQC(1)) {
+      alert("⚠️ You have 0 QC left. Please buy more credits to continue.");
+      return;
+    }
 
-if (!currentSessionId) {  
-  await createNewSession();  
-  if (!currentSessionId) return;  
-}  
+    if (!currentSessionId) {
+      await createNewSession();
+      if (!currentSessionId) return;
+    }
 
-const u = document.createElement("div");  
-u.className = "message user";  
-u.innerText = text;  
-chatWindow.appendChild(u);  
+    const u = document.createElement("div");
+    u.className = "message user";
+    u.innerText = text;
+    chatWindow.appendChild(u);
 
-input.value = "";  
+    input.value = "";
 
-const a = document.createElement("div");  
-a.className = "message ai";  
-a.innerText = "Thinking…";  
-chatWindow.appendChild(a);  
+    const a = document.createElement("div");
+    a.className = "message ai";
+    a.innerText = "Thinking…";
+    chatWindow.appendChild(a);
 
-chatWindow.scrollTop = chatWindow.scrollHeight;  
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 
-let reply = "🌐 Network error.";  
+    let reply = "🌐 Network error.";
 
-try {  
-  const res = await fetch(`${API_BASE}/api/generate`, {  
-    method: "POST",  
-    headers: { "Content-Type": "application/json" },  
-    body: JSON.stringify({ messages: [{ sender: "user", text }] })  
-  });  
+    try {
+      const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ sender: "user", text }] })
+      });
 
-  const data = await res.json();  
+      const data = await res.json();
 
-  reply = (data?.reply || "")  
-    .replace(/<think>[\s\S]*?<\/think>/gi, "")  
-    .trim() || reply;  
+      reply = (data?.reply || "")
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .trim() || reply;
 
-  a.innerText = reply;  
+      a.innerText = reply;
 
-} catch {  
-  a.innerText = reply;  
-}  
+    } catch {
+      a.innerText = reply;
+    }
 
-await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {  
-  method: "POST",  
-  headers: {  
-    "Content-Type": "application/json",  
-    Authorization: `Bearer ${token}`  
-  },  
-  body: JSON.stringify({ sender: "user", text })  
-});  
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "user", text })
+    });
 
-await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {  
-  method: "POST",  
-  headers: {  
-    "Content-Type": "application/json",  
-    Authorization: `Bearer ${token}`  
-  },  
-  body: JSON.stringify({ sender: "ai", text: reply })  
-});  
+    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "ai", text: reply })
+    });
 
-chatWindow.scrollTop = chatWindow.scrollHeight;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
 
-}
+  sendBtn.onclick = send;
 
-sendBtn.onclick = send;
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
 
-input.addEventListener("keydown", e => {
-if (e.key === "Enter" && !e.shiftKey) {
-e.preventDefault();
-send();
-}
-});
-
-console.log("Send events bound successfully");
+  console.log("Send events bound successfully");
 }
 
 // ✅ INTEGRATED (2) — renderCredits() on load
 document.addEventListener("DOMContentLoaded", () => {
-bindSendEvents();
-updateCreditsVisibility();
-renderCredits(); // ✅ ADD THIS
+  bindSendEvents();
+  updateCreditsVisibility();
+  renderCredits(); // ✅ ADD THIS
 });
