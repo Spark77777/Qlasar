@@ -333,20 +333,54 @@ async function renderSessionsList() {
     });
 
     const sessions = await res.json();
-
     sessionsPanelList.innerHTML = "";
 
     sessions.forEach(s => {
-      const pill = document.createElement("div");
-      pill.className = "session-pill";
-      pill.textContent = "💬 " + (s.title || "Untitled chat");
+      // row wrapper
+      const row = document.createElement("div");
+      row.className = "session-pill session-row";
+
+      // title
+      const title = document.createElement("span");
+      title.textContent = "💬 " + (s.title || "Untitled chat");
+      title.style.flex = "1";
+      title.style.cursor = "pointer";
+
+      title.onclick = () => loadSession(s.id);
+
+      // actions container
+      const actions = document.createElement("div");
+      actions.className = "session-actions";
+
+      // rename button
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "session-action-btn";
+      renameBtn.textContent = "✏️";
+      renameBtn.onclick = (e) => {
+        e.stopPropagation();
+        renameSession(s.id, s.title);
+      };
+
+      // delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "session-action-btn";
+      deleteBtn.textContent = "🗑️";
+      deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deleteSession(s.id);
+      };
+
+      actions.appendChild(renameBtn);
+      actions.appendChild(deleteBtn);
+
+      row.appendChild(title);
+      row.appendChild(actions);
 
       if (s.id === currentSessionId) {
-        pill.classList.add("active-session");
+        row.classList.add("active-session");
       }
 
-      pill.onclick = () => loadSession(s.id);
-      sessionsPanelList.appendChild(pill);
+      sessionsPanelList.appendChild(row);
     });
 
   } catch {
@@ -354,10 +388,66 @@ async function renderSessionsList() {
   }
 }
 
-// ✅ SUPPORT FUNCTION (needed because your integration calls it)
-function renderSessionsListHybrid() {
-  // In cloud-only mode, hybrid is the same as renderSessionsList()
-  return renderSessionsList();
+async function renameSession(sessionId, oldTitle = "") {
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
+
+  const newTitle = prompt("Rename session:", oldTitle || "");
+  if (!newTitle || newTitle.trim() === oldTitle) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ title: newTitle.trim() })
+    });
+
+    if (!res.ok) {
+      alert("Failed to rename session.");
+      return;
+    }
+
+    renderSessionsList();
+
+  } catch {
+    alert("Network error while renaming session.");
+  }
+}
+
+async function deleteSession(sessionId) {
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
+
+  const confirmDelete = confirm("Delete this session permanently?");
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      alert("Failed to delete session.");
+      return;
+    }
+
+    if (sessionId === currentSessionId) {
+      currentSessionId = null;
+      chatWindow.innerHTML = "";
+      welcome();
+    }
+
+    renderSessionsList();
+
+  } catch {
+    alert("Network error while deleting session.");
+  }
 }
 
 // ================= ALERTS =================
