@@ -191,6 +191,28 @@ app.get("/api/sessions/:id", getUserFromToken, async (req, res) => {
   res.json(data);
 });
 
+// RENAME SESSION
+app.patch("/api/sessions/:id", getUserFromToken, async (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: "Title is required." });
+  }
+
+  const { error } = await supabase
+    .from("user_sessions")
+    .update({ title: title.trim() })
+    .eq("id", id)
+    .eq("user_id", req.user.id); // 🔒 ownership check
+
+  if (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  res.json({ success: true });
+});
+
 // ADD MESSAGE TO SESSION
 app.post("/api/sessions/:id/messages", getUserFromToken, async (req, res) => {
   const { id } = req.params;
