@@ -48,13 +48,31 @@
   </section>
 
   <!-- ================= ALERTS ================= -->
-  <section id="alerts-section" class="hidden">
-    <h2>Scouted Alerts</h2>
-    <div id="alerts-list"></div>
-  </section>
+<section id="alerts-section" class="hidden">
+  <h2>Scouted Alerts</h2>
 
-</main>
+  <!-- 🔹 Topic Controls -->
+  <div id="alerts-controls">
 
+    <div id="alerts-input-row">
+      <input
+        id="alert-topic-input"
+        type="text"
+        placeholder="Enter topic (crypto, stocks, jobs...)"
+      />
+      <button id="add-alert-topic">Add</button>
+    </div>
+
+    <div id="alert-topics-list">
+      <!-- topics rendered dynamically -->
+    </div>
+
+  </div>
+
+  <!-- 🔹 Alerts Feed -->
+  <div id="alerts-list"></div>
+</section>
+    
 <!-- ================= RIGHT SLIDE SAVED SESSIONS PANEL ================= -->
 <div id="sessions-panel">
 
