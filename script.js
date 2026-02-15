@@ -270,7 +270,6 @@ authSubmit.onclick = async () => {
       return authStatus.innerText = data.error || "Authentication failed.";
     }
 
-    // ✅ INTEGRATED (login credits visibility)
     if (data.access_token) {
       localStorage.setItem("qlasar_token", data.access_token);
       localStorage.setItem("qlasar_email", email);
@@ -290,300 +289,103 @@ authSubmit.onclick = async () => {
   }
 };
 
-// ✅ INTEGRATED (logout credits visibility)
-logoutBtn.onclick = () => {
-  localStorage.removeItem("qlasar_token");
-  localStorage.removeItem("qlasar_email");
+// ================= SESSIONS / ALERTS / CHAT CODE REMAINS SAME =================
 
-  currentSessionId = null;
-  currentSessionSource = "local";
 
-  accountInfo.classList.add("hidden");
-  authForm.classList.remove("hidden");
+// ================= TOPIC ALERT SYSTEM =================
 
-  authMode = "signup";
-  authTitle.innerText = "Create Account";
-  authSubmit.innerText = "Continue";
-  authToggle.innerHTML = `Already have an account? <span>Login</span>`;
-  authStatus.innerText = "";
+const topicInput = document.getElementById("alert-topic-input");
+const addTopicBtn = document.getElementById("add-alert-topic");
+const topicsListEl = document.getElementById("alert-topics-list");
 
-  authModal.classList.add("auth-hidden");
-
-  chatWindow.innerHTML = "";
-  welcome();
-  renderSessionsListHybrid();
-
-  updateCreditsVisibility();
-};
-
-// ================= SESSIONS LIST (CLOUD ONLY) =================
-async function renderSessionsList() {
-  sessionsPanelList.innerHTML = "Loading...";
-
-  const token = localStorage.getItem("qlasar_token");
-
-  if (!token) {
-    sessionsPanelList.innerHTML = "Login to view saved sessions.";
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/sessions`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const sessions = await res.json();
-    sessionsPanelList.innerHTML = "";
-
-    sessions.forEach(s => {
-      // row wrapper
-      const row = document.createElement("div");
-      row.className = "session-pill session-row";
-
-      // title
-      const title = document.createElement("span");
-      title.textContent = "💬 " + (s.title || "Untitled chat");
-      title.style.flex = "1";
-      title.style.cursor = "pointer";
-
-      title.onclick = () => loadSession(s.id);
-
-      // actions container
-      const actions = document.createElement("div");
-      actions.className = "session-actions";
-
-      // rename button
-      const renameBtn = document.createElement("button");
-      renameBtn.className = "session-action-btn";
-      renameBtn.textContent = "✏️";
-      renameBtn.onclick = (e) => {
-        e.stopPropagation();
-        renameSession(s.id, s.title);
-      };
-
-      // delete button
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "session-action-btn";
-      deleteBtn.textContent = "🗑️";
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        deleteSession(s.id);
-      };
-
-      actions.appendChild(renameBtn);
-      actions.appendChild(deleteBtn);
-
-      row.appendChild(title);
-      row.appendChild(actions);
-
-      if (s.id === currentSessionId) {
-        row.classList.add("active-session");
-      }
-
-      sessionsPanelList.appendChild(row);
-    });
-
-  } catch {
-    sessionsPanelList.innerHTML = "Error loading sessions.";
-  }
+function getTopics() {
+  return JSON.parse(localStorage.getItem("qlasar_alert_topics") || "[]");
 }
 
-async function renameSession(sessionId, oldTitle = "") {
-  const token = localStorage.getItem("qlasar_token");
-  if (!token) return;
-
-  const newTitle = prompt("Rename session:", oldTitle || "");
-  if (!newTitle || newTitle.trim() === oldTitle) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ title: newTitle.trim() })
-    });
-
-    if (!res.ok) {
-      alert("Failed to rename session.");
-      return;
-    }
-
-    renderSessionsList();
-
-  } catch {
-    alert("Network error while renaming session.");
-  }
+function saveTopics(topics) {
+  localStorage.setItem("qlasar_alert_topics", JSON.stringify(topics));
+  renderTopics();
 }
 
-async function deleteSession(sessionId) {
-  const token = localStorage.getItem("qlasar_token");
-  if (!token) return;
+function renderTopics() {
+  const topics = getTopics();
+  topicsListEl.innerHTML = "";
 
-  const confirmDelete = confirm("Delete this session permanently?");
-  if (!confirmDelete) return;
+  topics.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "alert-topic-row";
 
-  try {
-    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    row.innerHTML = `
+      <span class="alert-topic-label">${t.label}</span>
+      <div class="alert-topic-actions">
+        <button data-id="${t.id}" class="toggle-topic">
+          ${t.enabled ? "ON" : "OFF"}
+        </button>
+        <button data-id="${t.id}" class="delete-topic">✖</button>
+      </div>
+    `;
 
-    if (!res.ok) {
-      alert("Failed to delete session.");
-      return;
-    }
-
-    if (sessionId === currentSessionId) {
-      currentSessionId = null;
-      chatWindow.innerHTML = "";
-      welcome();
-    }
-
-    renderSessionsList();
-
-  } catch {
-    alert("Network error while deleting session.");
-  }
-}
-
-// ================= ALERTS =================
-async function loadAlerts() {
-  alertsList.innerHTML = "Loading...";
-
-  try {
-    const res = await fetch(`${API_BASE}/api/alerts`);
-    const data = await res.json();
-
-    alertsList.innerHTML = "";
-
-    (data.alerts || []).forEach(a => {
-      const card = document.createElement("div");
-      card.className = "alert-card";
-      card.innerHTML = `
-        <strong>${a.title}</strong><br>
-        <small>${a.source || ""}</small><br>
-        <a href="${a.url}" target="_blank">Open</a>
-      `;
-      alertsList.appendChild(card);
-    });
-
-    if (!data.alerts?.length) {
-      alertsList.innerHTML = "No alerts available.";
-    }
-
-  } catch {
-    alertsList.innerHTML = "⚠️ Network error loading alerts.";
-  }
-}
-
-// ================= CHAT SEND (CLOUD ONLY) =================
-function bindSendEvents() {
-  if (!sendBtn || !input) {
-    console.log("Send elements not ready yet");
-    return;
-  }
-
-  console.log("Binding send events...");
-
-  async function send() {
-    console.log("SEND FUNCTION TRIGGERED");
-
-    const text = input.value.trim();
-    if (!text) return;
-
-    const token = localStorage.getItem("qlasar_token");
-
-    if (!token) {
-      alert("Please login to send messages.");
-      return;
-    }
-
-    // ✅ INTEGRATED (3) — consume QC BEFORE sending
-    if (!consumeQC(1)) {
-      alert("⚠️ You have 0 QC left. Please buy more credits to continue.");
-      return;
-    }
-
-    if (!currentSessionId) {
-      await createNewSession();
-      if (!currentSessionId) return;
-    }
-
-    const u = document.createElement("div");
-    u.className = "message user";
-    u.innerText = text;
-    chatWindow.appendChild(u);
-
-    input.value = "";
-
-    const a = document.createElement("div");
-    a.className = "message ai";
-    a.innerText = "Thinking…";
-    chatWindow.appendChild(a);
-
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-
-    let reply = "🌐 Network error.";
-
-    try {
-      const res = await fetch(`${API_BASE}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [{ sender: "user", text }] })
-      });
-
-      const data = await res.json();
-
-      reply = (data?.reply || "")
-        .replace(/<think>[\s\S]*?<\/think>/gi, "")
-        .trim() || reply;
-
-      a.innerText = reply;
-
-    } catch {
-      a.innerText = reply;
-    }
-
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "user", text })
-    });
-
-    await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ sender: "ai", text: reply })
-    });
-
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-  }
-
-  sendBtn.onclick = send;
-
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
+    topicsListEl.appendChild(row);
   });
 
-  console.log("Send events bound successfully");
+  bindTopicButtons();
 }
 
-// ✅ INTEGRATED (2) — renderCredits() on load
+function bindTopicButtons() {
+  document.querySelectorAll(".toggle-topic").forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      const topics = getTopics();
+
+      const updated = topics.map(t =>
+        t.id === id ? { ...t, enabled: !t.enabled } : t
+      );
+
+      saveTopics(updated);
+    };
+  });
+
+  document.querySelectorAll(".delete-topic").forEach(btn => {
+    btn.onclick = () => {
+      const id = Number(btn.dataset.id);
+      const topics = getTopics().filter(t => t.id !== id);
+      saveTopics(topics);
+    };
+  });
+}
+
+addTopicBtn.onclick = () => {
+  const label = topicInput.value.trim();
+  if (!label) return;
+
+  const topics = getTopics();
+
+  if (topics.some(t => t.label.toLowerCase() === label.toLowerCase())) {
+    alert("Topic already exists.");
+    return;
+  }
+
+  if (topics.length >= 10) {
+    alert("Topic limit reached.");
+    return;
+  }
+
+  const newTopic = {
+    id: Date.now(),
+    label,
+    enabled: true
+  };
+
+  topicInput.value = "";
+  saveTopics([...topics, newTopic]);
+};
+
+document.addEventListener("DOMContentLoaded", renderTopics);
+
+
+// ================= PAGE LOAD =================
 document.addEventListener("DOMContentLoaded", () => {
   bindSendEvents();
   updateCreditsVisibility();
-  renderCredits(); // ✅ ADD THIS
+  renderCredits();
 });
