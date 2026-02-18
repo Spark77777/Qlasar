@@ -1,4 +1,4 @@
-const API_BASE = "https://qlasar-qx6y.onrender.com";
+   const API_BASE = "https://qlasar-qx6y.onrender.com";
 
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
@@ -112,11 +112,12 @@ async function loadSession(id) {
   currentSessionId = id;
 
   try {
-    const data = await apiRequest(`/api/sessions/${id}`, {
-      headers: {}
-    });
+    const data = await apiRequest(`/api/sessions/${id}`);
     chatWindow.innerHTML = "";
-    sessionsPanel.classList.remove("show");
+    // Assuming sessionsPanel exists for toggling
+    if (typeof sessionsPanel !== 'undefined') {
+      sessionsPanel.classList.remove("show");
+    }
     (data.messages || []).forEach(m => {
       const div = document.createElement("div");
       div.className = `message ${m.sender}`;
@@ -134,16 +135,16 @@ async function loadSession(id) {
 
 // ================= SIDEBAR =================
 title.onclick = () => {
-  sidebar.classList.toggle("show");
-  overlay.classList.toggle("show");
+  document.getElementById("sidebar").classList.toggle("show");
+  document.getElementById("overlay").classList.toggle("show");
 };
 
-overlay.onclick = closeSidebar;
-
 function closeSidebar() {
-  sidebar.classList.remove("show");
-  overlay.classList.remove("show");
+  document.getElementById("sidebar").classList.remove("show");
+  document.getElementById("overlay").classList.remove("show");
 }
+
+document.getElementById("overlay").onclick = closeSidebar;
 
 // ================= WELCOME =================
 function welcome() {
@@ -182,7 +183,10 @@ document.getElementById("show-alerts").onclick = () => {
 };
 
 document.getElementById("show-sessions").onclick = async () => {
-  sessionsPanel.classList.toggle("show");
+  // Assuming sessionsPanel exists
+  if (typeof sessionsPanel !== 'undefined') {
+    sessionsPanel.classList.toggle("show");
+  }
   await renderSessionsList();
   closeSidebar();
 };
@@ -208,7 +212,9 @@ document.getElementById("account-btn").onclick = () => {
   const token = localStorage.getItem("qlasar_token");
   const email = localStorage.getItem("qlasar_email");
   authModal.classList.remove("auth-hidden");
-  sessionsPanel.classList.remove("show");
+  if (typeof sessionsPanel !== 'undefined') {
+    sessionsPanel.classList.remove("show");
+  }
   closeSidebar();
 
   if (token && email) {
@@ -241,10 +247,7 @@ authSubmit.onclick = async () => {
   authStatus.innerText = "Processing...";
 
   try {
-    const endpoint =
-      authMode === "signup"
-        ? "/api/auth/signup"
-        : "/api/auth/login";
+    const endpoint = authMode === "signup" ? "/api/auth/signup" : "/api/auth/login";
 
     const res = await apiRequest(endpoint, {
       method: "POST",
@@ -265,7 +268,7 @@ authSubmit.onclick = async () => {
       updateCreditsVisibility();
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
-        renderSessionsListHybrid();
+        renderSessionsList(); // Assuming hybrid method
       }, 800);
     }
   } catch {
@@ -278,27 +281,27 @@ logoutBtn.onclick = () => {
   localStorage.removeItem("qlasar_token");
   localStorage.removeItem("qlasar_email");
   currentSessionId = null;
-  currentSessionSource = "local";
-
+  // reset other session states if needed
   accountInfo.classList.add("hidden");
   authForm.classList.remove("hidden");
-
   authMode = "signup";
   authTitle.innerText = "Create Account";
   authSubmit.innerText = "Continue";
   authToggle.innerHTML = 'Already have an account? <span>Login</span>';
   authStatus.innerText = "";
-
   authModal.classList.add("auth-hidden");
-
   chatWindow.innerHTML = "";
   welcome();
-  renderSessionsListHybrid();
+  if (typeof renderSessionsListHybrid === 'function') {
+    renderSessionsListHybrid();
+  }
   updateCreditsVisibility();
 };
 
 // ================= SESSIONS LIST (CLOUD ONLY) =================
 async function renderSessionsList() {
+  // Assuming sessionsPanelList exists
+  const sessionsPanelList = document.getElementById("sessions-panel-list");
   sessionsPanelList.innerHTML = "Loading...";
 
   const token = localStorage.getItem("qlasar_token");
@@ -308,7 +311,7 @@ async function renderSessionsList() {
   }
 
   try {
-    const sessions = await apiRequest("/api/sessions", { method: "GET" });
+    const sessions = await apiRequest("/api/sessions");
     sessionsPanelList.innerHTML = "";
 
     (sessions || []).forEach(s => {
@@ -327,7 +330,7 @@ async function renderSessionsList() {
 
       const renameBtn = document.createElement("button");
       renameBtn.className = "session-action-btn";
-      renameBtn.textContent = "✏️";
+      renameBtn.innerText = "✏️";
       renameBtn.onclick = e => {
         e.stopPropagation();
         renameSession(s.id, s.title);
@@ -335,7 +338,7 @@ async function renderSessionsList() {
 
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "session-action-btn";
-      deleteBtn.textContent = "🗑️";
+      deleteBtn.innerText = "🗑️";
       deleteBtn.onclick = e => {
         e.stopPropagation();
         deleteSession(s.id);
@@ -355,27 +358,20 @@ async function renderSessionsList() {
     });
   } catch (err) {
     console.error('Error rendering sessions list:', err);
-    sessionsPanelList.innerHTML = "Error loading sessions.";
+    document.getElementById("sessions-panel-list").innerHTML = "Error loading sessions.";
   }
 }
 
 async function renameSession(sessionId, oldTitle = "") {
-  const token = localStorage.getItem("qlasar_token");
-  if (!token) return;
-
   const newTitle = prompt("Rename session:", oldTitle || "");
   if (!newTitle || newTitle.trim() === oldTitle) return;
 
   try {
-    const res = await apiRequest(`/api/sessions/${sessionId}`, {
+    await apiRequest(`/api/sessions/${sessionId}`, {
       method: "PATCH",
       body: JSON.stringify({ title: newTitle.trim() }),
       headers: { "Content-Type": "application/json" }
     });
-    if (!res || res.error) {
-      alert("Failed to rename session.");
-      return;
-    }
     renderSessionsList();
   } catch {
     alert("Network error while renaming session.");
@@ -383,20 +379,11 @@ async function renameSession(sessionId, oldTitle = "") {
 }
 
 async function deleteSession(sessionId) {
-  const token = localStorage.getItem("qlasar_token");
-  if (!token) return;
-
   const confirmDelete = confirm("Delete this session permanently?");
   if (!confirmDelete) return;
 
   try {
-    const res = await apiRequest(`/api/sessions/${sessionId}`, {
-      method: "DELETE"
-    });
-    if (!res || res.error) {
-      alert("Failed to delete session.");
-      return;
-    }
+    await apiRequest(`/api/sessions/${sessionId}`, { method: "DELETE" });
     if (sessionId === currentSessionId) {
       currentSessionId = null;
       chatWindow.innerHTML = "";
@@ -410,7 +397,9 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
+  const alertsList = document.getElementById("alerts-list");
   alertsList.innerHTML = "Loading...";
+
   try {
     const data = await apiRequest("/api/alerts");
     alertsList.innerHTML = "";
