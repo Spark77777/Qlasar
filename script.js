@@ -18,184 +18,173 @@ const creditsBar = document.getElementById("credits-bar");
 
 // ✅ NEW — update credits visibility helper
 function updateCreditsVisibility() {
-const token = localStorage.getItem("qlasar_token");
-
-if (token) {
-creditsBar.classList.remove("hidden");
-} else {
-creditsBar.classList.add("hidden");
+  const token = localStorage.getItem("qlasar_token");
+  if (token) {
+    creditsBar.classList.remove("hidden");
+  } else {
+    creditsBar.classList.add("hidden");
+  }
 }
+
+// Helper function for API requests
+async function apiRequest(endpoint, options = {}) {
+  const token = localStorage.getItem("qlasar_token");
+  const headers = options.headers || {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    return await res.json();
+  } catch (err) {
+    console.error(`Error during API request to ${endpoint}:`, err);
+    throw err;
+  }
 }
 
-// ✅ INTEGRATED (1) — Credits DOM + logic
+// ================= INTEGRATED (1) — Credits DOM + logic
 const qcCountEl = document.getElementById("qc-count");
 const saCountEl = document.getElementById("sa-count");
 
 function getCredits() {
-return {
-qc: parseInt(localStorage.getItem("qc") || "200"),
-sa: parseInt(localStorage.getItem("sa") || "5")
-};
+  return {
+    qc: parseInt(localStorage.getItem("qc") || "200"),
+    sa: parseInt(localStorage.getItem("sa") || "5")
+  };
 }
 
 function saveCredits(qc, sa) {
-localStorage.setItem("qc", qc);
-localStorage.setItem("sa", sa);
-renderCredits();
+  localStorage.setItem("qc", qc);
+  localStorage.setItem("sa", sa);
+  renderCredits();
 }
 
 function renderCredits() {
-const { qc, sa } = getCredits();
-qcCountEl.innerText = qc;
-saCountEl.innerText = sa;
+  const { qc, sa } = getCredits();
+  qcCountEl.innerText = qc;
+  saCountEl.innerText = sa;
 }
 
 function consumeQC(amount = 1) {
-let { qc, sa } = getCredits();
-if (qc < amount) return false;
-
-qc -= amount;
-saveCredits(qc, sa);
-return true;
+  let { qc, sa } = getCredits();
+  if (qc < amount) return false;
+  qc -= amount;
+  saveCredits(qc, sa);
+  return true;
 }
 
 function consumeSA(amount = 1) {
-let { qc, sa } = getCredits();
-if (sa < amount) return false;
-
-sa -= amount;
-saveCredits(qc, sa);
-return true;
+  let { qc, sa } = getCredits();
+  if (sa < amount) return false;
+  sa -= amount;
+  saveCredits(qc, sa);
+  return true;
 }
 
-console.log("SEND BUTTON ELEMENT:", sendBtn);
-console.log("INPUT ELEMENT:", input);
-
-// ⭐ sessions panel
-const sessionsPanel = document.getElementById("sessions-panel");
-const sessionsPanelList = document.getElementById("sessions-panel-list");
-
-// ====================== SESSION STATE ======================
+// ===================== SESSION STATE ======================
 let currentSessionId = null;
 
 // ================= CREATE NEW SESSION (CLOUD ONLY) =================
 async function createNewSession() {
-const token = localStorage.getItem("qlasar_token");
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) {
+    alert("Please login to start using Qlasar.");
+    return;
+  }
 
-if (!token) {
-alert("Please login to start using Qlasar.");
-return;
-}
-
-try {
-const res = await fetch(${API_BASE}/api/sessions, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-Authorization: Bearer ${token}
-},
-body: JSON.stringify({ title: "New chat" })
-});
-
-const data = await res.json();  
-
-currentSessionId = data.id;  
-
-welcome();  
-renderSessionsList();
-
-} catch {
-alert("Failed to create session. Please try again.");
-}
+  try {
+    const data = await apiRequest("/api/sessions", {
+      method: "POST",
+      body: JSON.stringify({ title: "New chat" }),
+      headers: { "Content-Type": "application/json" }
+    });
+    currentSessionId = data.id;
+    welcome();
+    renderSessionsList();
+  } catch (err) {
+    alert("Failed to create session. Please try again.");
+  }
 }
 
 // ================= LOAD SESSION (CLOUD) =================
 async function loadSession(id) {
-const token = localStorage.getItem("qlasar_token");
-if (!token) return;
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
 
-currentSessionId = id;
+  currentSessionId = id;
 
-const res = await fetch(${API_BASE}/api/sessions/${id}, {
-headers: { Authorization: Bearer ${token} }
-});
-
-const data = await res.json();
-
-chatWindow.innerHTML = "";
-sessionsPanel.classList.remove("show");
-
-(data.messages || []).forEach(m => {
-const div = document.createElement("div");
-div.className = message ${m.sender};
-div.innerText = m.text;
-chatWindow.appendChild(div);
-});
-
-chatSection.classList.remove("hidden");
-alertsSection.classList.add("hidden");
-
-chatWindow.scrollTop = chatWindow.scrollHeight;
-renderSessionsList();
+  try {
+    const data = await apiRequest(`/api/sessions/${id}`, {
+      headers: {}
+    });
+    chatWindow.innerHTML = "";
+    sessionsPanel.classList.remove("show");
+    (data.messages || []).forEach(m => {
+      const div = document.createElement("div");
+      div.className = `message ${m.sender}`;
+      div.innerText = m.text;
+      chatWindow.appendChild(div);
+    });
+    chatSection.classList.remove("hidden");
+    alertsSection.classList.add("hidden");
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+    renderSessionsList();
+  } catch (err) {
+    console.error('Error loading session:', err);
+  }
 }
 
 // ================= SIDEBAR =================
 title.onclick = () => {
-sidebar.classList.toggle("show");
-overlay.classList.toggle("show");
+  sidebar.classList.toggle("show");
+  overlay.classList.toggle("show");
 };
 
 overlay.onclick = closeSidebar;
 
 function closeSidebar() {
-sidebar.classList.remove("show");
-overlay.classList.remove("show");
+  sidebar.classList.remove("show");
+  overlay.classList.remove("show");
 }
 
 // ================= WELCOME =================
 function welcome() {
-chatSection.classList.remove("hidden");
-alertsSection.classList.add("hidden");
-chatWindow.innerHTML = "";
-
-const w = document.createElement("div");
-w.className = "message ai";
-w.innerText = "Hello! I’m Qlasar — ask me anything.";
-chatWindow.appendChild(w);
+  chatSection.classList.remove("hidden");
+  alertsSection.classList.add("hidden");
+  chatWindow.innerHTML = "";
+  const w = document.createElement("div");
+  w.className = "message ai";
+  w.innerText = "Hello! I’m Qlasar — ask me anything.";
+  chatWindow.appendChild(w);
 }
 
 welcome();
 
 // ================= MENU BUTTONS =================
 document.getElementById("new-chat").onclick = () => {
-createNewSession();
-closeSidebar();
+  createNewSession();
+  closeSidebar();
 };
 
 // ✅ INTEGRATED (4) — SA consumption on alerts
 document.getElementById("show-alerts").onclick = () => {
-
-const token = localStorage.getItem("qlasar_token");
-if (!token) {
-alert("Please login to use Scouted Alerts.");
-return;
-}
-
-if (!consumeSA(1)) {
-alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
-return;
-}
-
-chatSection.classList.add("hidden");
-alertsSection.classList.remove("hidden");
-closeSidebar();
-loadAlerts();
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) {
+    alert("Please login to use Scouted Alerts.");
+    return;
+  }
+  if (!consumeSA(1)) {
+    alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
+    return;
+  }
+  chatSection.classList.add("hidden");
+  alertsSection.classList.remove("hidden");
+  closeSidebar();
+  loadAlerts();
 };
 
 document.getElementById("show-sessions").onclick = async () => {
-sessionsPanel.classList.toggle("show");
-await renderSessionsList();
-closeSidebar();
+  sessionsPanel.classList.toggle("show");
+  await renderSessionsList();
+  closeSidebar();
 };
 
 // ================= AUTH UI =================
@@ -216,375 +205,328 @@ const logoutBtn = document.getElementById("logout-btn");
 let authMode = "signup";
 
 document.getElementById("account-btn").onclick = () => {
-const token = localStorage.getItem("qlasar_token");
-const email = localStorage.getItem("qlasar_email");
+  const token = localStorage.getItem("qlasar_token");
+  const email = localStorage.getItem("qlasar_email");
+  authModal.classList.remove("auth-hidden");
+  sessionsPanel.classList.remove("show");
+  closeSidebar();
 
-authModal.classList.remove("auth-hidden");
-sessionsPanel.classList.remove("show");
-closeSidebar();
-
-if (token && email) {
-accountInfo.classList.remove("hidden");
-authForm.classList.add("hidden");
-accountEmail.innerText = email;
-} else {
-accountInfo.classList.add("hidden");
-authForm.classList.remove("hidden");
-}
+  if (token && email) {
+    accountInfo.classList.remove("hidden");
+    authForm.classList.add("hidden");
+    accountEmail.innerText = email;
+  } else {
+    accountInfo.classList.add("hidden");
+    authForm.classList.remove("hidden");
+  }
 };
 
 authClose.onclick = () => authModal.classList.add("auth-hidden");
 
 authToggle.onclick = () => {
-authMode = authMode === "signup" ? "login" : "signup";
-authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
-authSubmit.innerText = authTitle.innerText;
-authStatus.innerText = "";
+  authMode = authMode === "signup" ? "login" : "signup";
+  authTitle.innerText = authMode === "signup" ? "Create account" : "Login";
+  authSubmit.innerText = authTitle.innerText;
+  authStatus.innerText = "";
 };
 
 authSubmit.onclick = async () => {
-const email = authEmail.value.trim();
-const password = authPassword.value.trim();
+  const email = authEmail.value.trim();
+  const password = authPassword.value.trim();
 
-if (!email || !password) {
-return authStatus.innerText = "Enter email and password.";
-}
+  if (!email || !password) {
+    return (authStatus.innerText = "Enter email and password.");
+  }
 
-authStatus.innerText = "Processing...";
+  authStatus.innerText = "Processing...";
 
-try {
-const endpoint =
-authMode === "signup"
-? ${API_BASE}/api/auth/signup
-: ${API_BASE}/api/auth/login;
+  try {
+    const endpoint =
+      authMode === "signup"
+        ? "/api/auth/signup"
+        : "/api/auth/login";
 
-const res = await fetch(endpoint, {  
-  method: "POST",  
-  headers: { "Content-Type": "application/json" },  
-  body: JSON.stringify({ email, password })  
-});  
+    const res = await apiRequest(endpoint, {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const data = res;
 
-const data = await res.json();  
+    if (!res || res.error) {
+      return (authStatus.innerText = res.error || "Authentication failed.");
+    }
 
-if (!res.ok) {  
-  return authStatus.innerText = data.error || "Authentication failed.";  
-}  
-
-// ✅ INTEGRATED (login credits visibility)  
-if (data.access_token) {  
-  localStorage.setItem("qlasar_token", data.access_token);  
-  localStorage.setItem("qlasar_email", email);  
-
-  authStatus.innerText = "✔️ Logged in.";  
-
-  updateCreditsVisibility();  
-
-  setTimeout(() => {  
-    authModal.classList.add("auth-hidden");  
-    renderSessionsListHybrid();  
-  }, 800);  
-}
-
-} catch {
-authStatus.innerText = "🌐 Network error.";
-}
+    // ✅ INTEGRATED (login credits visibility)
+    if (data.access_token) {
+      localStorage.setItem("qlasar_token", data.access_token);
+      localStorage.setItem("qlasar_email", email);
+      authStatus.innerText = "✔️ Logged in.";
+      updateCreditsVisibility();
+      setTimeout(() => {
+        authModal.classList.add("auth-hidden");
+        renderSessionsListHybrid();
+      }, 800);
+    }
+  } catch {
+    authStatus.innerText = "🌐 Network error.";
+  }
 };
 
 // ✅ INTEGRATED (logout credits visibility)
 logoutBtn.onclick = () => {
-localStorage.removeItem("qlasar_token");
-localStorage.removeItem("qlasar_email");
+  localStorage.removeItem("qlasar_token");
+  localStorage.removeItem("qlasar_email");
+  currentSessionId = null;
+  currentSessionSource = "local";
 
-currentSessionId = null;
-currentSessionSource = "local";
+  accountInfo.classList.add("hidden");
+  authForm.classList.remove("hidden");
 
-accountInfo.classList.add("hidden");
-authForm.classList.remove("hidden");
+  authMode = "signup";
+  authTitle.innerText = "Create Account";
+  authSubmit.innerText = "Continue";
+  authToggle.innerHTML = 'Already have an account? <span>Login</span>';
+  authStatus.innerText = "";
 
-authMode = "signup";
-authTitle.innerText = "Create Account";
-authSubmit.innerText = "Continue";
-authToggle.innerHTML = Already have an account? <span>Login</span>;
-authStatus.innerText = "";
+  authModal.classList.add("auth-hidden");
 
-authModal.classList.add("auth-hidden");
-
-chatWindow.innerHTML = "";
-welcome();
-renderSessionsListHybrid();
-
-updateCreditsVisibility();
+  chatWindow.innerHTML = "";
+  welcome();
+  renderSessionsListHybrid();
+  updateCreditsVisibility();
 };
 
 // ================= SESSIONS LIST (CLOUD ONLY) =================
 async function renderSessionsList() {
-sessionsPanelList.innerHTML = "Loading...";
+  sessionsPanelList.innerHTML = "Loading...";
 
-const token = localStorage.getItem("qlasar_token");
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) {
+    sessionsPanelList.innerHTML = "Login to view saved sessions.";
+    return;
+  }
 
-if (!token) {
-sessionsPanelList.innerHTML = "Login to view saved sessions.";
-return;
-}
+  try {
+    const sessions = await apiRequest("/api/sessions", { method: "GET" });
+    sessionsPanelList.innerHTML = "";
 
-try {
-const res = await fetch(${API_BASE}/api/sessions, {
-headers: { Authorization: Bearer ${token} }
-});
+    (sessions || []).forEach(s => {
+      const row = document.createElement("div");
+      row.className = "session-pill session-row";
 
-const sessions = await res.json();  
-sessionsPanelList.innerHTML = "";  
+      const title = document.createElement("span");
+      title.textContent = "💬 " + (s.title || "Untitled chat");
+      title.style.flex = "1";
+      title.style.cursor = "pointer";
 
-sessions.forEach(s => {  
-  // row wrapper  
-  const row = document.createElement("div");  
-  row.className = "session-pill session-row";  
+      title.onclick = () => loadSession(s.id);
 
-  // title  
-  const title = document.createElement("span");  
-  title.textContent = "💬 " + (s.title || "Untitled chat");  
-  title.style.flex = "1";  
-  title.style.cursor = "pointer";  
+      const actions = document.createElement("div");
+      actions.className = "session-actions";
 
-  title.onclick = () => loadSession(s.id);  
+      const renameBtn = document.createElement("button");
+      renameBtn.className = "session-action-btn";
+      renameBtn.textContent = "✏️";
+      renameBtn.onclick = e => {
+        e.stopPropagation();
+        renameSession(s.id, s.title);
+      };
 
-  // actions container  
-  const actions = document.createElement("div");  
-  actions.className = "session-actions";  
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "session-action-btn";
+      deleteBtn.textContent = "🗑️";
+      deleteBtn.onclick = e => {
+        e.stopPropagation();
+        deleteSession(s.id);
+      };
 
-  // rename button  
-  const renameBtn = document.createElement("button");  
-  renameBtn.className = "session-action-btn";  
-  renameBtn.textContent = "✏️";  
-  renameBtn.onclick = (e) => {  
-    e.stopPropagation();  
-    renameSession(s.id, s.title);  
-  };  
+      actions.appendChild(renameBtn);
+      actions.appendChild(deleteBtn);
 
-  // delete button  
-  const deleteBtn = document.createElement("button");  
-  deleteBtn.className = "session-action-btn";  
-  deleteBtn.textContent = "🗑️";  
-  deleteBtn.onclick = (e) => {  
-    e.stopPropagation();  
-    deleteSession(s.id);  
-  };  
+      row.appendChild(title);
+      row.appendChild(actions);
 
-  actions.appendChild(renameBtn);  
-  actions.appendChild(deleteBtn);  
+      if (s.id === currentSessionId) {
+        row.classList.add("active-session");
+      }
 
-  row.appendChild(title);  
-  row.appendChild(actions);  
-
-  if (s.id === currentSessionId) {  
-    row.classList.add("active-session");  
-  }  
-
-  sessionsPanelList.appendChild(row);  
-});
-
-} catch {
-sessionsPanelList.innerHTML = "Error loading sessions.";
-}
+      sessionsPanelList.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error rendering sessions list:', err);
+    sessionsPanelList.innerHTML = "Error loading sessions.";
+  }
 }
 
 async function renameSession(sessionId, oldTitle = "") {
-const token = localStorage.getItem("qlasar_token");
-if (!token) return;
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
 
-const newTitle = prompt("Rename session:", oldTitle || "");
-if (!newTitle || newTitle.trim() === oldTitle) return;
+  const newTitle = prompt("Rename session:", oldTitle || "");
+  if (!newTitle || newTitle.trim() === oldTitle) return;
 
-try {
-const res = await fetch(${API_BASE}/api/sessions/${sessionId}, {
-method: "PATCH",
-headers: {
-"Content-Type": "application/json",
-Authorization: Bearer ${token}
-},
-body: JSON.stringify({ title: newTitle.trim() })
-});
-
-if (!res.ok) {  
-  alert("Failed to rename session.");  
-  return;  
-}  
-
-renderSessionsList();
-
-} catch {
-alert("Network error while renaming session.");
-}
+  try {
+    const res = await apiRequest(`/api/sessions/${sessionId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title: newTitle.trim() }),
+      headers: { "Content-Type": "application/json" }
+    });
+    if (!res || res.error) {
+      alert("Failed to rename session.");
+      return;
+    }
+    renderSessionsList();
+  } catch {
+    alert("Network error while renaming session.");
+  }
 }
 
 async function deleteSession(sessionId) {
-const token = localStorage.getItem("qlasar_token");
-if (!token) return;
+  const token = localStorage.getItem("qlasar_token");
+  if (!token) return;
 
-const confirmDelete = confirm("Delete this session permanently?");
-if (!confirmDelete) return;
+  const confirmDelete = confirm("Delete this session permanently?");
+  if (!confirmDelete) return;
 
-try {
-const res = await fetch(${API_BASE}/api/sessions/${sessionId}, {
-method: "DELETE",
-headers: {
-Authorization: Bearer ${token}
-}
-});
-
-if (!res.ok) {  
-  alert("Failed to delete session.");  
-  return;  
-}  
-
-if (sessionId === currentSessionId) {  
-  currentSessionId = null;  
-  chatWindow.innerHTML = "";  
-  welcome();  
-}  
-
-renderSessionsList();
-
-} catch {
-alert("Network error while deleting session.");
-}
+  try {
+    const res = await apiRequest(`/api/sessions/${sessionId}`, {
+      method: "DELETE"
+    });
+    if (!res || res.error) {
+      alert("Failed to delete session.");
+      return;
+    }
+    if (sessionId === currentSessionId) {
+      currentSessionId = null;
+      chatWindow.innerHTML = "";
+      welcome();
+    }
+    renderSessionsList();
+  } catch {
+    alert("Network error while deleting session.");
+  }
 }
 
 // ================= ALERTS =================
 async function loadAlerts() {
-alertsList.innerHTML = "Loading...";
-
-try {
-const res = await fetch(${API_BASE}/api/alerts);
-const data = await res.json();
-
-alertsList.innerHTML = "";  
-
-(data.alerts || []).forEach(a => {  
-  const card = document.createElement("div");  
-  card.className = "alert-card";  
-  card.innerHTML = `  
-    <strong>${a.title}</strong><br>  
-    <small>${a.source || ""}</small><br>  
-    <a href="${a.url}" target="_blank">Open</a>  
-  `;  
-  alertsList.appendChild(card);  
-});  
-
-if (!data.alerts?.length) {  
-  alertsList.innerHTML = "No alerts available.";  
-}
-
-} catch {
-alertsList.innerHTML = "⚠️ Network error loading alerts.";
-}
+  alertsList.innerHTML = "Loading...";
+  try {
+    const data = await apiRequest("/api/alerts");
+    alertsList.innerHTML = "";
+    (data.alerts || []).forEach(a => {
+      const card = document.createElement("div");
+      card.className = "alert-card";
+      card.innerHTML = `
+        <strong>${a.title}</strong><br>
+        <small>${a.source || ""}</small><br>
+        <a href="${a.url}" target="_blank">Open</a>
+      `;
+      alertsList.appendChild(card);
+    });
+    if (!(data.alerts && data.alerts.length)) {
+      alertsList.innerHTML = "No alerts available.";
+    }
+  } catch {
+    alertsList.innerHTML = "⚠️ Network error loading alerts.";
+  }
 }
 
 // ================= CHAT SEND (CLOUD ONLY) =================
 function bindSendEvents() {
-if (!sendBtn || !input) {
-console.log("Send elements not ready yet");
-return;
+  if (!sendBtn || !input) {
+    console.log("Send elements not ready yet");
+    return;
+  }
+
+  console.log("Binding send events...");
+
+  async function send() {
+    console.log("SEND FUNCTION TRIGGERED");
+    const text = input.value.trim();
+    if (!text) return;
+
+    const token = localStorage.getItem("qlasar_token");
+    if (!token) {
+      alert("Please login to send messages.");
+      return;
+    }
+
+    // ✅ INTEGRATED (3) — consume QC BEFORE sending
+    if (!consumeQC(1)) {
+      alert("⚠️ You have 0 QC left. Please buy more credits to continue.");
+      return;
+    }
+
+    if (!currentSessionId) {
+      await createNewSession();
+      if (!currentSessionId) return;
+    }
+
+    const u = document.createElement("div");
+    u.className = "message user";
+    u.innerText = text;
+    chatWindow.appendChild(u);
+    input.value = "";
+
+    const a = document.createElement("div");
+    a.className = "message ai";
+    a.innerText = "Thinking…";
+    chatWindow.appendChild(a);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    let reply = "🌐 Network error.";
+    try {
+      const res = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [{ sender: "user", text }] })
+      });
+      const data = await res.json();
+      reply = (data?.reply || "")
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .trim() || reply;
+      a.innerText = reply;
+    } catch {
+      a.innerText = reply;
+    }
+
+    // Save messages to session
+    await apiRequest(`/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "user", text })
+    });
+    await apiRequest(`/api/sessions/${currentSessionId}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sender: "ai", text: reply })
+    });
+
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  sendBtn.onclick = send;
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  console.log("Send events bound successfully");
 }
 
-console.log("Binding send events...");
-
-async function send() {
-console.log("SEND FUNCTION TRIGGERED");
-
-const text = input.value.trim();  
-if (!text) return;  
-
-const token = localStorage.getItem("qlasar_token");  
-
-if (!token) {  
-  alert("Please login to send messages.");  
-  return;  
-}  
-
-// ✅ INTEGRATED (3) — consume QC BEFORE sending  
-if (!consumeQC(1)) {  
-  alert("⚠️ You have 0 QC left. Please buy more credits to continue.");  
-  return;  
-}  
-
-if (!currentSessionId) {  
-  await createNewSession();  
-  if (!currentSessionId) return;  
-}  
-
-const u = document.createElement("div");  
-u.className = "message user";  
-u.innerText = text;  
-chatWindow.appendChild(u);  
-
-input.value = "";  
-
-const a = document.createElement("div");  
-a.className = "message ai";  
-a.innerText = "Thinking…";  
-chatWindow.appendChild(a);  
-
-chatWindow.scrollTop = chatWindow.scrollHeight;  
-
-let reply = "🌐 Network error.";  
-
-try {  
-  const res = await fetch(`${API_BASE}/api/generate`, {  
-    method: "POST",  
-    headers: { "Content-Type": "application/json" },  
-    body: JSON.stringify({ messages: [{ sender: "user", text }] })  
-  });  
-
-  const data = await res.json();  
-
-  reply = (data?.reply || "")  
-    .replace(/<think>[\s\S]*?<\/think>/gi, "")  
-    .trim() || reply;  
-
-  a.innerText = reply;  
-
-} catch {  
-  a.innerText = reply;  
-}  
-
-await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {  
-  method: "POST",  
-  headers: {  
-    "Content-Type": "application/json",  
-    Authorization: `Bearer ${token}`  
-  },  
-  body: JSON.stringify({ sender: "user", text })  
-});  
-
-await fetch(`${API_BASE}/api/sessions/${currentSessionId}/messages`, {  
-  method: "POST",  
-  headers: {  
-    "Content-Type": "application/json",  
-    Authorization: `Bearer ${token}`  
-  },  
-  body: JSON.stringify({ sender: "ai", text: reply })  
-});  
-
-chatWindow.scrollTop = chatWindow.scrollHeight;
-
-}
-
-sendBtn.onclick = send;
-
-input.addEventListener("keydown", e => {
-if (e.key === "Enter" && !e.shiftKey) {
-e.preventDefault();
-send();
-}
-});
-
-console.log("Send events bound successfully");
-}
-
-// ✅ INTEGRATED (2) — renderCredits() on load
+// ===================== Initialization =====================
 document.addEventListener("DOMContentLoaded", () => {
-bindSendEvents();
-updateCreditsVisibility();
-renderCredits(); // ✅ ADD THIS
+  bindSendEvents();
+  updateCreditsVisibility();
+  renderCredits(); // Ensures credits are shown on load
 });
