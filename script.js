@@ -1,4 +1,4 @@
-   const API_BASE = "https://qlasar-qx6y.onrender.com";
+const API_BASE = "https://qlasar-qx6y.onrender.com";
 
 const sidebar = document.getElementById("sidebar");
 const overlay = document.getElementById("overlay");
@@ -98,7 +98,7 @@ async function createNewSession() {
     });
     currentSessionId = data.id;
     welcome();
-    renderSessionsList();
+    await renderSessionsList(); // ensure list updates after creating
   } catch (err) {
     alert("Failed to create session. Please try again.");
   }
@@ -127,7 +127,7 @@ async function loadSession(id) {
     chatSection.classList.remove("hidden");
     alertsSection.classList.add("hidden");
     chatWindow.scrollTop = chatWindow.scrollHeight;
-    renderSessionsList();
+    await renderSessionsList(); // update list to mark active
   } catch (err) {
     console.error('Error loading session:', err);
   }
@@ -268,7 +268,7 @@ authSubmit.onclick = async () => {
       updateCreditsVisibility();
       setTimeout(() => {
         authModal.classList.add("auth-hidden");
-        renderSessionsList(); // Assuming hybrid method
+        renderSessionsList(); // refresh list after login
       }, 800);
     }
   } catch {
@@ -300,7 +300,6 @@ logoutBtn.onclick = () => {
 
 // ================= SESSIONS LIST (CLOUD ONLY) =================
 async function renderSessionsList() {
-  // Assuming sessionsPanelList exists
   const sessionsPanelList = document.getElementById("sessions-panel-list");
   sessionsPanelList.innerHTML = "Loading...";
 
@@ -323,7 +322,11 @@ async function renderSessionsList() {
       title.style.flex = "1";
       title.style.cursor = "pointer";
 
-      title.onclick = () => loadSession(s.id);
+      // Attach click handler to load session
+      title.onclick = () => {
+        console.log("Loading session ID:", s.id);
+        loadSession(s.id);
+      };
 
       const actions = document.createElement("div");
       actions.className = "session-actions";
@@ -356,6 +359,7 @@ async function renderSessionsList() {
 
       sessionsPanelList.appendChild(row);
     });
+    console.log("Rendered sessions list");
   } catch (err) {
     console.error('Error rendering sessions list:', err);
     document.getElementById("sessions-panel-list").innerHTML = "Error loading sessions.";
@@ -372,7 +376,7 @@ async function renameSession(sessionId, oldTitle = "") {
       body: JSON.stringify({ title: newTitle.trim() }),
       headers: { "Content-Type": "application/json" }
     });
-    renderSessionsList();
+    await renderSessionsList(); // refresh list after renaming
   } catch {
     alert("Network error while renaming session.");
   }
@@ -389,7 +393,7 @@ async function deleteSession(sessionId) {
       chatWindow.innerHTML = "";
       welcome();
     }
-    renderSessionsList();
+    await renderSessionsList(); // update list after delete
   } catch {
     alert("Network error while deleting session.");
   }
@@ -517,5 +521,5 @@ function bindSendEvents() {
 document.addEventListener("DOMContentLoaded", () => {
   bindSendEvents();
   updateCreditsVisibility();
-  renderCredits(); // Ensures credits are shown on load
+  renderCredits(); // Ensure credits are shown on load
 });
