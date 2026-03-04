@@ -533,4 +533,82 @@ document.addEventListener("DOMContentLoaded", () => {
   bindSendEvents();
   updateCreditsVisibility();
   renderCredits(); // Ensure credits are shown on load
-});
+
+  // Selected DOM elements
+const addTopicBtn = document.getElementById("add-topic-btn");
+const topicInput = document.getElementById("topic-input");
+const trackingTagsContainer = document.getElementById("tracking-tags");
+const alertFeed = document.getElementById("alert-feed");
+const smartAlertsCheckbox = document.getElementById("smartAlerts");
+const refreshAlertsBtn = document.getElementById("refresh-alerts-btn");
+
+// Array to hold tracked topics
+let trackedTopics = [];
+
+// Function to add a new topic
+function addTopic() {
+  const topic = topicInput.value.trim();
+  if (!topic || trackedTopics.includes(topic)) return;
+
+  trackedTopics.push(topic);
+
+  const tag = document.createElement("div");
+  tag.className = "tracking-tag";
+  tag.innerHTML = `
+    <span>${topic}</span>
+    <button class="remove-tag-btn" style="background:none; border:none; color:#fff; cursor:pointer;">✖️</button>
+  `;
+  // Remove button handler
+  tag.querySelector("button").onclick = () => {
+    trackedTopics = trackedTopics.filter(t => t !== topic);
+    trackingTagsContainer.removeChild(tag);
+  };
+
+  trackingTagsContainer.appendChild(tag);
+  topicInput.value = "";
+}
+
+// Function to load alerts based on topics and smart alert toggle
+async function loadAlerts() {
+  alertFeed.innerHTML = "Loading...";
+  // Example: Send tracked topics and alert mode to API
+  try {
+    const response = await apiRequest("/api/alerts", {
+      method: "POST",
+      body: JSON.stringify({
+        topics: trackedTopics,
+        smart: smartAlertsCheckbox.checked
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    alertFeed.innerHTML = "";
+    (response.alerts || []).forEach(a => {
+      const card = document.createElement("div");
+      card.className = "alert-item";
+      card.innerHTML = `
+        <strong>${a.title}</strong><br>
+        <small>${a.source || ""}</small><br>
+        <a href="${a.url}" target="_blank">Open</a>
+      `;
+      alertFeed.appendChild(card);
+    });
+    if (!(response.alerts && response.alerts.length)) {
+      alertFeed.innerHTML = "No alerts available.";
+    }
+  } catch {
+    alertFeed.innerHTML = "⚠️ Network error loading alerts.";
+  }
+}
+
+// Event listener for adding a topic
+addTopicBtn.onclick = () => addTopic();
+
+// Event listener for refresh button
+refreshAlertsBtn.onclick = () => loadAlerts();
+
+// Event listener for smart alerts toggle
+smartAlertsCheckbox.onchange = () => {
+  // Optionally, reload alerts when toggling
+  loadAlerts();
+};
+  });
