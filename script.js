@@ -46,7 +46,7 @@ const saCountEl = document.getElementById("sa-count");
 
 function getCredits() {
   return {
-    qc: parseInt(localStorage.getItem("qc") || "200"),
+    qc: parseInt(localStorage.getItem("qc") || "10"),
     sa: parseInt(localStorage.getItem("sa") || "5")
   };
 }
