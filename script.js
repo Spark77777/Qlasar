@@ -310,10 +310,20 @@ async function renderSessionsList() {
   }
 
   try {
-    const sessions = await apiRequest("/api/sessions");
+    const sessionsResponse = await apiRequest("/api/sessions");
+    console.log('API response from /api/sessions:', sessionsResponse);
+
+    // Check if response is an array
+    if (!Array.isArray(sessionsResponse)) {
+      console.error('Unexpected response shape:', sessionsResponse);
+      sessionsPanelList.innerHTML = "Error: Unexpected response shape.";
+      return;
+    }
+
+    // Clear existing list
     sessionsPanelList.innerHTML = "";
 
-    (sessions || []).forEach(s => {
+    (sessionsResponse || []).forEach(s => {
       const row = document.createElement("div");
       row.className = "session-pill session-row";
 
@@ -322,7 +332,7 @@ async function renderSessionsList() {
       title.style.flex = "1";
       title.style.cursor = "pointer";
 
-      // Attach click handler to load session
+      // Load session on click
       title.onclick = () => {
         console.log("Loading session ID:", s.id);
         loadSession(s.id);
@@ -359,6 +369,7 @@ async function renderSessionsList() {
 
       sessionsPanelList.appendChild(row);
     });
+
     console.log("Rendered sessions list");
   } catch (err) {
     console.error('Error rendering sessions list:', err);
