@@ -49,8 +49,37 @@
 
   <!-- ================= ALERTS ================= -->
   <section id="alerts-section" class="hidden">
-    <h2>Scouted Alerts</h2>
-    <div id="alerts-list"></div>
+  <h2>Scouted Alerts</h2>
+  <div class="scouted-alerts-container">
+    <!-- Toggle Switch -->
+    <div class="header">
+      <div class="title">Scouted Alerts</div>
+      <div class="toggle">
+        <input type="checkbox" id="smartAlerts" checked />
+        <label for="smartAlerts">Smart Alerts On</label>
+      </div>
+    </div>
+
+    <!-- Track a Topic -->
+    <h2>Track a Topic</h2>
+    <div class="track-input">
+      <input type="text" placeholder="Enter topic..." id="topic-input" />
+      <button id="add-topic-btn">Add</button>
+    </div>
+
+    <!-- Tracking tags -->
+    <div class="tracking-tags" id="tracking-tags"></div>
+
+    <!-- Refresh Alerts Button -->
+    <div style="margin-top: 10px;">
+      <button id="refresh-alerts-btn">Refresh Alerts (1 SA)</button>
+    </div>
+
+    <!-- Alert Feed -->
+    <div class="alert-feed" id="alert-feed">
+      <!-- Alert items will be appended here dynamically -->
+    </div>
+  </div>
   </section>
 
 </main>
