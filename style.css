@@ -590,3 +590,126 @@ footer {
     right: 4%;
   }
 }
+
+/* Styles for the Scouted Alerts section */
+
+#alerts-section {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  background: rgba(11, 18, 32, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+  margin-top: 20px;
+}
+
+#alerts-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #00ffff;
+}
+
+/* Header with toggle switch */
+.scouted-alerts-container .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.scouted-alerts-container .title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.scouted-alerts-container .toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Track input area */
+.track-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+#topic-input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(20, 40, 80, 0.2);
+  background: #11182a;
+  color: white;
+  font-size: 1rem;
+}
+
+#add-topic-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #00ffff;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#add-topic-btn:hover {
+  background: #00cccc;
+}
+
+/* Tracking tags styles */
+#tracking-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tracking-tag {
+  background: rgba(0, 255, 255, 0.2);
+  border: 1px solid #00ffff;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracking-tag span {
+  cursor: pointer;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Alert feed styles */
+#alert-feed {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Individual alert item */
+.alert-item {
+  padding: 15px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,255,255,0.2);
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #fff;
+  transition: background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+
+.alert-item:hover {
+  background: rgba(0,255,255,0.1);
+  transform: translateX(2px);
+}
