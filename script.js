@@ -532,6 +532,7 @@ function bindSendEvents() {
 document.addEventListener("DOMContentLoaded", () => {
   bindSendEvents();
   updateCreditsVisibility();
+  localStorage.setItem("qc", "10");
   renderCredits(); // Ensure credits are shown on load
 
   // Selected DOM elements
