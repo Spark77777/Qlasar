@@ -592,7 +592,6 @@ footer {
 }
 
 /* Styles for the Scouted Alerts section */
-
 #alerts-section {
   padding: 20px;
   max-width: 900px;
@@ -602,6 +601,12 @@ footer {
   border: 1px solid rgba(0, 255, 255, 0.2);
   box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
   margin-top: 20px;
+
+  /* Make the alerts section fill the remaining space in the chat window */
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 250px); /* Adjust as needed to fit within the viewport and other elements */
+  overflow: hidden; /* Prevent overflow */
 }
 
 #alerts-section h2 {
