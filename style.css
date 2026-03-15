@@ -593,17 +593,14 @@ footer {
 
 /* Styles for the Scouted Alerts section */
 #alerts-section {
-  position: fixed;
-  top: 0;
+  position: absolute;
+  top: 60px; /* adjust if your header height is different */
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: calc(100vh - 60px);
   padding: 20px;
   background: rgba(11, 18, 32, 0.75);
-  border-radius: 0;
-  border: none;
-  box-shadow: none;
-  z-index: 9878;
+  z-index: 999; /* ensure it's below header if needed */
   display: flex;
   flex-direction: column;
   overflow: auto;
