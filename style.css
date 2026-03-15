@@ -605,7 +605,7 @@ footer {
   border-radius: 0;
   border: none;
   box-shadow: none;
-  z-index: 9998;
+  z-index: 9978;
   display: flex;
   flex-direction: column;
   overflow: auto;
