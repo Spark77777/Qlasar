@@ -258,7 +258,7 @@ app.post("/api/generate", async (req, res) => {
     const { messages } = req.body;
 
     const payload = {
-      model: "tngtech/deepseek-r1t2-chimera:free",
+      model: "stepfun/step-3.5-flash:free",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         ...messages.map(m => ({
