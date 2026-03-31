@@ -301,17 +301,31 @@ app.get("/api/alerts", async (req, res) => {
     });
   }
 
-  const url = `https://newsapi.org/v2/everything?q=AI&apiKey=${NEWSAPI_KEY}`;
-  const response = await fetch(url);
-  const data = await response.json();
+  const keywords = ["startup", "AI business", "SaaS", "freelancing", "funding"];
+  const query = keywords.join(" OR ");
 
-  res.json({
-    alerts: data.articles.map(a => ({
-      title: a.title,
-      source: a.source.name,
-      url: a.url
-    }))
-  });
+  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=relevance&apiKey=${NEWSAPI_KEY}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status !== "ok") {
+      return res.status(500).json({ error: "Failed to fetch news" });
+    }
+
+    const articles = data.articles.slice(0, 10).map(article => ({
+      title: article.title,
+      source: article.source.name,
+      url: article.url,
+      type: "opportunity"
+    }));
+
+    res.json({ alerts: articles });
+  } catch (err) {
+    console.error("Error fetching alerts:", err);
+    res.status(500).json({ error: "Error fetching news" });
+  }
 });
 
 // ================= FRONTEND =================
