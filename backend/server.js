@@ -328,6 +328,12 @@ app.get("/api/alerts", async (req, res) => {
   }
 });
 
+console.log("Fetching news with URL:", url);
+const response = await fetch(url);
+console.log("Response received");
+const data = await response.json();
+console.log("Data:", data);
+
 // ================= FRONTEND =================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
