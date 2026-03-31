@@ -307,6 +307,7 @@ app.get("/api/alerts", async (req, res) => {
   const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=relevance&apiKey=${NEWSAPI_KEY}`;
 
   try {
+    // Make sure fetch is imported if using Node.js
     const response = await fetch(url);
     const data = await response.json();
 
