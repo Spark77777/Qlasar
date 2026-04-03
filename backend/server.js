@@ -304,7 +304,7 @@ app.get("/api/alerts", async (req, res) => {
   const keywords = ["startup", "AI business", "SaaS", "freelancing", "funding"];
   const query = keywords.join(" OR ");
 
-  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=relevance&apiKey=${NEWSAPI_KEY}`;
+  const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=relevance&apiKey=${NEWS_API_KEY}`;
 
   try {
     const response = await fetch(url);
