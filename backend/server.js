@@ -24,7 +24,7 @@ const {
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
   OPENROUTER_KEY,
-  NEWSAPI_KEY,
+  NEWS_API_KEY,
 } = process.env;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !OPENROUTER_KEY) {
@@ -295,7 +295,7 @@ app.post("/api/generate", async (req, res) => {
 
 // ================= ALERTS =================
 app.get("/api/alerts", async (req, res) => {
-  if (!NEWSAPI_KEY) {
+  if (!NEWS_API_KEY) {
     return res.json({
       alerts: [{ title: "AI breakthrough", source: "Qlasar" }],
     });
