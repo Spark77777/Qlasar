@@ -11,7 +11,11 @@ const chatWindow = document.getElementById("chat-window");
 const sendBtn = document.getElementById("send-btn");
 const input = document.getElementById("message-input");
 
-const alertsList = document.getElementById("alerts-list");
+let alertsList;
+
+document.addEventListener("DOMContentLoaded", () => {
+  alertsList = document.getElementById("alerts-list");
+});
 
 // ✅ NEW — credits bar element
 const creditsBar = document.getElementById("credits-bar");
@@ -412,21 +416,29 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
+  if (!alertsList) {
+    console.error("alertsList not found");
+    return;
+  }
+
   alertsList.innerHTML = "Loading...";
 
   try {
     const res = await fetch(`${API_BASE}/api/alerts`);
 
-    // ✅ CHECK RESPONSE STATUS
-    if (!res.ok) {
-      console.error("❌ API ERROR:", res.status);
-      alertsList.innerHTML = "⚠️ Failed to fetch alerts.";
+    const text = await res.text(); // 🔥 read raw first
+
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch (err) {
+      console.error("❌ JSON PARSE ERROR:", text);
+      alertsList.innerHTML = "⚠️ Invalid server response.";
       return;
     }
 
-    const data = await res.json();
-
-    console.log("✅ ALERTS DATA:", data); // 🔍 DEBUG
+    console.log("✅ ALERTS:", data);
 
     alertsList.innerHTML = "";
 
