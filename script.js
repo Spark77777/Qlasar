@@ -412,26 +412,43 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
-  const alertsList = document.getElementById("alerts-list");
   alertsList.innerHTML = "Loading...";
 
   try {
-    const data = await apiRequest("/api/alerts");
+    const res = await fetch(`${API_BASE}/api/alerts`);
+
+    // ✅ CHECK RESPONSE STATUS
+    if (!res.ok) {
+      console.error("❌ API ERROR:", res.status);
+      alertsList.innerHTML = "⚠️ Failed to fetch alerts.";
+      return;
+    }
+
+    const data = await res.json();
+
+    console.log("✅ ALERTS DATA:", data); // 🔍 DEBUG
+
     alertsList.innerHTML = "";
+
     (data.alerts || []).forEach(a => {
       const card = document.createElement("div");
       card.className = "alert-card";
+
       card.innerHTML = `
         <strong>${a.title}</strong><br>
         <small>${a.source || ""}</small><br>
         <a href="${a.url}" target="_blank">Open</a>
       `;
+
       alertsList.appendChild(card);
     });
-    if (!(data.alerts && data.alerts.length)) {
+
+    if (!data.alerts?.length) {
       alertsList.innerHTML = "No alerts available.";
     }
-  } catch {
+
+  } catch (err) {
+    console.error("🔥 FETCH ERROR:", err);
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
