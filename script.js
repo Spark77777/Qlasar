@@ -416,6 +416,9 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
+
+  const alertsList = document.getElementById("alerts-list"); // ✅ FIX HERE
+
   if (!alertsList) {
     console.error("alertsList not found");
     return;
@@ -426,19 +429,16 @@ async function loadAlerts() {
   try {
     const res = await fetch(`${API_BASE}/api/alerts`);
 
-    const text = await res.text(); // 🔥 read raw first
+    const text = await res.text();
 
     let data;
-
     try {
       data = JSON.parse(text);
-    } catch (err) {
-      console.error("❌ JSON PARSE ERROR:", text);
+    } catch {
+      console.error("Invalid JSON:", text);
       alertsList.innerHTML = "⚠️ Invalid server response.";
       return;
     }
-
-    console.log("✅ ALERTS:", data);
 
     alertsList.innerHTML = "";
 
@@ -460,7 +460,7 @@ async function loadAlerts() {
     }
 
   } catch (err) {
-    console.error("🔥 FETCH ERROR:", err);
+    console.error("Fetch error:", err);
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
