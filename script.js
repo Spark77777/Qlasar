@@ -417,7 +417,10 @@ async function deleteSession(sessionId) {
 // ================= ALERTS =================
 async function loadAlerts() {
   const alertsList = document.getElementById("alerts-list");
-  if (!alertsList) return;
+  if (!alertsList) {
+    console.error("alertsList not found in DOM");
+    return;
+  }
 
   alertsList.innerHTML = "Loading...";
 
@@ -426,26 +429,53 @@ async function loadAlerts() {
 
     console.log("STATUS:", res.status);
 
+    // ❗ Always read as text first (safer)
     const text = await res.text();
     console.log("RAW RESPONSE:", text);
 
-    const data = JSON.parse(text);
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error("JSON PARSE ERROR:", parseErr);
+      alertsList.innerHTML = "⚠️ Invalid server response.";
+      return;
+    }
+
+    // ❗ Handle backend error responses
+    if (!res.ok || data.error) {
+      console.error("API ERROR:", data);
+      alertsList.innerHTML = "⚠️ Failed to load alerts.";
+      return;
+    }
 
     alertsList.innerHTML = "";
 
-    (data.alerts || []).forEach(a => {
+    if (!data.alerts || data.alerts.length === 0) {
+      alertsList.innerHTML = "No alerts available.";
+      return;
+    }
+
+    data.alerts.forEach(a => {
       const card = document.createElement("div");
       card.className = "alert-card";
+
       card.innerHTML = `
-        <strong>${a.title}</strong><br>
-        <small>${a.source || ""}</small><br>
-        <a href="${a.url}" target="_blank">Open</a>
+        <strong>${a.title || "No title"}</strong><br>
+        <small>${a.source || "Unknown source"}</small><br>
+        ${
+          a.url
+            ? `<a href="${a.url}" target="_blank">Open</a>`
+            : ""
+        }
       `;
+
       alertsList.appendChild(card);
     });
 
   } catch (err) {
-    console.error("FULL ERROR:", err);
+    console.error("FETCH ERROR:", err);
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
