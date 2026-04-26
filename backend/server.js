@@ -258,7 +258,7 @@ app.post("/api/generate", async (req, res) => {
     const { messages } = req.body;
 
     const payload = {
-      model: "stepfun/step-3.5-flash:free",
+      model: "nvidia/nemotron-3-super-120b-a12b:free",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         ...messages.map(m => ({
