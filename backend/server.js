@@ -341,7 +341,7 @@ app.get("/api/alerts", async (req, res) => {
 // ================= FRONTEND =================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const frontendPath = path.join(__dirname, "../frontend/dist");
+const frontendPath = path.join(__dirname, "../frontend");
 
 app.use(express.static(frontendPath));
 app.get("*", (_, res) =>
