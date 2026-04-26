@@ -171,19 +171,28 @@ document.getElementById("new-chat").onclick = () => {
 
 // ✅ INTEGRATED (4) — SA consumption on alerts
 document.getElementById("show-alerts").onclick = () => {
+  console.log("🛰️ Alerts button clicked"); // ✅ ADD THIS
+
   const token = localStorage.getItem("qlasar_token");
   if (!token) {
     alert("Please login to use Scouted Alerts.");
     return;
   }
+
   if (!consumeSA(1)) {
     alert("⚠️ You have 0 SA left. Please buy more alerts to continue.");
     return;
   }
+
   chatSection.classList.add("hidden");
   alertsSection.classList.remove("hidden");
+
   closeSidebar();
-  loadAlerts();
+
+  // ✅ ADD A SMALL DELAY (IMPORTANT FIX)
+  setTimeout(() => {
+    loadAlerts();
+  }, 100);
 };
 
 document.getElementById("show-sessions").onclick = async () => {
@@ -416,20 +425,22 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
-  const alertsList = document.getElementById("alerts-list");
+  console.log("🔥 loadAlerts triggered");
+
+  const alertsList = document.querySelector("#alerts-section #alerts-list");
+
   if (!alertsList) {
-    console.error("alertsList not found in DOM");
+    console.error("❌ alertsList not found in DOM");
     return;
   }
 
   alertsList.innerHTML = "Loading...";
 
   try {
-    const res = await fetch(`${API_BASE}/api/alerts`);
+    const res = await fetch("https://qlasar-qx6y.onrender.com/api/alerts");
 
     console.log("STATUS:", res.status);
 
-    // ❗ Always read as text first (safer)
     const text = await res.text();
     console.log("RAW RESPONSE:", text);
 
@@ -438,14 +449,13 @@ async function loadAlerts() {
     try {
       data = JSON.parse(text);
     } catch (parseErr) {
-      console.error("JSON PARSE ERROR:", parseErr);
+      console.error("❌ JSON PARSE ERROR:", parseErr);
       alertsList.innerHTML = "⚠️ Invalid server response.";
       return;
     }
 
-    // ❗ Handle backend error responses
     if (!res.ok || data.error) {
-      console.error("API ERROR:", data);
+      console.error("❌ API ERROR:", data);
       alertsList.innerHTML = "⚠️ Failed to load alerts.";
       return;
     }
@@ -464,18 +474,14 @@ async function loadAlerts() {
       card.innerHTML = `
         <strong>${a.title || "No title"}</strong><br>
         <small>${a.source || "Unknown source"}</small><br>
-        ${
-          a.url
-            ? `<a href="${a.url}" target="_blank">Open</a>`
-            : ""
-        }
+        ${a.url ? `<a href="${a.url}" target="_blank">Open</a>` : ""}
       `;
 
       alertsList.appendChild(card);
     });
 
   } catch (err) {
-    console.error("FETCH ERROR:", err);
+    console.error("❌ FETCH ERROR:", err);
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
