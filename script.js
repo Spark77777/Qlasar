@@ -416,51 +416,36 @@ async function deleteSession(sessionId) {
 
 // ================= ALERTS =================
 async function loadAlerts() {
-
-  const alertsList = document.getElementById("alerts-list"); // ✅ FIX HERE
-
-  if (!alertsList) {
-    console.error("alertsList not found");
-    return;
-  }
+  const alertsList = document.getElementById("alerts-list");
+  if (!alertsList) return;
 
   alertsList.innerHTML = "Loading...";
 
   try {
     const res = await fetch(`${API_BASE}/api/alerts`);
 
-    const text = await res.text();
+    console.log("STATUS:", res.status);
 
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error("Invalid JSON:", text);
-      alertsList.innerHTML = "⚠️ Invalid server response.";
-      return;
-    }
+    const text = await res.text();
+    console.log("RAW RESPONSE:", text);
+
+    const data = JSON.parse(text);
 
     alertsList.innerHTML = "";
 
     (data.alerts || []).forEach(a => {
       const card = document.createElement("div");
       card.className = "alert-card";
-
       card.innerHTML = `
         <strong>${a.title}</strong><br>
         <small>${a.source || ""}</small><br>
         <a href="${a.url}" target="_blank">Open</a>
       `;
-
       alertsList.appendChild(card);
     });
 
-    if (!data.alerts?.length) {
-      alertsList.innerHTML = "No alerts available.";
-    }
-
   } catch (err) {
-    console.error("Fetch error:", err);
+    console.error("FULL ERROR:", err);
     alertsList.innerHTML = "⚠️ Network error loading alerts.";
   }
 }
