@@ -1,11 +1,15 @@
-// frontend/src/App.jsx
 import React from "react";
-import ChatWindow from "./components/ChatWindow";
+import ProactiveAlerts from "./components/ProactiveAlerts";
 
 function App() {
   return (
-    <div className="w-screen h-screen overflow-hidden">
-      <ChatWindow />
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#020617",
+      }}
+    >
+      <ProactiveAlerts />
     </div>
   );
 }
